@@ -1,0 +1,10 @@
+version: "2"
+
+services:
+  postgres:
+    image: postgres
+    container_name: postgres
+    volumes:
+      - ./docker/postgres/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+    ports:
+      - 5432:5432
