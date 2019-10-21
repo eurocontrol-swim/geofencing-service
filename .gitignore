@@ -1,0 +1,13 @@
+*.py[cod]
+venv*/
+dist/
+build/
+log/
+*.egg-info/
+.idea/workspace.xml
+.idea/dbnavigator.xml
+.cache/
+__pycache__/
+.coverage
+/.pytest_cache
+specs

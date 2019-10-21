@@ -1,0 +1,18 @@
+name: geofencing
+dependencies:
+- python
+- pytest
+- pytest-cov
+- Flask
+- Flask-SQLAlchemy
+- SQLAlchemy
+- Werkzeug
+- pip:
+  - gunicorn
+  - connexion[swagger-ui]
+  - marshmallow
+  - marshmallow-sqlalchemy
+  - flask-migrate
+  - psycopg2-binary
+  - git+https://git@github.com/eurocontrol-swim/rest-client.git
+  - git+https://git@github.com/eurocontrol-swim/swim-backend.git
