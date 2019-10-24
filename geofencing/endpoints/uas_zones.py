@@ -27,45 +27,9 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from pathlib import Path
-
-import connexion
-from mongoengine import connect
-from swagger_ui_bundle import swagger_ui_3_path
-from pkg_resources import resource_filename
-
-from swim_backend.flask import configure_flask
-from swim_backend.config import configure_logging, load_app_config
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-# TODO: fix typing hints
-
-
-def create_app(config_file):
-    options = {'swagger_path': swagger_ui_3_path}
-    connexion_app = connexion.App(__name__, options=options)
-
-    connexion_app.add_api(Path('openapi.yml'), strict_validation=True)
-
-    app = connexion_app.app
-
-    app_config = load_app_config(filename=config_file)
-
-    app.config.update(app_config)
-
-    configure_flask(app)
-
-    configure_logging(app)
-
-    connect('geodb')
-
-    return app
-
-
-if __name__ == '__main__':
-    config_file = resource_filename(__name__, 'config.yml')
-    app = create_app(config_file)
-
-    app.run(host="0.0.0.0", port=8080, debug=False)
+def get_uas_zones():
+    pass

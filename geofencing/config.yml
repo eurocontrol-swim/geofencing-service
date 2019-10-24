@@ -27,7 +27,3 @@ LOGGING:
 
     connexion:
       level: INFO
-
-
-SQLALCHEMY_DATABASE_URI: 'postgresql+psycopg2://swim:swim@localhost:5432/geodb'
-SQLALCHEMY_TRACK_MODIFICATIONS: false  # silence the deprecation warning
