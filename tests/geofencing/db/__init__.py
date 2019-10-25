@@ -27,17 +27,5 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-import pytest
-from mongoengine import connect, connection
-from pkg_resources import resource_filename
 
-from swim_backend.config import load_app_config
-
-
-@pytest.fixture(scope='session', autouse=True)
-def setup_mongodb():
-    config = load_app_config(filename=resource_filename('tests', 'test_config.yml'))
-    connect(db=config['MONGO']['db'])
-
-    db = connection.get_db()
-    db.client.drop_database(db.name)
+__author__ = "EUROCONTROL (SWIM)"

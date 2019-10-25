@@ -27,17 +27,19 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-import pytest
-from mongoengine import connect, connection
-from pkg_resources import resource_filename
+from datetime import datetime
 
-from swim_backend.config import load_app_config
+from mongoengine import Q
+
+from geofencing.db import PolygonType
+from geofencing.db.models import UASZone
+
+__author__ = "EUROCONTROL (SWIM)"
 
 
-@pytest.fixture(scope='session', autouse=True)
-def setup_mongodb():
-    config = load_app_config(filename=resource_filename('tests', 'test_config.yml'))
-    connect(db=config['MONGO']['db'])
-
-    db = connection.get_db()
-    db.client.drop_database(db.name)
+def get_uas_zones(polygon: PolygonType, start_date_time: datetime, end_date_time: datetime):
+    return UASZone.objects(
+        Q(airspace_volume__polygon__geo_intersects=[polygon]) &
+        Q(applicable_time_period__start_date_time__gte=start_date_time) &
+        Q(applicable_time_period__end_date_time__lte=end_date_time)
+    )

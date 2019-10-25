@@ -40,9 +40,6 @@ from swim_backend.config import configure_logging, load_app_config
 __author__ = "EUROCONTROL (SWIM)"
 
 
-# TODO: fix typing hints
-
-
 def create_app(config_file):
     options = {'swagger_path': swagger_ui_3_path}
     connexion_app = connexion.App(__name__, options=options)
@@ -59,7 +56,7 @@ def create_app(config_file):
 
     configure_logging(app)
 
-    connect('geodb')
+    connect(db=app.config['MONGO']['db'])
 
     return app
 

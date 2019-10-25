@@ -30,4 +30,4 @@ LOGGING:
 
 
 MONGO:
-  db: geodb
+  db: test

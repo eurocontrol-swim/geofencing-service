@@ -30,7 +30,7 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 import enum
 
 from mongoengine import EmbeddedDocument, StringField, IntField, PolygonField, DateTimeField, EmbeddedDocumentField, \
-    Document, ListField, EmbeddedDocumentListField
+    Document, ListField, EmbeddedDocumentListField, DictField, ValidationError, ReferenceField
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -38,16 +38,6 @@ __author__ = "EUROCONTROL (SWIM)"
 class YesNoChoice(enum.Enum):
     YES = "YES"
     NO = "NO"
-
-
-class AirspaceVolume(EmbeddedDocument):
-
-    id = StringField(required=True, unique=True)
-    lower_limit_in_m = IntField()
-    lower_vertical_reference = StringField()
-    upper_limit_in_m = IntField()
-    upper_vertical_reference = StringField()
-    polygon = PolygonField(required=True)
 
 
 class Day(enum.Enum):
@@ -58,45 +48,6 @@ class Day(enum.Enum):
     FRIDAY = 5
     SATURDAY = 6
     SUNDAY = 7
-
-
-class DailySchedule(EmbeddedDocument):
-
-    id = StringField(required=True, unique=True)
-
-    day = StringField(choices=(day.name for day in Day))
-    start_time = DateTimeField(required=True)
-    end_time = DateTimeField(required=True)
-
-
-class ApplicableTimePeriod(EmbeddedDocument):
-
-    id = StringField(required=True, unique=True)
-    permanent = StringField(choices=(e.name for e in YesNoChoice))
-    start_date_time = DateTimeField(required=True)
-    end_date_time = DateTimeField(required=True)
-    daily_schedule = EmbeddedDocumentListField(DailySchedule)
-
-
-class Authority(EmbeddedDocument):
-
-    id = StringField(required=True, unique=True)
-
-    name = StringField(required=True)
-    contact_name = StringField()
-    service = StringField()
-
-    # at  least  one  of  the  following  shall  be  specified
-    email = StringField()
-    site_url = StringField()
-    phone = StringField()
-
-
-class Country(EmbeddedDocument):
-
-    id = StringField(required=True, unique=True)
-    name = StringField(required=True)
-    iso_code3 = StringField(required=True)
 
 
 class UASType(enum.Enum):
@@ -116,13 +67,6 @@ class USpaceClass(enum.Enum):
     CORUS = "CORUS"
 
 
-class NotificationRequirement(EmbeddedDocument):
-
-    id = StringField(required=True, unique=True)
-    authority = EmbeddedDocumentField(Authority, required=True)
-    interval_before = StringField(required=True)
-
-
 class UASZoneReason(enum.Enum):
     AIR_TRAFFIC = "AIR_TRAFFIC"
     SENSITIVE = "SENSITIVE"
@@ -134,24 +78,67 @@ class UASZoneReason(enum.Enum):
     OTHER = "OTHER"
 
 
-class UASZone(Document):
+class AirspaceVolume(EmbeddedDocument):
+    lower_limit_in_m = IntField(db_field='lowerLimit')
+    lower_vertical_reference = StringField(db_field='lowerVerticalReference')
+    upper_limit_in_m = IntField(db_field='upperLimit')
+    upper_vertical_reference = StringField(db_field='upperVerticalReference')
+    polygon = PolygonField(required=True)
 
-    identifier = StringField(required=True, unique=True)
 
+class DailySchedule(EmbeddedDocument):
+    day = StringField(choices=tuple(e.value for e in Day))
+    start_time = DateTimeField(db_field='startTime', required=True)
+    end_time = DateTimeField(db_field='endTime', required=True)
+
+
+class ApplicableTimePeriod(EmbeddedDocument):
+    permanent = StringField(choices=tuple(e.value for e in YesNoChoice))
+    start_date_time = DateTimeField(db_field='startDateTime', required=True)
+    end_date_time = DateTimeField(db_field='endDateTime', required=True)
+    daily_schedule = EmbeddedDocumentListField(DailySchedule, db_field='dailySchedule')
+
+
+class Authority(Document):
+    authority_id = StringField(primary_key=True)
     name = StringField(required=True)
-    type = StringField(choices=(t.name for t in UASType))
-    restriction = StringField(choices=(r.name for r in UASRestriction))
-    # region = IntField()
-    data_capture_prohibition = StringField(choices=(e.name for e in YesNoChoice))
-    u_space_class = StringField(choices=(s.name for s in USpaceClass))
-    message = StringField()
-    creation_date_time = DateTimeField(required=True)
-    update_date_time = DateTimeField()
+    contact_name = StringField(db_field='contactName')
+    service = StringField()
+    email = StringField()
+    site_url = StringField(db_field='siteUrl')
+    phone = StringField()
 
-    reason = ListField(StringField(choices=(r.name for r in UASZoneReason)))
-    country = EmbeddedDocumentField(Country)
-    airspace_volume = EmbeddedDocumentField(AirspaceVolume, required=True)
-    notification_requirement = EmbeddedDocumentField(NotificationRequirement)
-    authorization_requirement = EmbeddedDocumentField(Authority)
-    applicable_time_period = EmbeddedDocumentField(ApplicableTimePeriod)
-    # author = EmbeddedDocumentField(Authority)
+    def clean(self):
+        if not (self.email or self.site_url or self.phone):
+            raise ValidationError(f"One of email, site_url, phone must be defined.")
+
+
+class NotificationRequirement(EmbeddedDocument):
+    authority = ReferenceField(Authority, required=True)
+    interval_before = StringField(db_field='intervalBefore', required=True)
+
+
+class DataSource(EmbeddedDocument):
+    # author = ReferenceField(Authority, required=True)
+    creation_date_time = DateTimeField(db_field='creationDateTime', required=True)
+    update_date_time = DateTimeField(db_field='endDateTime', )
+
+
+class UASZone(Document):
+    identifier = StringField(required=True, primary_key=True)
+    name = StringField(required=True)
+    type = StringField(choices=tuple(e.value for e in UASType))
+    restriction = StringField(choices=tuple(e.value for e in UASRestriction))
+    # region = IntField()
+    data_capture_prohibition = StringField(db_field='dataCaptureProhibition', choices=tuple(e.value for e in YesNoChoice))
+    u_space_class = StringField(db_field='uSpaceClass', choices=tuple(e.value for e in USpaceClass))
+    message = StringField()
+
+    reason = ListField(StringField(choices=tuple(e.value for e in UASZoneReason)))
+    country = StringField()
+    airspace_volume = EmbeddedDocumentField(AirspaceVolume, db_field='airspaceVolume', required=True)
+    notification_requirement = EmbeddedDocumentField(NotificationRequirement, db_field='notificationRequirement')
+    authorization_requirement = ReferenceField(Authority, db_field='authorizationRequirement')
+    applicable_time_period = EmbeddedDocumentField(ApplicableTimePeriod, db_field='applicableTimePeriod')
+    data_source = EmbeddedDocumentField(DataSource, db_field='dataSource')
+    extended_properties = DictField(db_field='extendedProperties')
