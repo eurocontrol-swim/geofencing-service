@@ -31,8 +31,8 @@ import uuid
 from datetime import datetime
 
 from geofencing.db import PolygonType
-from geofencing.db.models import AirspaceVolume, Authority, ApplicableTimePeriod, YesNoChoice, UASZone, UASRestriction, \
-    USpaceClass, UASType, DataSource
+from geofencing.db.models import AirspaceVolume, AuthorityEntity, ApplicableTimePeriod, CodeYesNoType, UASZone, \
+    CodeRestrictionType, CodeUSpaceClassType, CodeZoneType, DataSource
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -41,19 +41,20 @@ def get_unique_id():
     return uuid.uuid4().hex
 
 
-def make_airspace_volume(polygon: PolygonType) -> AirspaceVolume:
+def make_airspace_volume(polygon: PolygonType, upper_limit_in_m=None, lower_limit_in_m=None) -> AirspaceVolume:
     return AirspaceVolume(
         polygon=[polygon],
-        upper_limit_in_m=100
+        upper_limit_in_m=upper_limit_in_m,
+        lower_limit_in_m=lower_limit_in_m or 0
     )
 
 
-def make_authority() -> Authority:
-    result = Authority()
+def make_authority() -> AuthorityEntity:
+    result = AuthorityEntity()
     result.authority_id = get_unique_id()
-    result.name = "Authority"
-    result.contact_name = "Authority manager",
-    result.service = "Authority service",
+    result.name = "AuthorityEntity"
+    result.contact_name = "AuthorityEntity manager"
+    result.service = "AuthorityEntity service"
     result.email = "auth@autority.be"
 
     return result
@@ -61,7 +62,7 @@ def make_authority() -> Authority:
 
 def make_applicable_period():
     return ApplicableTimePeriod(
-        permanent=YesNoChoice.YES.value,
+        permanent=CodeYesNoType.YES.value,
         start_date_time=datetime(2020, 1, 1, 0, 0, 0),
         end_date_time=datetime(2021, 1, 1, 0, 0, 0)
     )
@@ -69,19 +70,20 @@ def make_applicable_period():
 
 def make_uas_zone(polygon: PolygonType) -> UASZone:
     result = UASZone()
-    result.identifier = get_unique_id()
+    result.identifier = get_unique_id()[:7]
     result.name = get_unique_id()
-    result.type = UASType.COMMON.value
-    result.restriction = UASRestriction.NO_RESTRICTION.value
-    result.data_capture_prohibition = YesNoChoice.YES.value
-    result.u_space_class = USpaceClass.EUROCONTROL.value
+    result.type = CodeZoneType.COMMON.value
+    result.region = 1
+    result.restriction = CodeRestrictionType.NO_RESTRICTION.value
+    result.data_capture_prohibition = CodeYesNoType.YES.value
+    result.u_space_class = CodeUSpaceClassType.EUROCONTROL.value
     result.message = "message"
     result.country = "BEL"
     result.airspace_volume = make_airspace_volume(polygon)
     result.authorization_requirement = make_authority()
     result.applicable_time_period = make_applicable_period()
     result.data_source = DataSource(
-        creation_date_time=datetime.now()
+        creation_date_time=datetime.now(),
     )
 
     return result

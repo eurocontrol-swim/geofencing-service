@@ -34,7 +34,7 @@ from pkg_resources import resource_filename
 from swim_backend.config import load_app_config
 
 
-@pytest.fixture(scope='session', autouse=True)
+@pytest.fixture(scope='function', autouse=True)
 def setup_mongodb():
     config = load_app_config(filename=resource_filename('tests', 'test_config.yml'))
     connect(db=config['MONGO']['db'])
