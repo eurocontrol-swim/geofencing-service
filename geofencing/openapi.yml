@@ -47,25 +47,28 @@ tags:
   - name: UASZones
     description: UASZones
 paths:
-  /uas_zones/:
-    get:
+  /uas_zones/filter/:
+
+    post:
       tags:
         - UASZones
-      summary: retrieves all available topics
+      summary: retrieves UASZones based on the provided filtering criteria
       operationId: geofencing.endpoints.uas_zones.get_uas_zones
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UASZonesRequest'
+        description: UASZone filtering criteria
       responses:
         '200':
-          description: lists all available topics
+          description: UASZones retrieved
           content:
             application/json:
               schema:
-                type: array
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/UASZonesReply'
+        '400':
+          description: 'invalid input, object invalid'
 
 components:
 #  securitySchemes:
@@ -75,6 +78,254 @@ components:
 #      x-basicInfoFunc: subscription_manager.auth.basic_auth
 
   schemas:
+    UASZone:
+      description: The UASZone object
+      type: object
+      properties:
+        identifier:
+          type: string
+          description: A string of characters that uniquely identifies the UAS Zone within the State/Territory identified by the country attribute.
+          maxLength: 7
+          minLength: 7
+        country:
+          type: string
+          description: The State that has the authority to declare the zone.
+          maxLength: 3
+          minLength: 3
+        name:
+          type: string
+          description: A free text name by which the zone may be known by the public or by the UAS community
+        type:
+          type: string
+          description: An indication whether the Zone is provided with its common definition or with a customised definition, for a particular use
+          enum: [
+            "COMMON",
+            "CUSTOMIZED"
+          ]
+        restriction:
+          type: string
+          description: An indication if flying in the zone is permitted, conditional or forbidden.
+          enum: [
+            "PROHIBITED",
+            "REQ_AUTHORISATION",
+            "CONDITIONAL",
+            "NO_RESTRICTION"
+          ]
+        restrictionConditions:
+          type: array
+          items:
+            description: An indication of the conditions under which the zone can be used
+            type: string
+        region:
+          type: integer
+          description: Where applicable, identifies a region inside a State where the UAS Zone is located.
+          minimum: 0
+          maximum: 65535
+        dataCaptureProhibition:
+          type: string
+          description: An indication if data capturing (such as aerial photography, etc.) is prohibited when flying in the zone.
+          enum: [
+            "YES",
+            "NO"
+          ]
+        reason:
+          type: array
+          items:
+            type: string
+            description: A coded indication for the reason that led to the establishment of the zone.
+            enum: [
+              "AIR_TRAFFIC",
+              "SENSITIVE",
+              "PRIVACY",
+              "POPULATION",
+              "NATURE",
+              "NOISE",
+              "FOREIGN_TERRITORY",
+              "OTHER"
+            ]
+        uSpaceClass:
+          type: string
+          description: A code that identifies the category or class of the zone applying a "USpace concept".
+          enum: [
+            "EUROCONTROL",
+            "CORUS"
+          ]
+        message:
+          type: string
+          description: A message to be displayed to the user of the zone
+        dataSource:
+          type: object
+          properties:
+            author:
+              type: string
+            creationDateTime:
+              type: string
+              format: 'date-time'
+            updateDateTime:
+              type: string
+              format: 'date-time'
+        authority:
+          type: object
+          properties:
+            requiresNotificationTo:
+              type: object
+              properties:
+                authority:
+                  $ref: '#/components/schemas/Authority'
+                intervalBefore:
+                  type: string
+                  description: The minimal time interval required between notification and starting to operate in the zone, in the format PnnDTnnHnnM (ISO 8601).
+            requiresAuthorisationFrom:
+              type: object
+              properties:
+                authority:
+                  $ref: '#/components/schemas/Authority'
+        applicableTimePeriod:
+          $ref: '#/components/schemas/ApplicableTimePeriod'
+        airspaceVolumt:
+          $ref: '#/components/schemas/AirspaceVolume'
+        extendedProperties:
+          type: string
+          description: The extendedProperties section is a placeholder, allowing service providers to customize the implementation and provide additional information.
+
+    ApplicableTimePeriod:
+      type: object
+      properties:
+        permanent:
+          type: string
+          description: An indication that the area is permanent.
+          enum: [
+            "YES",
+            "NO"
+          ]
+        startDateTime:
+          type: string
+          description: The date and time when the area starts to exist.
+          format: 'date-time'
+        endDateTime:
+          type: string
+          description: The date and time when the area ceases to exist.
+          format: 'date-time'
+        dailySchedule:
+          type: array
+          items:
+            type: object
+            properties:
+              day:
+                type: string
+                description: The day of the week
+                enum: [
+                  "MON",
+                  "TUE",
+                  "WED",
+                  "THU",
+                  "FRI",
+                  "SAT",
+                  "SUN"
+                ]
+              startTime:
+                type: string
+                description: The daily start time
+                format: 'date-time'
+              endTime:
+                type: string
+                description: The daily end time
+                format: 'date-time'
+
+    AirspaceVolume:
+      type: object
+      properties:
+        lowerLimit:
+          type: integer
+          description: The lowest level included in the Zone (in metres). If not specified, it means that the zone starts from surface (ground)
+        lowerVerticalReference:
+          type: string
+          description: The vertical reference system used for expressing the lower limit
+        upperLimit:
+          type: string
+          description: The highest level included in the Zone (in metres). If not specified, it means that the zone extends to any possible level (unlimited).
+        upperVerticalReference:
+          type: string
+          description: The vertical reference system used for expressing the upper limit
+        polygon:
+          type: array
+          description: The shape of the area in a projection at the surface of the Earth considered as the WGS-84 ellipsoid.
+          minItems: 3
+          items:
+            type: object
+            properties:
+              LAT:
+                type: string
+              LON:
+                type: string
+    Authority:
+      type: object
+      description: A public or private authority that has responsibilities in relation with the authorisation of UAS operations within a Country.
+      properties:
+        name:
+          type: string
+        service:
+          type: string
+        email:
+          type: string
+        contactName:
+          type: string
+        siteURL:
+          type: string
+        phone:
+          type: string
+
+    UASZonesRequest:
+      description: The filtering criteria of UASZone retrieving
+      type: object
+      required:
+        - airspaceVolume
+        - startDateTime
+        - endDateTime
+        - requestID
+      properties:
+        airspaceVolume:
+          $ref: '#/components/schemas/AirspaceVolume'
+        regions:
+          type: array
+          items:
+            type: string
+        startDateTime:
+          type: string
+          format: 'date-time'
+        endDateTime:
+          type: string
+          format: 'date-time'
+        requestID:
+          type: string
+        updatedAfterDateTime:
+          type: string
+          format: 'date-time'
+
+    UASZonesReply:
+      type: object
+      properties:
+        UASZoneList:
+          type: array
+          items:
+            $ref: '#/components/schemas/UASZone'
+        genericReply:
+          $ref: '#/components/schemas/GenericReply'
+
+
+    GenericReply:
+      type: object
+      properties:
+        RequestStatus:
+          type: string
+          enum: [
+            "OK",
+            "NOK"
+          ]
+        RequestExceptionDescription:
+          type: string
+        RequestProcessedTimeStamp:
+          type: string
     Error:
       description: Error structure (RFC 7807 compliant - https://tools.ietf.org/html/rfc7807)
       type: object
