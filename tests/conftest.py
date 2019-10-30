@@ -27,56 +27,17 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from uuid import uuid4
-
 import pytest
+from mongoengine import connect, connection
 from pkg_resources import resource_filename
 
-from geofencing.app import create_app
-from swim_backend.db import db as _db, db_save
-
-DEFAULT_LOGIN_PASS = 'password'
-
-
-@pytest.yield_fixture(scope='session')
-def app():
-    config_file = resource_filename(__name__, 'test_config.yml')
-    _app = create_app(config_file)
-    ctx = _app.app_context()
-    ctx.push()
-
-    yield _app
-
-    ctx.pop()
-
-
-@pytest.fixture(scope='session')
-def test_client(app):
-    return app.test_client()
-
-
-@pytest.yield_fixture(scope='session')
-def db(app):
-    _db.app = app
-    _db.create_all()
-
-    yield _db
-
-    _db.drop_all()
+from swim_backend.config import load_app_config
 
 
 @pytest.fixture(scope='function', autouse=True)
-def session(db):
-    connection = db.engine.connect()
-    transaction = connection.begin()
+def setup_mongodb():
+    config = load_app_config(filename=resource_filename('tests', 'test_config.yml'))
+    connect(db=config['MONGO']['db'])
 
-    options = dict(bind=connection, binds={})
-    session_ = db.create_scoped_session(options=options)
-
-    db.session = session_
-
-    yield session_
-
-    transaction.rollback()
-    connection.close()
-    session_.remove()
+    db = connection.get_db()
+    db.client.drop_database(db.name)

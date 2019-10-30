@@ -27,42 +27,35 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from pathlib import Path
+from datetime import datetime
+from functools import reduce
+from typing import Optional, List
 
-import connexion
-from mongoengine import connect
-from swagger_ui_bundle import swagger_ui_3_path
-from pkg_resources import resource_filename
+from mongoengine import Q
 
-from swim_backend.flask import configure_flask
-from swim_backend.config import configure_logging, load_app_config
+from geofencing.db.models import UASZone, AirspaceVolume
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def create_app(config_file):
-    options = {'swagger_path': swagger_ui_3_path}
-    connexion_app = connexion.App(__name__, options=options)
+def get_uas_zones(airspace_volume: AirspaceVolume,
+                  regions: List[int],
+                  start_date_time: datetime,
+                  end_date_time: datetime,
+                  update_after_date_time: Optional[datetime] = None):
 
-    connexion_app.add_api(Path('openapi.yml'), strict_validation=True)
+    queries_list = [
+        Q(airspace_volume__polygon__geo_intersects=airspace_volume.polygon),
+        Q(airspace_volume__upper_limit_in_m__lte=airspace_volume.upper_limit_in_m),
+        Q(airspace_volume__lower_limit_in_m__gte=airspace_volume.lower_limit_in_m),
+        Q(region__in=regions),
+        Q(applicable_time_period__start_date_time__gte=start_date_time),
+        Q(applicable_time_period__end_date_time__lte=end_date_time)
+    ]
 
-    app = connexion_app.app
+    if update_after_date_time:
+        queries_list.append(Q(data_source__update_date_time__gte=update_after_date_time))
 
-    app_config = load_app_config(filename=config_file)
+    query = reduce(lambda q1, q2: q1 & q2, queries_list, Q())
 
-    app.config.update(app_config)
-
-    configure_flask(app)
-
-    configure_logging(app)
-
-    connect(db=app.config['MONGO']['db'])
-
-    return app
-
-
-if __name__ == '__main__':
-    config_file = resource_filename(__name__, 'config.yml')
-    app = create_app(config_file)
-
-    app.run(host="0.0.0.0", port=8080, debug=False)
+    return UASZone.objects(query).all()

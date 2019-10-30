@@ -40,18 +40,39 @@ info:
 #  license:
 #    name: Apache 2.0
 #    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
-security:
-  - basicAuth: []
-tags: []
+#security:
+#  - basicAuth: []
 
+tags:
+  - name: UASZones
+    description: UASZones
 paths:
+  /uas_zones/:
+    get:
+      tags:
+        - UASZones
+      summary: retrieves all available topics
+      operationId: geofencing.endpoints.uas_zones.get_uas_zones
+      responses:
+        '200':
+          description: lists all available topics
+          content:
+            application/json:
+              schema:
+                type: array
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
 components:
-  securitySchemes:
-    basicAuth:
-      type: http
-      scheme: basic
-      x-basicInfoFunc: subscription_manager.auth.basic_auth
+#  securitySchemes:
+#    basicAuth:
+#      type: http
+#      scheme: basic
+#      x-basicInfoFunc: subscription_manager.auth.basic_auth
 
   schemas:
     Error:
