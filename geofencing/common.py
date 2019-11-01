@@ -27,32 +27,17 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from functools import reduce
+from typing import List
 
-from mongoengine import Q
-
-from geofencing.common import mongo_polygon_from_polygon_filter
-from geofencing.db.models import UASZone
-from geofencing.filters import UASZonesFilter
+from geofencing.db import MongoPolygonType
+from geofencing.filters import PolygonFilter
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def get_uas_zones(uas_zones_filter: UASZonesFilter):
-    mongo_polygon = mongo_polygon_from_polygon_filter(uas_zones_filter.airspace_volume.polygon)
+def mongo_polygon_from_polygon_filter(polygon_filter: List[PolygonFilter]) -> MongoPolygonType:
+    return [[[pf.lat, pf.lon] for pf in polygon_filter]]
 
-    queries_list = [
-        Q(airspace_volume__polygon__geo_intersects=mongo_polygon),
-        Q(airspace_volume__upper_limit_in_m__lte=uas_zones_filter.airspace_volume.upper_limit_in_m),
-        Q(airspace_volume__lower_limit_in_m__gte=uas_zones_filter.airspace_volume.lower_limit_in_m),
-        Q(region__in=uas_zones_filter.regions),
-        Q(applicable_time_period__start_date_time__gte=uas_zones_filter.start_date_time),
-        Q(applicable_time_period__end_date_time__lte=uas_zones_filter.end_date_time)
-    ]
 
-    if uas_zones_filter.update_after_date_time:
-        queries_list.append(Q(data_source__update_date_time__gte=uas_zones_filter.update_after_date_time))
-
-    query = reduce(lambda q1, q2: q1 & q2, queries_list, Q())
-
-    return UASZone.objects(query).all()
+def polygon_filter_from_mongo_polygon(mongo_polygon: MongoPolygonType) -> List[PolygonFilter]:
+    return [PolygonFilter(lat=mp[0], lon=mp[1]) for mp in mongo_polygon[0]]

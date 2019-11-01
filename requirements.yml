@@ -10,5 +10,6 @@ dependencies:
   - connexion[swagger-ui]
   - marshmallow
   - mongoengine
+  - marshmallow-mongoengine
   - git+https://git@github.com/eurocontrol-swim/rest-client.git
   - git+https://git@github.com/eurocontrol-swim/swim-backend.git

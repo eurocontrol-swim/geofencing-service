@@ -30,9 +30,11 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 import uuid
 from datetime import datetime
 
-from geofencing.db import PolygonType
+from geofencing.common import polygon_filter_from_mongo_polygon
+from geofencing.db import MongoPolygonType
 from geofencing.db.models import AirspaceVolume, AuthorityEntity, ApplicableTimePeriod, CodeYesNoType, UASZone, \
-    CodeRestrictionType, CodeUSpaceClassType, CodeZoneType, DataSource
+    CodeRestrictionType, CodeUSpaceClassType, CodeZoneType, DataSource, DailySchedule, CodeWeekDay
+from geofencing.filters import UASZonesFilter, AirspaceVolumeFilter
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -41,9 +43,9 @@ def get_unique_id():
     return uuid.uuid4().hex
 
 
-def make_airspace_volume(polygon: PolygonType, upper_limit_in_m=None, lower_limit_in_m=None) -> AirspaceVolume:
+def make_airspace_volume(polygon: MongoPolygonType, upper_limit_in_m=None, lower_limit_in_m=None) -> AirspaceVolume:
     return AirspaceVolume(
-        polygon=[polygon],
+        polygon=polygon,
         upper_limit_in_m=upper_limit_in_m,
         lower_limit_in_m=lower_limit_in_m or 0
     )
@@ -60,15 +62,24 @@ def make_authority() -> AuthorityEntity:
     return result
 
 
+def make_daily_schedule():
+    return DailySchedule(
+        day=CodeWeekDay.MON.value,
+        start_time=datetime(2000, 1, 1, 12, 00),
+        end_time=datetime(2000, 1, 1, 18, 00),
+    )
+
+
 def make_applicable_period():
     return ApplicableTimePeriod(
         permanent=CodeYesNoType.YES.value,
         start_date_time=datetime(2020, 1, 1, 0, 0, 0),
-        end_date_time=datetime(2021, 1, 1, 0, 0, 0)
+        end_date_time=datetime(2021, 1, 1, 0, 0, 0),
+        daily_schedule=[make_daily_schedule()]
     )
 
 
-def make_uas_zone(polygon: PolygonType) -> UASZone:
+def make_uas_zone(polygon: MongoPolygonType) -> UASZone:
     result = UASZone()
     result.identifier = get_unique_id()[:7]
     result.name = get_unique_id()
@@ -87,3 +98,21 @@ def make_uas_zone(polygon: PolygonType) -> UASZone:
     )
 
     return result
+
+
+def make_uas_zones_filter_from_db_uas_zone(uas_zone: UASZone):
+    uas_zones_filter = UASZonesFilter(
+        airspace_volume=AirspaceVolumeFilter(
+            polygon=polygon_filter_from_mongo_polygon(uas_zone.airspace_volume.polygon),
+            upper_limit_in_m=uas_zone.airspace_volume.upper_limit_in_m,
+            lower_limit_in_m=uas_zone.airspace_volume.lower_limit_in_m,
+            upper_vertical_reference=uas_zone.airspace_volume.upper_vertical_reference,
+            lower_vertical_reference=uas_zone.airspace_volume.lower_vertical_reference
+        ),
+        regions=[uas_zone.region],
+        start_date_time=uas_zone.applicable_time_period.start_date_time,
+        end_date_time=uas_zone.applicable_time_period.end_date_time,
+        update_after_date_time=uas_zone.data_source.update_date_time,
+    )
+
+    return uas_zones_filter

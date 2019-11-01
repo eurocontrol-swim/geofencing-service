@@ -27,7 +27,7 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from typing import List
+from typing import List, Union
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -35,4 +35,7 @@ VERSION = "1.0"
 DESCRIPTION = "Geofencing API"
 BASE_PATH = f"/geofencing/api/{VERSION}"
 
-PolygonType = List[List[float]]
+MongoPolygonType = List[List[List[Union[float, int]]]]
+
+AIRSPACE_VOLUME_UPPER_LIMIT_IN_M = 100000
+AIRSPACE_VOLUME_LOWER_LIMIT_IN_M = 0

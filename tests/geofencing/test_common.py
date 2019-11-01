@@ -27,32 +27,25 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from functools import reduce
+import pytest
 
-from mongoengine import Q
-
-from geofencing.common import mongo_polygon_from_polygon_filter
-from geofencing.db.models import UASZone
-from geofencing.filters import UASZonesFilter
+from geofencing.common import mongo_polygon_from_polygon_filter, polygon_filter_from_mongo_polygon
+from geofencing.filters import PolygonFilter
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def get_uas_zones(uas_zones_filter: UASZonesFilter):
-    mongo_polygon = mongo_polygon_from_polygon_filter(uas_zones_filter.airspace_volume.polygon)
+@pytest.mark.parametrize('polygon_filter, expected_mongo_polygon', [
+    ([PolygonFilter(1, 2), PolygonFilter(3, 4), PolygonFilter(5, 6)],
+     [[[1, 2], [3, 4], [5, 6]]])
+])
+def test_polygon_filter_to_mongo_polygon(polygon_filter, expected_mongo_polygon):
+    assert expected_mongo_polygon == mongo_polygon_from_polygon_filter(polygon_filter)
 
-    queries_list = [
-        Q(airspace_volume__polygon__geo_intersects=mongo_polygon),
-        Q(airspace_volume__upper_limit_in_m__lte=uas_zones_filter.airspace_volume.upper_limit_in_m),
-        Q(airspace_volume__lower_limit_in_m__gte=uas_zones_filter.airspace_volume.lower_limit_in_m),
-        Q(region__in=uas_zones_filter.regions),
-        Q(applicable_time_period__start_date_time__gte=uas_zones_filter.start_date_time),
-        Q(applicable_time_period__end_date_time__lte=uas_zones_filter.end_date_time)
-    ]
 
-    if uas_zones_filter.update_after_date_time:
-        queries_list.append(Q(data_source__update_date_time__gte=uas_zones_filter.update_after_date_time))
-
-    query = reduce(lambda q1, q2: q1 & q2, queries_list, Q())
-
-    return UASZone.objects(query).all()
+@pytest.mark.parametrize('mongo_polygon, expected_polygon_filter', [
+    ([[[1, 2], [3, 4], [5, 6]]],
+     [PolygonFilter(1, 2), PolygonFilter(3, 4), PolygonFilter(5, 6)])
+])
+def test_polygon_filter_to_mongo_polygon(mongo_polygon, expected_polygon_filter):
+    assert expected_polygon_filter == polygon_filter_from_mongo_polygon(mongo_polygon)

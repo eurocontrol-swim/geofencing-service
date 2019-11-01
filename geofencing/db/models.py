@@ -33,6 +33,8 @@ from typing import Tuple, Any
 from mongoengine import EmbeddedDocument, StringField, IntField, PolygonField, DateTimeField, EmbeddedDocumentField, \
     Document, ListField, EmbeddedDocumentListField, DictField, ValidationError, ReferenceField
 
+from geofencing.db import AIRSPACE_VOLUME_UPPER_LIMIT_IN_M, AIRSPACE_VOLUME_LOWER_LIMIT_IN_M
+
 __author__ = "EUROCONTROL (SWIM)"
 
 
@@ -90,10 +92,6 @@ class CodeVerticalReferenceType(Choice):
     AGL = "AGL"
     AMSL = "AMSL"
     WGS84 = "WGS84"
-
-
-AIRSPACE_VOLUME_UPPER_LIMIT_IN_M = 100000
-AIRSPACE_VOLUME_LOWER_LIMIT_IN_M = 0
 
 
 class AirspaceVolume(EmbeddedDocument):
