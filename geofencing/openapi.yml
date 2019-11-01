@@ -242,7 +242,7 @@ components:
           type: string
           description: The vertical reference system used for expressing the lower limit
         upperLimit:
-          type: string
+          type: integer
           description: The highest level included in the Zone (in metres). If not specified, it means that the zone extends to any possible level (unlimited).
         upperVerticalReference:
           type: string
