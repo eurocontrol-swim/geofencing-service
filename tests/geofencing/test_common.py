@@ -30,13 +30,13 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 import pytest
 
 from geofencing.common import mongo_polygon_from_polygon_filter, polygon_filter_from_mongo_polygon
-from geofencing.filters import PolygonFilter
+from geofencing.filters import PointFilter
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
 @pytest.mark.parametrize('polygon_filter, expected_mongo_polygon', [
-    ([PolygonFilter(1, 2), PolygonFilter(3, 4), PolygonFilter(5, 6)],
+    ([PointFilter(1, 2), PointFilter(3, 4), PointFilter(5, 6)],
      [[[1, 2], [3, 4], [5, 6]]])
 ])
 def test_polygon_filter_to_mongo_polygon(polygon_filter, expected_mongo_polygon):
@@ -45,7 +45,7 @@ def test_polygon_filter_to_mongo_polygon(polygon_filter, expected_mongo_polygon)
 
 @pytest.mark.parametrize('mongo_polygon, expected_polygon_filter', [
     ([[[1, 2], [3, 4], [5, 6]]],
-     [PolygonFilter(1, 2), PolygonFilter(3, 4), PolygonFilter(5, 6)])
+     [PointFilter(1, 2), PointFilter(3, 4), PointFilter(5, 6)])
 ])
 def test_polygon_filter_to_mongo_polygon(mongo_polygon, expected_polygon_filter):
     assert expected_polygon_filter == polygon_filter_from_mongo_polygon(mongo_polygon)

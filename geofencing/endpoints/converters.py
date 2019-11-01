@@ -15,7 +15,7 @@ following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
 INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
 DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCL(Schema)UDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
 SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE 
 USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
@@ -27,17 +27,13 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from typing import List
+from datetime import datetime
+from typing import Dict, Any
 
-from geofencing.db import MongoPolygonType
-from geofencing.filters import PointFilter
+from geofencing.filters import UASZonesFilter
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def mongo_polygon_from_polygon_filter(polygon_filter: List[PointFilter]) -> MongoPolygonType:
-    return [[[pf.lat, pf.lon] for pf in polygon_filter]]
-
-
-def polygon_filter_from_mongo_polygon(mongo_polygon: MongoPolygonType) -> List[PointFilter]:
-    return [PointFilter(lat=mp[0], lon=mp[1]) for mp in mongo_polygon[0]]
+def uas_zones_filter_from_uas_zones_request(uas_zones_request: Dict[str, Any]) -> UASZonesFilter:
+    return UASZonesFilter.from_dict(uas_zones_request)

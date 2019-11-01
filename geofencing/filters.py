@@ -43,7 +43,7 @@ class CompareMixin:
         return not other == self
 
 
-class PolygonFilter(CompareMixin):
+class PointFilter(CompareMixin):
 
     def __init__(self, lat: float, lon: float) -> None:
         """
@@ -65,7 +65,7 @@ class PolygonFilter(CompareMixin):
 class AirspaceVolumeFilter(CompareMixin):
 
     def __init__(self,
-                 polygon: List[PolygonFilter],
+                 polygon: List[PointFilter],
                  upper_limit_in_m: Optional[int] = AIRSPACE_VOLUME_UPPER_LIMIT_IN_M,
                  lower_limit_in_m: Optional[int] = AIRSPACE_VOLUME_LOWER_LIMIT_IN_M,
                  upper_vertical_reference: Optional[str] = None,
@@ -87,7 +87,7 @@ class AirspaceVolumeFilter(CompareMixin):
     @classmethod
     def from_dict(cls, object_dict):
         return cls(
-            polygon=[PolygonFilter.from_dict(coords) for coords in object_dict['polygon']],
+            polygon=[PointFilter.from_dict(coords) for coords in object_dict['polygon']],
             upper_limit_in_m=object_dict.get("upper_limit_in_m"),
             lower_limit_in_m=object_dict.get("lower_limit_in_m"),
             upper_vertical_reference=object_dict.get("upper_vertical_reference"),

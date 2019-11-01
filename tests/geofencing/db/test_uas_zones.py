@@ -34,7 +34,6 @@ import pytest
 from geofencing.common import polygon_filter_from_mongo_polygon
 from geofencing.db import MongoPolygonType
 from geofencing.db.uas_zones import get_uas_zones
-from geofencing.filters import UASZonesFilter
 from tests.geofencing.utils import make_uas_zone, make_airspace_volume, make_uas_zones_filter_from_db_uas_zone
 
 __author__ = "EUROCONTROL (SWIM)"

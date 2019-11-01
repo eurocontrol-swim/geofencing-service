@@ -148,7 +148,7 @@ class Authority(EmbeddedDocument):
 class DataSource(EmbeddedDocument):
     # author = ReferenceField(AuthorityEntity, required=True)
     creation_date_time = DateTimeField(db_field='creationDateTime', required=True)
-    update_date_time = DateTimeField(db_field='endDateTime', )
+    update_date_time = DateTimeField(db_field='endDateTime')
 
 
 class UASZone(Document):

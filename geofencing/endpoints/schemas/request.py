@@ -27,17 +27,18 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from typing import List
+from marshmallow import Schema
+from marshmallow.fields import String, List, Nested, AwareDateTime, Integer
 
-from geofencing.db import MongoPolygonType
-from geofencing.filters import PointFilter
+from geofencing.endpoints.schemas.common import AirspaceVolumeSchema
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def mongo_polygon_from_polygon_filter(polygon_filter: List[PointFilter]) -> MongoPolygonType:
-    return [[[pf.lat, pf.lon] for pf in polygon_filter]]
-
-
-def polygon_filter_from_mongo_polygon(mongo_polygon: MongoPolygonType) -> List[PointFilter]:
-    return [PointFilter(lat=mp[0], lon=mp[1]) for mp in mongo_polygon[0]]
+class UASZonesRequestSchema(Schema):
+    airspace_volume = Nested(AirspaceVolumeSchema, data_key='airspaceVolume')
+    start_date_time = AwareDateTime(data_key='startDateTime')
+    end_date_time = AwareDateTime(data_key='endDateTime')
+    request_id = String(data_key='requestID')
+    regions = List(Integer)
+    updated_after_date_time = AwareDateTime(data_key='updatedAfterDateTime')

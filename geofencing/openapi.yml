@@ -255,9 +255,9 @@ components:
             type: object
             properties:
               LAT:
-                type: string
+                type: number
               LON:
-                type: string
+                type: number
     Authority:
       type: object
       description: A public or private authority that has responsibilities in relation with the authorisation of UAS operations within a Country.
@@ -289,7 +289,7 @@ components:
         regions:
           type: array
           items:
-            type: string
+            type: integer
         startDateTime:
           type: string
           format: 'date-time'

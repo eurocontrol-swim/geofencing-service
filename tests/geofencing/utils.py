@@ -28,7 +28,7 @@ http://opensource.org/licenses/BSD-3-Clause
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from geofencing.common import polygon_filter_from_mongo_polygon
 from geofencing.db import MongoPolygonType
@@ -65,16 +65,16 @@ def make_authority() -> AuthorityEntity:
 def make_daily_schedule():
     return DailySchedule(
         day=CodeWeekDay.MON.value,
-        start_time=datetime(2000, 1, 1, 12, 00),
-        end_time=datetime(2000, 1, 1, 18, 00),
+        start_time=datetime(2000, 1, 1, 12, 00, tzinfo=timezone.utc),
+        end_time=datetime(2000, 1, 1, 18, 00, tzinfo=timezone.utc),
     )
 
 
 def make_applicable_period():
     return ApplicableTimePeriod(
         permanent=CodeYesNoType.YES.value,
-        start_date_time=datetime(2020, 1, 1, 0, 0, 0),
-        end_date_time=datetime(2021, 1, 1, 0, 0, 0),
+        start_date_time=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
+        end_date_time=datetime(2021, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
         daily_schedule=[make_daily_schedule()]
     )
 
@@ -94,7 +94,7 @@ def make_uas_zone(polygon: MongoPolygonType) -> UASZone:
     result.authorization_requirement = make_authority()
     result.applicable_time_period = make_applicable_period()
     result.data_source = DataSource(
-        creation_date_time=datetime.now(),
+        creation_date_time=datetime.now(timezone.utc),
     )
 
     return result
