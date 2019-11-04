@@ -127,3 +127,9 @@ class UASZoneSchema(Schema):
     authority = Nested(AuthoritySchema)
     data_source = Nested(DataSourceSchema, data_key='dataSource')
     extended_properties = Dict(data_key='extendedProperties')
+
+
+class GenericReplySchema(Schema):
+    request_status = String(data_key="RequestStatus")
+    request_exception_description = String(data_key="RequestExceptionDescription")
+    request_processed_timestamp = DateTime(data_key="RequestProcessedTimestamp")

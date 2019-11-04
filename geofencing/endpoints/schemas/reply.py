@@ -27,5 +27,17 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
+from marshmallow import Schema
+from marshmallow.fields import Nested
+
+from geofencing.endpoints.schemas.common import UASZoneSchema, GenericReplySchema
 
 __author__ = "EUROCONTROL (SWIM)"
+
+
+class ReplySchema(Schema):
+    generic_reply = Nested(GenericReplySchema, required=True, data_key="genericReply")
+
+
+class UASZonesReplySchema(ReplySchema):
+    uas_zones = Nested(UASZoneSchema, many=True, data_key="UASZoneList")

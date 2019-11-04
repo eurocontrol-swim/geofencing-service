@@ -40,6 +40,7 @@ info:
 #  license:
 #    name: Apache 2.0
 #    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+
 #security:
 #  - basicAuth: []
 
@@ -48,7 +49,6 @@ tags:
     description: UASZones
 paths:
   /uas_zones/filter/:
-
     post:
       tags:
         - UASZones
@@ -67,8 +67,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UASZonesReply'
-        '400':
-          description: 'invalid input, object invalid'
 
 components:
 #  securitySchemes:
@@ -312,7 +310,6 @@ components:
         genericReply:
           $ref: '#/components/schemas/GenericReply'
 
-
     GenericReply:
       type: object
       properties:
@@ -326,23 +323,3 @@ components:
           type: string
         RequestProcessedTimeStamp:
           type: string
-    Error:
-      description: Error structure (RFC 7807 compliant - https://tools.ietf.org/html/rfc7807)
-      type: object
-      required:
-        - title
-        - detail
-        - status
-      properties:
-        title:
-          type: string
-          description: A short, human-readable summary of the problem
-          example: Internal Server Error
-        detail:
-          type: string
-          description: A human-readable explanation specific to this occurrence of the problem
-          example: The server has encountered an error during the request
-        status:
-          type: integer
-          description: The HTTP response code
-          example: 500

@@ -37,6 +37,8 @@ from pkg_resources import resource_filename
 from swim_backend.flask import configure_flask
 from swim_backend.config import configure_logging, load_app_config
 
+from geofencing.endpoints.reply import handle_flask_request_error
+
 __author__ = "EUROCONTROL (SWIM)"
 
 
@@ -47,6 +49,8 @@ def create_app(config_file):
     connexion_app.add_api(Path('openapi.yml'), strict_validation=True)
 
     app = connexion_app.app
+
+    app.after_request(handle_flask_request_error)
 
     app_config = load_app_config(filename=config_file)
 
