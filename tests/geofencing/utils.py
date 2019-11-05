@@ -33,7 +33,7 @@ from datetime import datetime, timezone
 from geofencing.common import polygon_filter_from_mongo_polygon
 from geofencing.db import MongoPolygonType
 from geofencing.db.models import AirspaceVolume, AuthorityEntity, ApplicableTimePeriod, CodeYesNoType, UASZone, \
-    CodeRestrictionType, CodeUSpaceClassType, CodeZoneType, DataSource, DailySchedule, CodeWeekDay
+    CodeRestrictionType, CodeUSpaceClassType, CodeZoneType, DataSource, DailySchedule, CodeWeekDay, User
 from geofencing.filters import UASZonesFilter, AirspaceVolumeFilter
 
 __author__ = "EUROCONTROL (SWIM)"
@@ -79,6 +79,14 @@ def make_applicable_period():
     )
 
 
+def make_user():
+    user = User()
+    user.username = get_unique_id()
+    user.password = ""
+
+    return user
+
+
 def make_uas_zone(polygon: MongoPolygonType) -> UASZone:
     result = UASZone()
     result.identifier = get_unique_id()[:7]
@@ -96,6 +104,7 @@ def make_uas_zone(polygon: MongoPolygonType) -> UASZone:
     result.data_source = DataSource(
         creation_date_time=datetime.now(timezone.utc),
     )
+    result.user = make_user()
 
     return result
 

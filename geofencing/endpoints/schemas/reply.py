@@ -28,11 +28,17 @@ http://opensource.org/licenses/BSD-3-Clause
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
 from marshmallow import Schema
-from marshmallow.fields import Nested
+from marshmallow.fields import Nested, String, DateTime
 
-from geofencing.endpoints.schemas.common import UASZoneSchema, GenericReplySchema
+from geofencing.endpoints.schemas.models import UASZoneSchema
 
 __author__ = "EUROCONTROL (SWIM)"
+
+
+class GenericReplySchema(Schema):
+    request_status = String(data_key="RequestStatus")
+    request_exception_description = String(data_key="RequestExceptionDescription")
+    request_processed_timestamp = DateTime(data_key="RequestProcessedTimestamp")
 
 
 class ReplySchema(Schema):

@@ -41,8 +41,8 @@ info:
 #    name: Apache 2.0
 #    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
 
-#security:
-#  - basicAuth: []
+security:
+  - basicAuth: []
 
 tags:
   - name: UASZones
@@ -69,11 +69,11 @@ paths:
                 $ref: '#/components/schemas/UASZonesReply'
 
 components:
-#  securitySchemes:
-#    basicAuth:
-#      type: http
-#      scheme: basic
-#      x-basicInfoFunc: subscription_manager.auth.basic_auth
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      x-basicInfoFunc: geofencing.auth.basic_auth
 
   schemas:
     UASZone:

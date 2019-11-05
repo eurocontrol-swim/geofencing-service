@@ -27,18 +27,48 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from marshmallow import Schema
-from marshmallow.fields import String, List, Nested, AwareDateTime, Integer
+import pytest
+from mongoengine import NotUniqueError
+from werkzeug.security import check_password_hash
 
-from geofencing.endpoints.schemas.models import AirspaceVolumeSchema
+from geofencing.db.models import User
+from geofencing.db.users import get_user_by_username, create_user
+from tests.geofencing.utils import make_user
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-class UASZonesRequestSchema(Schema):
-    airspace_volume = Nested(AirspaceVolumeSchema, data_key='airspaceVolume')
-    start_date_time = AwareDateTime(data_key='startDateTime')
-    end_date_time = AwareDateTime(data_key='endDateTime')
-    request_id = String(data_key='requestID')
-    regions = List(Integer)
-    updated_after_date_time = AwareDateTime(data_key='updatedAfterDateTime')
+def test_get_user_by_username__username_exists__user_is_returned():
+    user = make_user()
+    user.save()
+
+    user_from_db = get_user_by_username(username=user.username)
+    assert user_from_db is not None
+    assert user.username == user_from_db.username
+
+
+def test_get_user_by_username__invalid_username__none_is_returned():
+    user_from_db = get_user_by_username(username="invalid")
+
+    assert user_from_db is None
+
+
+def test_create_user__user_is_saved_in_db():
+    user = User("username", "password")
+
+    create_user(user)
+
+    user_from_db = User.objects.get(username='username')
+
+    assert user_from_db is not None
+    assert user.username == user_from_db.username
+    assert check_password_hash(user_from_db.password, 'password')
+
+
+def test_create_user__username_should_be_unique():
+    user1 = User("username", "password")
+    user2 = User("username", "password")
+
+    user1.save()
+    with pytest.raises(NotUniqueError):
+        user2.save()

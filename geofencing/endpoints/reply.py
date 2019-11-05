@@ -79,7 +79,7 @@ class UASZoneReply(Reply):
         self.uas_zones = uas_zones
 
 
-def handle_request(schema):
+def handle_response(schema):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -105,3 +105,4 @@ def handle_flask_request_error(response):
         data = ReplySchema().dump(reply)
 
         return jsonify(data)
+    return response

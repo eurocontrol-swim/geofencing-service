@@ -27,18 +27,35 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from marshmallow import Schema
-from marshmallow.fields import String, List, Nested, AwareDateTime, Integer
+from typing import Union
 
-from geofencing.endpoints.schemas.models import AirspaceVolumeSchema
+from mongoengine import MultipleObjectsReturned, DoesNotExist
+from swim_backend.auth.auth import hash_password
+
+from geofencing.db.models import User
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-class UASZonesRequestSchema(Schema):
-    airspace_volume = Nested(AirspaceVolumeSchema, data_key='airspaceVolume')
-    start_date_time = AwareDateTime(data_key='startDateTime')
-    end_date_time = AwareDateTime(data_key='endDateTime')
-    request_id = String(data_key='requestID')
-    regions = List(Integer)
-    updated_after_date_time = AwareDateTime(data_key='updatedAfterDateTime')
+def get_user_by_username(username: str) -> Union[User, None]:
+    """
+    :param username:
+    :return:
+    """
+    try:
+        result = User.objects.get(username=username)
+    except (DoesNotExist, MultipleObjectsReturned):
+        result = None
+
+    return result
+
+
+def create_user(user: User) -> User:
+    """
+    :param user:
+    :return:
+    """
+    # hash password
+    user.password = hash_password(user.password)
+
+    return user.save()

@@ -27,18 +27,17 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from marshmallow import Schema
-from marshmallow.fields import String, List, Nested, AwareDateTime, Integer
+from flask import request
 
-from geofencing.endpoints.schemas.models import AirspaceVolumeSchema
+from geofencing.db.users import create_user as db_create_user
+from geofencing.endpoints.reply import handle_response
+from geofencing.endpoints.schemas.models import UserSchema
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-class UASZonesRequestSchema(Schema):
-    airspace_volume = Nested(AirspaceVolumeSchema, data_key='airspaceVolume')
-    start_date_time = AwareDateTime(data_key='startDateTime')
-    end_date_time = AwareDateTime(data_key='endDateTime')
-    request_id = String(data_key='requestID')
-    regions = List(Integer)
-    updated_after_date_time = AwareDateTime(data_key='updatedAfterDateTime')
+@handle_response(UserSchema)
+def create_user():
+    user = UserSchema().load(request.get_json())
+
+    return db_create_user(user)

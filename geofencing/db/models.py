@@ -143,6 +143,17 @@ class Authority(EmbeddedDocument):
     requires_authorization_from = EmbeddedDocumentField(AuthorizationRequirement)
 
 
+class User(Document):
+    username = StringField(required=True)
+    password = StringField(required=True)
+
+    meta = {
+        'indexes': [
+            {'fields': ('username',), 'unique': True}
+        ]
+    }
+
+
 class DataSource(EmbeddedDocument):
     # author = ReferenceField(AuthorityEntity, required=True)
     creation_date_time = DateTimeField(required=True)
