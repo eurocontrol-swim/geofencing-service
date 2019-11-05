@@ -32,6 +32,8 @@ from dataclasses import dataclass
 from marshmallow import Schema, pre_dump, ValidationError
 from marshmallow.fields import String, Nested, Integer, DateTime, Dict, Float
 
+from geofencing.filters import AirspaceVolumeFilter
+
 __author__ = "EUROCONTROL (SWIM)"
 
 
@@ -49,12 +51,15 @@ class PointSchema(Schema):
 class AirspaceVolumeSchema(Schema):
     polygon = Nested(PointSchema, many=True)
     lower_limit_in_m = Integer(data_key="lowerLimit", missing=None)
-    lower_vertical_reference = String(data_key="lowerVerticalReference")
+    lower_vertical_reference = String(data_key="lowerVerticalReference", missing=None)
     upper_limit_in_m = Integer(data_key="upperLimit", missing=None)
-    upper_vertival_reference = String(data_key="upperVerticalReference")
+    upper_vertival_reference = String(data_key="upperVerticalReference", missing=None)
 
     @pre_dump
     def handle_polygon(self, item, many, **kwargs):
+        if isinstance(item, AirspaceVolumeFilter):
+            return item
+
         if isinstance(item['polygon'], list):
             coords = item['polygon'][0]
         elif isinstance(item['polygon'], dict):

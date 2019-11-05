@@ -30,7 +30,6 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 from flask import request
 
 from geofencing.db.uas_zones import get_uas_zones as db_get_uas_zones
-from geofencing.endpoints.converters import uas_zones_filter_from_uas_zones_request
 from geofencing.endpoints.reply import UASZoneReply, handle_response
 from geofencing.endpoints.schemas.reply import UASZonesReplySchema
 from geofencing.endpoints.schemas.request import UASZonesRequestSchema
@@ -40,9 +39,7 @@ __author__ = "EUROCONTROL (SWIM)"
 
 @handle_response(UASZonesReplySchema)
 def get_uas_zones():
-    uas_zones_request = UASZonesRequestSchema().load(request.get_json())
-
-    uas_zones_filter = uas_zones_filter_from_uas_zones_request(uas_zones_request)
+    uas_zones_filter = UASZonesRequestSchema().load(request.get_json())
 
     uas_zones = db_get_uas_zones(uas_zones_filter)
 

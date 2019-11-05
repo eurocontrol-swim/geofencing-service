@@ -31,10 +31,6 @@ from typing import List, Union
 
 __author__ = "EUROCONTROL (SWIM)"
 
-VERSION = "1.0"
-DESCRIPTION = "Geofencing API"
-BASE_PATH = f"/geofencing/api/{VERSION}"
-
 MongoPolygonType = List[List[List[Union[float, int]]]]
 
 AIRSPACE_VOLUME_UPPER_LIMIT_IN_M = 100000

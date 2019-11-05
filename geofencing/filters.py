@@ -81,8 +81,8 @@ class AirspaceVolumeFilter(CompareMixin):
         self.polygon = polygon
         self.upper_limit_in_m = upper_limit_in_m
         self.lower_limit_in_m = lower_limit_in_m
-        self.upper_vertical_reference = upper_vertical_reference
-        self.lower_vertical_reference = lower_vertical_reference
+        self.upper_vertical_reference = upper_vertical_reference or ""
+        self.lower_vertical_reference = lower_vertical_reference or ""
 
     @classmethod
     def from_dict(cls, object_dict):
@@ -100,21 +100,25 @@ class UASZonesFilter(CompareMixin):
     def __init__(self,
                  airspace_volume: AirspaceVolumeFilter,
                  regions: List[int],
+                 request_id: str,
                  start_date_time: datetime,
                  end_date_time: datetime,
-                 update_after_date_time: Optional[datetime] = None) -> None:
+                 updated_after_date_time: Optional[datetime] = None) -> None:
         """
 
+        :param airspace_volume:
+        :param request_id:
         :param regions:
         :param start_date_time:
         :param end_date_time:
-        :param update_after_date_time:
+        :param updated_after_date_time:
         """
         self.airspace_volume = airspace_volume
         self.regions = regions
+        self.request_id = request_id
         self.start_date_time = start_date_time
         self.end_date_time = end_date_time
-        self.update_after_date_time = update_after_date_time
+        self.updated_after_date_time = updated_after_date_time
 
     @classmethod
     def from_dict(cls, object_dict):
@@ -123,5 +127,6 @@ class UASZonesFilter(CompareMixin):
             regions=object_dict['regions'],
             start_date_time=object_dict['start_date_time'],
             end_date_time=object_dict['end_date_time'],
-            update_after_date_time=object_dict.get('update_after_date_time')
+            updated_after_date_time=object_dict.get('updated_after_date_time'),
+            request_id=object_dict.get('request_id')
         )

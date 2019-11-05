@@ -39,7 +39,7 @@ __author__ = "EUROCONTROL (SWIM)"
 
 
 def test_get_user_by_username__username_exists__user_is_returned():
-    user = make_user()
+    user = make_user('username', 'password')
     user.save()
 
     user_from_db = get_user_by_username(username=user.username)

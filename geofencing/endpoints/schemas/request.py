@@ -27,10 +27,11 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from marshmallow import Schema
+from marshmallow import Schema, post_load
 from marshmallow.fields import String, List, Nested, AwareDateTime, Integer
 
 from geofencing.endpoints.schemas.models import AirspaceVolumeSchema
+from geofencing.filters import UASZonesFilter
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -42,3 +43,7 @@ class UASZonesRequestSchema(Schema):
     request_id = String(data_key='requestID')
     regions = List(Integer)
     updated_after_date_time = AwareDateTime(data_key='updatedAfterDateTime')
+
+    @post_load
+    def load_filter(self, item, many, **kwargs):
+        return UASZonesFilter.from_dict(item)

@@ -29,3 +29,7 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 """
 
 __author__ = "EUROCONTROL (SWIM)"
+
+VERSION = "1.0"
+DESCRIPTION = "Geofencing API"
+BASE_PATH = f"/geofencing/api/{VERSION}"

@@ -33,6 +33,30 @@ from pkg_resources import resource_filename
 
 from swim_backend.config import load_app_config
 
+from geofencing.app import create_app
+from geofencing.db.models import User
+from geofencing.db.users import create_user
+from tests.geofencing.utils import make_user, get_unique_id
+
+DEFAULT_LOGIN_PASS = 'password'
+
+
+@pytest.yield_fixture(scope='session')
+def app():
+    config_file = resource_filename(__name__, 'test_config.yml')
+    _app = create_app(config_file)
+    ctx = _app.app_context()
+    ctx.push()
+
+    yield _app
+
+    ctx.pop()
+
+
+@pytest.fixture(scope='session')
+def test_client(app):
+    return app.test_client()
+
 
 @pytest.fixture(scope='function', autouse=True)
 def setup_mongodb():
@@ -41,3 +65,16 @@ def setup_mongodb():
 
     db = connection.get_db()
     db.client.drop_database(db.name)
+
+
+@pytest.fixture(scope='function')
+def test_user():
+    user = make_user(get_unique_id(), DEFAULT_LOGIN_PASS)
+    create_user(user)
+
+
+@pytest.fixture(scope='function')
+def test_user() -> User:
+    user = make_user(password=DEFAULT_LOGIN_PASS)
+
+    return create_user(user)

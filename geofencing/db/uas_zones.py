@@ -50,8 +50,8 @@ def get_uas_zones(uas_zones_filter: UASZonesFilter):
         Q(applicable_time_period__end_date_time__lte=uas_zones_filter.end_date_time)
     ]
 
-    if uas_zones_filter.update_after_date_time:
-        queries_list.append(Q(data_source__update_date_time__gte=uas_zones_filter.update_after_date_time))
+    if uas_zones_filter.updated_after_date_time:
+        queries_list.append(Q(data_source__update_date_time__gte=uas_zones_filter.updated_after_date_time))
 
     query = reduce(lambda q1, q2: q1 & q2, queries_list, Q())
 

@@ -28,6 +28,7 @@ http://opensource.org/licenses/BSD-3-Clause
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
 import uuid
+from base64 import b64encode
 from datetime import datetime, timezone
 
 from geofencing.common import polygon_filter_from_mongo_polygon
@@ -79,10 +80,10 @@ def make_applicable_period():
     )
 
 
-def make_user():
+def make_user(username=None, password=None):
     user = User()
-    user.username = get_unique_id()
-    user.password = ""
+    user.username = username or get_unique_id()
+    user.password = password or ""
 
     return user
 
@@ -121,7 +122,36 @@ def make_uas_zones_filter_from_db_uas_zone(uas_zone: UASZone):
         regions=[uas_zone.region],
         start_date_time=uas_zone.applicable_time_period.start_date_time,
         end_date_time=uas_zone.applicable_time_period.end_date_time,
-        update_after_date_time=uas_zone.data_source.update_date_time,
+        updated_after_date_time=uas_zone.data_source.update_date_time,
+        request_id="1"
     )
 
     return uas_zones_filter
+
+
+def make_basic_auth_header(username, password):
+    basic_auth_str = b64encode(bytes(f'{username}:{password}', 'utf-8'))
+
+    result = {'Authorization': f"Basic {basic_auth_str.decode('utf-8')}"}
+
+    return result
+
+
+BASILIQUE_POLYGON: MongoPolygonType = [
+    [[50.863648, 4.329385],
+     [50.865348, 4.328055],
+     [50.868470, 4.317369],
+     [50.867671, 4.314826],
+     [50.865873, 4.315920],
+     [50.862792, 4.326508],
+     [50.863648, 4.329385]]]
+INTERSECTING_BASILIQUE_POLYGON: MongoPolygonType = [
+    [[50.862525, 4.328120],
+     [50.865502, 4.329257],
+     [50.865468, 4.323686],
+     [50.862525, 4.328120]]]
+NON_INTERSECTING_BASILIQUE_POLYGON: MongoPolygonType = [
+    [[50.870058, 4.325421],
+     [50.867615, 4.326890],
+     [50.867602, 4.321407],
+     [50.870058, 4.325421]]]
