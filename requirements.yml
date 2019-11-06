@@ -11,5 +11,6 @@ dependencies:
   - marshmallow
   - mongoengine
   - marshmallow-mongoengine
+  - python-dateutil
   - git+https://git@github.com/eurocontrol-swim/rest-client.git
   - git+https://git@github.com/eurocontrol-swim/swim-backend.git

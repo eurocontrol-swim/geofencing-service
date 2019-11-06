@@ -29,8 +29,8 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 """
 from dataclasses import dataclass
 
-from marshmallow import Schema, pre_dump, ValidationError
-from marshmallow.fields import String, Nested, Integer, DateTime, Dict, Float
+from marshmallow import Schema, pre_dump, ValidationError, post_dump
+from marshmallow.fields import String, Nested, Integer, Dict, Float, AwareDateTime, List
 
 from geofencing.filters import AirspaceVolumeFilter
 
@@ -74,14 +74,24 @@ class AirspaceVolumeSchema(Schema):
 
 class DailyScheduleSchema(Schema):
     day = String()
-    start_time = DateTime(data_key='startTime', required=True)
-    end_time = DateTime(data_key='endTime', required=True)
+    start_time = AwareDateTime(data_key='startTime', required=True)
+    end_time = AwareDateTime(data_key='endTime', required=True)
+
+    def _get_time_from_string(self, date_string):
+        return date_string.split('T')[1]
+
+    @post_dump
+    def format_time(self, data, many, **kwargs):
+        data['startTime'] = self._get_time_from_string(data['startTime'])
+        data['endTime'] = self._get_time_from_string(data['endTime'])
+
+        return data
 
 
 class ApplicableTimePeriodSchema(Schema):
     permanent = String()
-    start_date_time = DateTime(data_key='startDateTime', required=True)
-    end_date_time = DateTime(data_key='endDateTime', required=True)
+    start_date_time = AwareDateTime(data_key='startDateTime', required=True)
+    end_date_time = AwareDateTime(data_key='endDateTime', required=True)
     daily_schedule = Nested(DailyScheduleSchema, many=True, data_key='dailySchedule')
 
 
@@ -111,8 +121,8 @@ class AuthoritySchema(Schema):
 
 class DataSourceSchema(Schema):
     # author = ReferenceField(AuthorityEntity, required=True)
-    creation_date_time = DateTime(data_key='creationDateTime', required=True)
-    update_date_time = DateTime(data_key='endDateTime')
+    creation_date_time = AwareDateTime(data_key='creationDateTime', required=True)
+    update_date_time = AwareDateTime(data_key='endDateTime')
 
 
 class UASZoneSchema(Schema):
@@ -124,7 +134,7 @@ class UASZoneSchema(Schema):
     data_capture_prohibition = String(data_key='dataCaptureProhibition')
     u_space_class = String(data_key='uSpaceClass')
     message = String()
-    reason = String(many=True)
+    reason = List(String())
     country = String()
 
     airspace_volume = Nested(AirspaceVolumeSchema, data_key='airspaceVolume', required=True)
