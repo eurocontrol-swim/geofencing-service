@@ -48,7 +48,7 @@ tags:
   - name: UASZones
     description: UASZones
 paths:
-  /uas_zones/filter/:
+  /uas_zones/:
     post:
       tags:
         - UASZones

@@ -43,6 +43,8 @@ from geofencing.common import polygon_filter_from_mongo_polygon
 
 __author__ = "EUROCONTROL (SWIM)"
 
+URL = f'{BASE_PATH}/uas_zones/'
+
 
 @pytest.fixture
 def db_uas_zone_basilique():
@@ -69,9 +71,8 @@ def filter_with_non_intersecting_airspace_volume(db_uas_zone_basilique):
 
 
 def test_get_uas_zones__invalid_user__returns_nok(test_client):
-    url = f'{BASE_PATH}/uas_zones/filter/'
 
-    response = test_client.post(url, headers=make_basic_auth_header('fake_username', 'fake_password'))
+    response = test_client.post(URL, headers=make_basic_auth_header('fake_username', 'fake_password'))
 
     response_data = json.loads(response.data)
     assert "NOK" == response_data['genericReply']['RequestStatus']
@@ -86,7 +87,6 @@ def test_get_uas_zones__invalid_user__returns_nok(test_client):
 ])
 def test_get_uas_zones__invalid_polygon_input__returns_nok(test_client, test_user, polygon,
                                                            expected_exception_description):
-    url = f'{BASE_PATH}/uas_zones/filter/'
     data = {
         "airspaceVolume": {
             "lowerLimit": 0,
@@ -104,7 +104,7 @@ def test_get_uas_zones__invalid_polygon_input__returns_nok(test_client, test_use
         "updatedAfterDateTime": "2019-11-05T13:10:39.315Z"
     }
 
-    response = test_client.post(url, data=json.dumps(data), content_type='application/json',
+    response = test_client.post(URL, data=json.dumps(data), content_type='application/json',
                                 headers=make_basic_auth_header(test_user.username, DEFAULT_LOGIN_PASS))
 
     response_data = json.loads(response.data)
@@ -113,7 +113,6 @@ def test_get_uas_zones__invalid_polygon_input__returns_nok(test_client, test_use
 
 
 def test_get_uas_zones__valid_input__returns_ok_and_empty_uas_zone_list(test_client, test_user):
-    url = f'{BASE_PATH}/uas_zones/filter/'
     data = {
         "airspaceVolume": {
             "lowerLimit": 0,
@@ -148,7 +147,7 @@ def test_get_uas_zones__valid_input__returns_ok_and_empty_uas_zone_list(test_cli
         "updatedAfterDateTime": "2019-11-05T13:10:39.315Z"
     }
 
-    response = test_client.post(url, data=json.dumps(data), content_type='application/json',
+    response = test_client.post(URL, data=json.dumps(data), content_type='application/json',
                                 headers=make_basic_auth_header(test_user.username, DEFAULT_LOGIN_PASS))
 
     response_data = json.loads(response.data)
@@ -223,14 +222,13 @@ def test_get_uas_zones__filter_by_updated_date_time(test_client, test_user, filt
 
 
 def _post_uas_zones_filter(test_client, test_user, filter_data):
-    url = f'{BASE_PATH}/uas_zones/filter/'
 
     if isinstance(filter_data, UASZonesFilter):
         filter_data = UASZonesRequestSchema().dumps(filter_data)
     else:
         filter_data = json.dumps(filter_data)
 
-    response = test_client.post(url, data=filter_data, content_type='application/json',
+    response = test_client.post(URL, data=filter_data, content_type='application/json',
                                 headers=make_basic_auth_header(test_user.username, DEFAULT_LOGIN_PASS))
     return json.loads(response.data)
 
