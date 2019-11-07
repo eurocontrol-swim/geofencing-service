@@ -31,10 +31,10 @@ from datetime import timedelta
 
 import pytest
 
-from geofencing.common import polygon_filter_from_mongo_polygon
 from geofencing.db.uas_zones import get_uas_zones
 from tests.geofencing.utils import make_uas_zone, make_airspace_volume, make_uas_zones_filter_from_db_uas_zone, \
     BASILIQUE_POLYGON, INTERSECTING_BASILIQUE_POLYGON, NON_INTERSECTING_BASILIQUE_POLYGON
+from geofencing.common import polygon_filter_from_mongo_polygon
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -64,7 +64,7 @@ def filter_with_non_intersecting_airspace_volume(db_uas_zone):
 
 
 def test_get_uas_zones__filter_by_airspace_volume__polygon(filter_with_intersecting_airspace_volume,
-                                                       filter_with_non_intersecting_airspace_volume):
+                                                           filter_with_non_intersecting_airspace_volume):
 
     result = get_uas_zones(filter_with_intersecting_airspace_volume)
     assert len(result) == 1

@@ -33,11 +33,14 @@ from datetime import timedelta
 import pytest
 
 from geofencing import BASE_PATH
-from geofencing.common import polygon_filter_from_mongo_polygon
+from geofencing.db.models import UASZone, CodeZoneType, CodeRestrictionType, CodeYesNoType, CodeUSpaceClassType, \
+    DataSource
 from geofencing.endpoints.schemas.request import UASZonesRequestSchema
 from tests.conftest import DEFAULT_LOGIN_PASS
 from tests.geofencing.utils import make_basic_auth_header, make_uas_zone, make_airspace_volume, BASILIQUE_POLYGON, \
-    INTERSECTING_BASILIQUE_POLYGON, NON_INTERSECTING_BASILIQUE_POLYGON, make_uas_zones_filter_from_db_uas_zone
+    INTERSECTING_BASILIQUE_POLYGON, NON_INTERSECTING_BASILIQUE_POLYGON, make_uas_zones_filter_from_db_uas_zone, \
+    NOW_STRING, get_unique_id, NOW
+from geofencing.common import polygon_filter_from_mongo_polygon
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -79,7 +82,8 @@ def test_get_uas_zones__invalid_user__returns_nok(test_client):
 @pytest.mark.parametrize('polygon, expected_exception_description', [
     ([{"LAT": 0, "LON": 0}], "[{'LAT': 0, 'LON': 0}] is too short"),
     ([{"LAT": 1.0, "LON": 2.0}, {"LAT": 3.0, "LON": 4.0}, {"LAT": 5.0, "LON": 6.0}],
-     "The server has encountered an error during the requestLoop is not closed: [ [ 1.0, 2.0 ], [ 3.0, 4.0 ], [ 5.0, 6.0 ] ]"),
+     "The server has encountered an error during the requestLoop is not closed: "
+     "[ [ 1.0, 2.0 ], [ 3.0, 4.0 ], [ 5.0, 6.0 ] ]"),
 ])
 def test_get_uas_zones__invalid_polygon_input__returns_nok(test_client, test_user, polygon,
                                                            expected_exception_description):
@@ -224,6 +228,5 @@ def _post_uas_zones_filter(test_client, test_user, filter_data):
 
     data = UASZonesRequestSchema().dumps(filter_data)
     response = test_client.post(url, data=data, content_type='application/json',
-                                headers=make_basic_auth_header(test_user.username,
-                                                               DEFAULT_LOGIN_PASS))
+                                headers=make_basic_auth_header(test_user.username, DEFAULT_LOGIN_PASS))
     return json.loads(response.data)

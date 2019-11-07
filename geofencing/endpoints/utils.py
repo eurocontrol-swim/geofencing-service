@@ -27,17 +27,18 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from typing import List
-
-from geofencing.db import MongoPolygonType
-from geofencing.filters import PointFilter
+from datetime import datetime, timezone
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def mongo_polygon_from_polygon_filter(polygon_filter: List[PointFilter]) -> MongoPolygonType:
-    return [[[pf.lat, pf.lon] for pf in polygon_filter]]
+def get_time_from_string(date_string):
+    return date_string.split('T')[1]
 
 
-def polygon_filter_from_mongo_polygon(mongo_polygon: MongoPolygonType) -> List[PointFilter]:
-    return [PointFilter(lat=lat, lon=lon) for lat, lon in mongo_polygon[0]]
+def make_datetime_string_aware(dt: str):
+    return make_datetime_aware(datetime.fromisoformat(dt)).isoformat()
+
+
+def make_datetime_aware(dt: datetime) -> datetime:
+    return dt.replace(tzinfo=timezone.utc)

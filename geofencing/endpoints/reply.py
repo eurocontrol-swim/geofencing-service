@@ -34,7 +34,6 @@ from functools import wraps
 from typing import List, Optional
 
 from flask import jsonify
-from marshmallow import ValidationError
 from geofencing.db.models import UASZone
 from geofencing.endpoints.schemas.reply import ReplySchema
 

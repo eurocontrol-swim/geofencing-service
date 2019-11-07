@@ -44,6 +44,10 @@ def get_unique_id():
     return uuid.uuid4().hex
 
 
+NOW = datetime.now(timezone.utc)
+NOW_STRING = NOW.isoformat()
+
+
 def make_airspace_volume(polygon: MongoPolygonType, upper_limit_in_m=None, lower_limit_in_m=None) -> AirspaceVolume:
     return AirspaceVolume(
         polygon=polygon,
@@ -103,9 +107,8 @@ def make_uas_zone(polygon: MongoPolygonType) -> UASZone:
     result.authorization_requirement = make_authority()
     result.applicable_time_period = make_applicable_period()
     result.data_source = DataSource(
-        creation_date_time=datetime.now(timezone.utc),
+        creation_date_time=NOW,
     )
-    result.user = make_user()
 
     return result
 
@@ -145,11 +148,15 @@ BASILIQUE_POLYGON: MongoPolygonType = [
      [50.865873, 4.315920],
      [50.862792, 4.326508],
      [50.863648, 4.329385]]]
+
+
 INTERSECTING_BASILIQUE_POLYGON: MongoPolygonType = [
     [[50.862525, 4.328120],
      [50.865502, 4.329257],
      [50.865468, 4.323686],
      [50.862525, 4.328120]]]
+
+
 NON_INTERSECTING_BASILIQUE_POLYGON: MongoPolygonType = [
     [[50.870058, 4.325421],
      [50.867615, 4.326890],

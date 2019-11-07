@@ -33,6 +33,7 @@ from marshmallow import Schema, pre_dump, ValidationError, post_dump
 from marshmallow.fields import String, Nested, Integer, Dict, Float, AwareDateTime, List
 
 from geofencing.filters import AirspaceVolumeFilter
+from geofencing.endpoints.utils import get_time_from_string, make_datetime_string_aware
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -77,13 +78,10 @@ class DailyScheduleSchema(Schema):
     start_time = AwareDateTime(data_key='startTime', required=True)
     end_time = AwareDateTime(data_key='endTime', required=True)
 
-    def _get_time_from_string(self, date_string):
-        return date_string.split('T')[1]
-
     @post_dump
-    def format_time(self, data, many, **kwargs):
-        data['startTime'] = self._get_time_from_string(data['startTime'])
-        data['endTime'] = self._get_time_from_string(data['endTime'])
+    def handle_time_format(self, data, many, **kwargs):
+        data['startTime'] = get_time_from_string(make_datetime_string_aware(data['startTime']))
+        data['endTime'] = get_time_from_string(make_datetime_string_aware(data['endTime']))
 
         return data
 
@@ -93,6 +91,13 @@ class ApplicableTimePeriodSchema(Schema):
     start_date_time = AwareDateTime(data_key='startDateTime', required=True)
     end_date_time = AwareDateTime(data_key='endDateTime', required=True)
     daily_schedule = Nested(DailyScheduleSchema, many=True, data_key='dailySchedule')
+
+    @post_dump
+    def handle_datetime_awareness(self, data, many, **kwargs):
+        data["startDateTime"] = make_datetime_string_aware(data["startDateTime"])
+        data["endDateTime"] = make_datetime_string_aware(data["endDateTime"])
+
+        return data
 
 
 class AuthorityEntitySchema(Schema):
@@ -122,7 +127,14 @@ class AuthoritySchema(Schema):
 class DataSourceSchema(Schema):
     # author = ReferenceField(AuthorityEntity, required=True)
     creation_date_time = AwareDateTime(data_key='creationDateTime', required=True)
-    update_date_time = AwareDateTime(data_key='endDateTime')
+    update_date_time = AwareDateTime(data_key='updateDateTime')
+
+    @post_dump
+    def handle_datetime_awareness(self, data, many, **kwargs):
+        data["creationDateTime"] = make_datetime_string_aware(data["creationDateTime"])
+        data["updateDateTime"] = make_datetime_string_aware(data["updateDateTime"])
+
+        return data
 
 
 class UASZoneSchema(Schema):

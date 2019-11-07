@@ -31,6 +31,7 @@ from datetime import datetime
 from typing import List, Optional, Any
 
 from geofencing.db import AIRSPACE_VOLUME_UPPER_LIMIT_IN_M, AIRSPACE_VOLUME_LOWER_LIMIT_IN_M
+from geofencing.endpoints.utils import make_datetime_aware
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -116,9 +117,10 @@ class UASZonesFilter(CompareMixin):
         self.airspace_volume = airspace_volume
         self.regions = regions
         self.request_id = request_id
-        self.start_date_time = start_date_time
-        self.end_date_time = end_date_time
-        self.updated_after_date_time = updated_after_date_time
+        self.start_date_time = make_datetime_aware(start_date_time)
+        self.end_date_time = make_datetime_aware(end_date_time)
+        self.updated_after_date_time = make_datetime_aware(updated_after_date_time) \
+            if updated_after_date_time is not None else None
 
     @classmethod
     def from_dict(cls, object_dict):

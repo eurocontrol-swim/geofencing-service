@@ -30,7 +30,7 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 import enum
 from typing import Tuple, Any
 
-from mongoengine import EmbeddedDocument, StringField, IntField, PolygonField, DateTimeField, EmbeddedDocumentField, \
+from mongoengine import EmbeddedDocument, StringField, IntField, PolygonField, ComplexDateTimeField, EmbeddedDocumentField, \
     Document, ListField, EmbeddedDocumentListField, DictField, ValidationError, ReferenceField
 
 from geofencing.db import AIRSPACE_VOLUME_UPPER_LIMIT_IN_M, AIRSPACE_VOLUME_LOWER_LIMIT_IN_M
@@ -106,14 +106,14 @@ class AirspaceVolume(EmbeddedDocument):
 
 class DailySchedule(EmbeddedDocument):
     day = StringField(choices=CodeWeekDay.choices())
-    start_time = DateTimeField(db_field='startTime', required=True)
-    end_time = DateTimeField(db_field='endTime', required=True)
+    start_time = ComplexDateTimeField(db_field='startTime', required=True)
+    end_time = ComplexDateTimeField(db_field='endTime', required=True)
 
 
 class ApplicableTimePeriod(EmbeddedDocument):
     permanent = StringField(choices=CodeYesNoType.choices())
-    start_date_time = DateTimeField(db_field='startDateTime', required=True)
-    end_date_time = DateTimeField(db_field='endDateTime', required=True)
+    start_date_time = ComplexDateTimeField(db_field='startDateTime', required=True)
+    end_date_time = ComplexDateTimeField(db_field='endDateTime', required=True)
     daily_schedule = EmbeddedDocumentListField(DailySchedule, db_field='dailySchedule')
 
 
@@ -147,8 +147,8 @@ class Authority(EmbeddedDocument):
 
 class DataSource(EmbeddedDocument):
     # author = ReferenceField(AuthorityEntity, required=True)
-    creation_date_time = DateTimeField(db_field='creationDateTime', required=True)
-    update_date_time = DateTimeField(db_field='endDateTime')
+    creation_date_time = ComplexDateTimeField(db_field='creationDateTime', required=True)
+    update_date_time = ComplexDateTimeField(db_field='endDateTime')
 
 
 class UASZone(Document):
