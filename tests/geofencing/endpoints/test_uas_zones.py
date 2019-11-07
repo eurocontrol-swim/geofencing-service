@@ -33,20 +33,19 @@ from datetime import timedelta
 import pytest
 
 from geofencing import BASE_PATH
-from geofencing.db.models import UASZone, CodeZoneType, CodeRestrictionType, CodeYesNoType, CodeUSpaceClassType, \
-    DataSource
 from geofencing.endpoints.schemas.request import UASZonesRequestSchema
+from geofencing.filters import UASZonesFilter
 from tests.conftest import DEFAULT_LOGIN_PASS
-from tests.geofencing.utils import make_basic_auth_header, make_uas_zone, make_airspace_volume, BASILIQUE_POLYGON, \
+from tests.geofencing.utils import make_basic_auth_header, make_uas_zone, BASILIQUE_POLYGON, \
     INTERSECTING_BASILIQUE_POLYGON, NON_INTERSECTING_BASILIQUE_POLYGON, make_uas_zones_filter_from_db_uas_zone, \
-    NOW_STRING, get_unique_id, NOW
+    NOW_STRING
 from geofencing.common import polygon_filter_from_mongo_polygon
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
 @pytest.fixture
-def db_uas_zone():
+def db_uas_zone_basilique():
     uas_zone = make_uas_zone(BASILIQUE_POLYGON)
     uas_zone.save()
 
@@ -54,16 +53,16 @@ def db_uas_zone():
 
 
 @pytest.fixture
-def filter_with_intersecting_airspace_volume(db_uas_zone):
-    uas_zones_filter = make_uas_zones_filter_from_db_uas_zone(db_uas_zone)
+def filter_with_intersecting_airspace_volume(db_uas_zone_basilique):
+    uas_zones_filter = make_uas_zones_filter_from_db_uas_zone(db_uas_zone_basilique)
     uas_zones_filter.airspace_volume.polygon = polygon_filter_from_mongo_polygon(INTERSECTING_BASILIQUE_POLYGON)
 
     return uas_zones_filter
 
 
 @pytest.fixture
-def filter_with_non_intersecting_airspace_volume(db_uas_zone):
-    uas_zones_filter = make_uas_zones_filter_from_db_uas_zone(db_uas_zone)
+def filter_with_non_intersecting_airspace_volume(db_uas_zone_basilique):
+    uas_zones_filter = make_uas_zones_filter_from_db_uas_zone(db_uas_zone_basilique)
     uas_zones_filter.airspace_volume.polygon = polygon_filter_from_mongo_polygon(NON_INTERSECTING_BASILIQUE_POLYGON)
 
     return uas_zones_filter
@@ -226,7 +225,105 @@ def test_get_uas_zones__filter_by_updated_date_time(test_client, test_user, filt
 def _post_uas_zones_filter(test_client, test_user, filter_data):
     url = f'{BASE_PATH}/uas_zones/filter/'
 
-    data = UASZonesRequestSchema().dumps(filter_data)
-    response = test_client.post(url, data=data, content_type='application/json',
+    if isinstance(filter_data, UASZonesFilter):
+        filter_data = UASZonesRequestSchema().dumps(filter_data)
+    else:
+        filter_data = json.dumps(filter_data)
+
+    response = test_client.post(url, data=filter_data, content_type='application/json',
                                 headers=make_basic_auth_header(test_user.username, DEFAULT_LOGIN_PASS))
     return json.loads(response.data)
+
+
+@pytest.mark.parametrize('filter, expected_uas_zones', [
+    (
+        {
+            'requestID': '1',
+            'airspaceVolume': {
+                'polygon': [{'LON': 4.32812, 'LAT': 50.862525},
+                            {'LON': 4.329257, 'LAT': 50.865502},
+                            {'LON': 4.323686, 'LAT': 50.865468},
+                            {'LON': 4.32812, 'LAT': 50.862525}],
+                'lowerVerticalReference': '',
+                'lowerLimit': 0,
+                'upperLimit': 100000,
+            },
+            'regions': [1],
+            'endDateTime': '2021-01-01T00:00:00+00:00',
+            'updatedAfterDateTime': NOW_STRING,
+            'startDateTime': '2020-01-01T00:00:00+00:00',
+        },
+        [{
+            'airspaceVolume': {
+                'lowerLimit': 0,
+                'lowerVerticalReference': None,
+                'polygon': [
+                    {'LAT': 50.863648, 'LON': 4.329385},
+                    {'LAT': 50.865348, 'LON': 4.328055},
+                    {'LAT': 50.86847, 'LON': 4.317369},
+                    {'LAT': 50.867671, 'LON': 4.314826},
+                    {'LAT': 50.865873, 'LON': 4.31592},
+                    {'LAT': 50.862792, 'LON': 4.326508},
+                    {'LAT': 50.863648, 'LON': 4.329385},
+                ],
+                'upperLimit': 100000,
+            },
+            'applicableTimePeriod': {
+                'dailySchedule': [{
+                    'day': 'MON',
+                     'endTime': '18:00:00+00:00',
+                     'startTime': '12:00:00+00:00'
+                }],
+                'endDateTime': '2021-01-01T00:00:00+00:00',
+                'permanent': 'YES',
+                'startDateTime': '2020-01-01T00:00:00+00:00',
+            },
+            'authority': None,
+            'country': 'BEL',
+            'dataCaptureProhibition': 'YES',
+            'dataSource': {
+                'creationDateTime': NOW_STRING,
+                'updateDateTime': NOW_STRING
+            },
+            'extendedProperties': {},
+            'identifier': "",
+            'message': 'message',
+            'name': "",
+            'reason': [],
+            'region': 1,
+            'restriction': 'NO_RESTRICTION',
+            'type': 'COMMON',
+            'uSpaceClass': 'EUROCONTROL',
+        }]
+    ),
+    (
+        {
+            'requestID': '1',
+            'airspaceVolume': {
+                'polygon': [{'LON': 4.325421, 'LAT': 50.870058},
+                            {'LON': 4.32689, 'LAT': 50.867615},
+                            {'LON': 4.321407, 'LAT': 50.867602},
+                            {'LON': 4.325421, 'LAT': 50.870058}],
+                'lowerVerticalReference': '',
+                'lowerLimit': 0,
+                'upperLimit': 100000,
+            },
+            'regions': [1],
+            'endDateTime': '2021-01-01T00:00:00+00:00',
+            'updatedAfterDateTime': NOW_STRING,
+            'startDateTime': '2020-01-01T00:00:00+00:00',
+        },
+        []
+    )
+])
+def test_get_uas_zones__filter_by_airspace_volume__polygon__response_is_serialized(
+        test_client, test_user, db_uas_zone_basilique, filter, expected_uas_zones):
+
+    # make them combatible
+    if expected_uas_zones:
+        expected_uas_zones[0]['identifier'] = db_uas_zone_basilique.identifier
+        expected_uas_zones[0]['name'] = db_uas_zone_basilique.name
+
+    response_data = _post_uas_zones_filter(test_client, test_user, filter)
+    assert len(expected_uas_zones) == len(response_data['UASZoneList'])
+    assert expected_uas_zones == response_data['UASZoneList']
