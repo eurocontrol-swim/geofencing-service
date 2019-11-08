@@ -27,17 +27,37 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from marshmallow import Schema, post_load
-from marshmallow.fields import String, List, Nested, AwareDateTime, Integer
+from marshmallow import post_load, Schema, ValidationError
+from marshmallow.fields import Nested, AwareDateTime, String, List, Integer, Float
 
-from geofencing.endpoints.schemas.models import AirspaceVolumeSchema
 from geofencing.filters import UASZonesFilter
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-class UASZonesRequestSchema(Schema):
-    airspace_volume = Nested(AirspaceVolumeSchema, data_key='airspaceVolume')
+class PointFilterSchema(Schema):
+    lat = Float(data_key='LAT')
+    lon = Float(data_key='LON')
+
+
+def validate_polygon(value):
+    if len(value) < 3:
+        raise ValidationError('Loop must have at least 3 different vertices')
+
+    if value[0] != value[-1]:
+        raise ValidationError('Loop is not closed')
+
+
+class AirspaceVolumeFilterSchema(Schema):
+    polygon = Nested(PointFilterSchema, many=True, validate=validate_polygon)
+    lower_limit_in_m = Integer(data_key="lowerLimit", missing=None)
+    lower_vertical_reference = String(data_key="lowerVerticalReference", missing=None)
+    upper_limit_in_m = Integer(data_key="upperLimit", missing=None)
+    upper_vertival_reference = String(data_key="upperVerticalReference", missing=None)
+
+
+class UASZonesFilterSchema(Schema):
+    airspace_volume = Nested(AirspaceVolumeFilterSchema, data_key='airspaceVolume')
     start_date_time = AwareDateTime(data_key='startDateTime')
     end_date_time = AwareDateTime(data_key='endDateTime')
     request_id = String(data_key='requestID')

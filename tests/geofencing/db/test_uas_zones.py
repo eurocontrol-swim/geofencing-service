@@ -32,9 +32,9 @@ from datetime import timedelta
 import pytest
 
 from geofencing.db.uas_zones import get_uas_zones
-from tests.geofencing.utils import make_uas_zone, make_airspace_volume, make_uas_zones_filter_from_db_uas_zone, \
+from tests.geofencing.utils import make_uas_zone, make_uas_zones_filter_from_db_uas_zone, \
     BASILIQUE_POLYGON, INTERSECTING_BASILIQUE_POLYGON, NON_INTERSECTING_BASILIQUE_POLYGON
-from geofencing.common import polygon_filter_from_mongo_polygon
+from geofencing.common import point_list_from_geojson_polygon_coordinates
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -50,7 +50,7 @@ def db_uas_zone():
 @pytest.fixture
 def filter_with_intersecting_airspace_volume(db_uas_zone):
     uas_zones_filter = make_uas_zones_filter_from_db_uas_zone(db_uas_zone)
-    uas_zones_filter.airspace_volume.polygon = polygon_filter_from_mongo_polygon(INTERSECTING_BASILIQUE_POLYGON)
+    uas_zones_filter.airspace_volume.polygon = point_list_from_geojson_polygon_coordinates(INTERSECTING_BASILIQUE_POLYGON)
 
     return uas_zones_filter
 
@@ -58,7 +58,7 @@ def filter_with_intersecting_airspace_volume(db_uas_zone):
 @pytest.fixture
 def filter_with_non_intersecting_airspace_volume(db_uas_zone):
     uas_zones_filter = make_uas_zones_filter_from_db_uas_zone(db_uas_zone)
-    uas_zones_filter.airspace_volume.polygon = polygon_filter_from_mongo_polygon(NON_INTERSECTING_BASILIQUE_POLYGON)
+    uas_zones_filter.airspace_volume.polygon = point_list_from_geojson_polygon_coordinates(NON_INTERSECTING_BASILIQUE_POLYGON)
 
     return uas_zones_filter
 

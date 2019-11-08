@@ -30,7 +30,7 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 from marshmallow import Schema
 from marshmallow.fields import Nested, String, DateTime
 
-from geofencing.endpoints.schemas.models import UASZoneSchema
+from geofencing.endpoints.schemas.db import UASZoneSchema
 
 __author__ = "EUROCONTROL (SWIM)"
 

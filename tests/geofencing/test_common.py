@@ -29,23 +29,23 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 """
 import pytest
 
-from geofencing.common import mongo_polygon_from_polygon_filter, polygon_filter_from_mongo_polygon
-from geofencing.filters import PointFilter
+from geofencing.common import geojson_polygon_coordinates_from_point_list, point_list_from_geojson_polygon_coordinates,\
+    Point
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-@pytest.mark.parametrize('polygon_filter, expected_mongo_polygon', [
-    ([PointFilter(1, 2), PointFilter(3, 4), PointFilter(5, 6)],
+@pytest.mark.parametrize('point_list, expected_geojson_polygon_coordinates', [
+    ([Point(1, 2), Point(3, 4), Point(5, 6)],
      [[[1, 2], [3, 4], [5, 6]]])
 ])
-def test_polygon_filter_to_mongo_polygon(polygon_filter, expected_mongo_polygon):
-    assert expected_mongo_polygon == mongo_polygon_from_polygon_filter(polygon_filter)
+def test_geojson_polygon_coordinates_from_point_list(point_list, expected_geojson_polygon_coordinates):
+    assert expected_geojson_polygon_coordinates == geojson_polygon_coordinates_from_point_list(point_list)
 
 
-@pytest.mark.parametrize('mongo_polygon, expected_polygon_filter', [
+@pytest.mark.parametrize('geojson_polygon_coordinates, expected_point_list', [
     ([[[1, 2], [3, 4], [5, 6]]],
-     [PointFilter(1, 2), PointFilter(3, 4), PointFilter(5, 6)])
+     [Point(1, 2), Point(3, 4), Point(5, 6)])
 ])
-def test_polygon_filter_to_mongo_polygon(mongo_polygon, expected_polygon_filter):
-    assert expected_polygon_filter == polygon_filter_from_mongo_polygon(mongo_polygon)
+def test_point_list_from_geojson_polygon_coordinatesn(geojson_polygon_coordinates, expected_point_list):
+    assert expected_point_list == point_list_from_geojson_polygon_coordinates(geojson_polygon_coordinates)

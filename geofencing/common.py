@@ -27,17 +27,43 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from typing import List
-
-from geofencing.db import MongoPolygonType
-from geofencing.filters import PointFilter
+from typing import List, Any, Union
 
 __author__ = "EUROCONTROL (SWIM)"
 
-
-def mongo_polygon_from_polygon_filter(polygon_filter: List[PointFilter]) -> MongoPolygonType:
-    return [[[pf.lat, pf.lon] for pf in polygon_filter]]
+GeoJSONPolygonCoordinates = List[List[List[Union[float, int]]]]
 
 
-def polygon_filter_from_mongo_polygon(mongo_polygon: MongoPolygonType) -> List[PointFilter]:
-    return [PointFilter(lat=lat, lon=lon) for lat, lon in mongo_polygon[0]]
+class CompareMixin:
+    def __eq__(self, other: Any) -> bool:
+        return isinstance(other, self.__class__) and other.__dict__ == self.__dict__
+
+    def __ne__(self, other: Any) -> bool:
+        return not other == self
+
+
+class Point(CompareMixin):
+
+    def __init__(self, lat: float, lon: float) -> None:
+        """
+
+        :param lat:
+        :param lon:
+        """
+        self.lat = lat
+        self.lon = lon
+
+    @classmethod
+    def from_dict(cls, object_dict):
+        return cls(
+            lat=object_dict['lat'],
+            lon=object_dict['lon'],
+        )
+
+
+def geojson_polygon_coordinates_from_point_list(point_list: List[Point]) -> GeoJSONPolygonCoordinates:
+    return [[[pf.lat, pf.lon] for pf in point_list]]
+
+
+def point_list_from_geojson_polygon_coordinates(coordinates: GeoJSONPolygonCoordinates) -> List[Point]:
+    return [Point(lat=lat, lon=lon) for lat, lon in coordinates[0]]

@@ -27,13 +27,17 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
+import json
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
 from functools import wraps
 from typing import List, Optional
 
-from flask import jsonify
+from flask import jsonify, Response
+from marshmallow import ValidationError
+from swim_backend.errors import APIError
+
 from geofencing.db.models import UASZone
 from geofencing.endpoints.schemas.reply import ReplySchema
 
@@ -82,26 +86,38 @@ def handle_response(schema):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
+            status_code = 200
             try:
                 result = func(*args, **kwargs)
-            except Exception as e:
+            except APIError as e:
                 result = Reply(
                     generic_reply=GenericReply(
                         request_status=RequestStatus.NOK.value,
                         request_exception_description=str(e)
                     )
                 )
-            return schema().dump(result)
+                status_code = APIError.status
+            except ValidationError as e:
+                result = Reply(
+                    generic_reply=GenericReply(
+                        request_status=RequestStatus.NOK.value,
+                        request_exception_description=str(e)
+                    )
+                )
+                status_code = 400
+
+            return schema().dump(result), status_code
         return wrapper
     return decorator
 
 
 def handle_flask_request_error(response):
-    if response.status_code != 200:
+
+    if response.status_code != 200 and 'detail' in response.json:
         reply = Reply(generic_reply=GenericReply(
             request_status=RequestStatus.NOK.value,
             request_exception_description=response.json['detail']))
-        data = ReplySchema().dump(reply)
 
-        return jsonify(data)
+        response.data = json.dumps(ReplySchema().dump(reply))
+
     return response

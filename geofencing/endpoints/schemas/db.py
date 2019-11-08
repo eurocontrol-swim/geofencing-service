@@ -29,19 +29,13 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 """
 from dataclasses import dataclass
 
-from marshmallow import Schema, pre_dump, ValidationError, post_dump
+from marshmallow import Schema, pre_dump, post_dump
 from marshmallow.fields import String, Nested, Integer, Dict, Float, AwareDateTime, List
 
-from geofencing.filters import AirspaceVolumeFilter
+from geofencing.common import point_list_from_geojson_polygon_coordinates, Point
 from geofencing.endpoints.utils import get_time_from_string, make_datetime_string_aware
 
 __author__ = "EUROCONTROL (SWIM)"
-
-
-@dataclass
-class Point:
-    lat: float
-    lon: float
 
 
 class PointSchema(Schema):
@@ -57,18 +51,34 @@ class AirspaceVolumeSchema(Schema):
     upper_vertival_reference = String(data_key="upperVerticalReference", missing=None)
 
     @pre_dump
-    def handle_polygon(self, item, many, **kwargs):
-        if isinstance(item, AirspaceVolumeFilter):
-            return item
+    def handle_geojson_polygon(self, item, many, **kwargs):
+        """
+        Converts a GeoJSON polygon (as it is found in a mongo polygon field) to a list of Point i.e.:
 
-        if isinstance(item['polygon'], list):
-            coords = item['polygon'][0]
-        elif isinstance(item['polygon'], dict):
-            coords = item['polygon']['coordinates'][0]
-        else:
-            raise ValidationError("invalid polygon type")
+        this GeoJSON polygon:
+        {
+            'type': 'Polygon',
+            'coordinates': [
+                [[50.863648, 4.329385],
+                 [50.865348, 4.328055],
+                 [50.86847, 4.317369],
+                 [50.863648, 4.329385]]
+            ]
+        }
+        will be converted to:
+        [
+             Point(lat=50.863648, lon=4.329385),
+             Point(lat=50.865348, lon=4.328055),
+             Point(lat=50.86847, lon=4.317369),
+             Point(lat=50.863648, lon=4.329385)
+        ]
+        :param item:
+        :param many:
+        :param kwargs:
+        :return:
+        """
 
-        item['polygon'] = [Point(lat, lon) for lat, lon in coords]
+        item['polygon']: List[Point] = point_list_from_geojson_polygon_coordinates(item['polygon']['coordinates'])
 
         return item
 
@@ -80,6 +90,15 @@ class DailyScheduleSchema(Schema):
 
     @post_dump
     def handle_time_format(self, data, many, **kwargs):
+        """
+        Makes the dumped datetimes timezone aware as it seems that this info is not kept in mongodb
+        TODO: to be checked
+
+        :param data:
+        :param many:
+        :param kwargs:
+        :return:
+        """
         data['startTime'] = get_time_from_string(make_datetime_string_aware(data['startTime']))
         data['endTime'] = get_time_from_string(make_datetime_string_aware(data['endTime']))
 

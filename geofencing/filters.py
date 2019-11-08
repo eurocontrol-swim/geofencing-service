@@ -28,45 +28,20 @@ http://opensource.org/licenses/BSD-3-Clause
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
 from datetime import datetime
-from typing import List, Optional, Any
+from typing import List, Optional
 
+from geofencing.common import CompareMixin, Point, geojson_polygon_coordinates_from_point_list, \
+    GeoJSONPolygonCoordinates
 from geofencing.db import AIRSPACE_VOLUME_UPPER_LIMIT_IN_M, AIRSPACE_VOLUME_LOWER_LIMIT_IN_M
 from geofencing.endpoints.utils import make_datetime_aware
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-class CompareMixin:
-    def __eq__(self, other: Any) -> bool:
-        return isinstance(other, self.__class__) and other.__dict__ == self.__dict__
-
-    def __ne__(self, other: Any) -> bool:
-        return not other == self
-
-
-class PointFilter(CompareMixin):
-
-    def __init__(self, lat: float, lon: float) -> None:
-        """
-
-        :param lat:
-        :param lon:
-        """
-        self.lat = lat
-        self.lon = lon
-
-    @classmethod
-    def from_dict(cls, object_dict):
-        return cls(
-            lat=object_dict['lat'],
-            lon=object_dict['lon'],
-        )
-
-
 class AirspaceVolumeFilter(CompareMixin):
 
     def __init__(self,
-                 polygon: List[PointFilter],
+                 polygon: List[Point],
                  upper_limit_in_m: Optional[int] = AIRSPACE_VOLUME_UPPER_LIMIT_IN_M,
                  lower_limit_in_m: Optional[int] = AIRSPACE_VOLUME_LOWER_LIMIT_IN_M,
                  upper_vertical_reference: Optional[str] = None,
@@ -85,10 +60,14 @@ class AirspaceVolumeFilter(CompareMixin):
         self.upper_vertical_reference = upper_vertical_reference or ""
         self.lower_vertical_reference = lower_vertical_reference or ""
 
+    @property
+    def polygon_coordinates(self) -> GeoJSONPolygonCoordinates:
+        return geojson_polygon_coordinates_from_point_list(self.polygon)
+
     @classmethod
     def from_dict(cls, object_dict):
         return cls(
-            polygon=[PointFilter.from_dict(coords) for coords in object_dict['polygon']],
+            polygon=[Point.from_dict(coords) for coords in object_dict['polygon']],
             upper_limit_in_m=object_dict.get("upper_limit_in_m"),
             lower_limit_in_m=object_dict.get("lower_limit_in_m"),
             upper_vertical_reference=object_dict.get("upper_vertical_reference"),

@@ -28,21 +28,26 @@ http://opensource.org/licenses/BSD-3-Clause
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
 from functools import reduce
+from typing import List
 
 from mongoengine import Q
 
-from geofencing.common import mongo_polygon_from_polygon_filter
 from geofencing.db.models import UASZone
 from geofencing.filters import UASZonesFilter
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def get_uas_zones(uas_zones_filter: UASZonesFilter):
-    mongo_polygon = mongo_polygon_from_polygon_filter(uas_zones_filter.airspace_volume.polygon)
+def get_uas_zones(uas_zones_filter: UASZonesFilter) -> List[UASZone]:
+    """
+    Retrieves UASZones based on the provided filters criteria.
+
+    :param uas_zones_filter:
+    :return:
+    """
 
     queries_list = [
-        Q(airspace_volume__polygon__geo_intersects=mongo_polygon),
+        Q(airspace_volume__polygon__geo_intersects=uas_zones_filter.airspace_volume.polygon_coordinates),
         Q(airspace_volume__upper_limit_in_m__lte=uas_zones_filter.airspace_volume.upper_limit_in_m),
         Q(airspace_volume__lower_limit_in_m__gte=uas_zones_filter.airspace_volume.lower_limit_in_m),
         Q(region__in=uas_zones_filter.regions),
@@ -53,6 +58,6 @@ def get_uas_zones(uas_zones_filter: UASZonesFilter):
     if uas_zones_filter.updated_after_date_time:
         queries_list.append(Q(data_source__update_date_time__gte=uas_zones_filter.updated_after_date_time))
 
-    query = reduce(lambda q1, q2: q1 & q2, queries_list, Q())
+    query: Q = reduce(lambda q1, q2: q1 & q2, queries_list, Q())
 
     return UASZone.objects(query).all()

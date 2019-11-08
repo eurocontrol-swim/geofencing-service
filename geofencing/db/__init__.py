@@ -27,11 +27,8 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from typing import List, Union
 
 __author__ = "EUROCONTROL (SWIM)"
-
-MongoPolygonType = List[List[List[Union[float, int]]]]
 
 AIRSPACE_VOLUME_UPPER_LIMIT_IN_M = 100000
 AIRSPACE_VOLUME_LOWER_LIMIT_IN_M = 0

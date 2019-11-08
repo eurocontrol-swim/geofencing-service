@@ -33,13 +33,13 @@ from datetime import timedelta
 import pytest
 
 from geofencing import BASE_PATH
-from geofencing.endpoints.schemas.request import UASZonesRequestSchema
+from geofencing.endpoints.schemas.filters import UASZonesFilterSchema
 from geofencing.filters import UASZonesFilter
 from tests.conftest import DEFAULT_LOGIN_PASS
 from tests.geofencing.utils import make_basic_auth_header, make_uas_zone, BASILIQUE_POLYGON, \
     INTERSECTING_BASILIQUE_POLYGON, NON_INTERSECTING_BASILIQUE_POLYGON, make_uas_zones_filter_from_db_uas_zone, \
     NOW_STRING
-from geofencing.common import polygon_filter_from_mongo_polygon
+from geofencing.common import point_list_from_geojson_polygon_coordinates
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -57,7 +57,7 @@ def db_uas_zone_basilique():
 @pytest.fixture
 def filter_with_intersecting_airspace_volume(db_uas_zone_basilique):
     uas_zones_filter = make_uas_zones_filter_from_db_uas_zone(db_uas_zone_basilique)
-    uas_zones_filter.airspace_volume.polygon = polygon_filter_from_mongo_polygon(INTERSECTING_BASILIQUE_POLYGON)
+    uas_zones_filter.airspace_volume.polygon = point_list_from_geojson_polygon_coordinates(INTERSECTING_BASILIQUE_POLYGON)
 
     return uas_zones_filter
 
@@ -65,7 +65,7 @@ def filter_with_intersecting_airspace_volume(db_uas_zone_basilique):
 @pytest.fixture
 def filter_with_non_intersecting_airspace_volume(db_uas_zone_basilique):
     uas_zones_filter = make_uas_zones_filter_from_db_uas_zone(db_uas_zone_basilique)
-    uas_zones_filter.airspace_volume.polygon = polygon_filter_from_mongo_polygon(NON_INTERSECTING_BASILIQUE_POLYGON)
+    uas_zones_filter.airspace_volume.polygon = point_list_from_geojson_polygon_coordinates(NON_INTERSECTING_BASILIQUE_POLYGON)
 
     return uas_zones_filter
 
@@ -82,8 +82,7 @@ def test_get_uas_zones__invalid_user__returns_nok(test_client):
 @pytest.mark.parametrize('polygon, expected_exception_description', [
     ([{"LAT": 0, "LON": 0}], "[{'LAT': 0, 'LON': 0}] is too short"),
     ([{"LAT": 1.0, "LON": 2.0}, {"LAT": 3.0, "LON": 4.0}, {"LAT": 5.0, "LON": 6.0}],
-     "The server has encountered an error during the requestLoop is not closed: "
-     "[ [ 1.0, 2.0 ], [ 3.0, 4.0 ], [ 5.0, 6.0 ] ]"),
+     "{'airspaceVolume': {'polygon': ['Loop is not closed']}}"),
 ])
 def test_get_uas_zones__invalid_polygon_input__returns_nok(test_client, test_user, polygon,
                                                            expected_exception_description):
@@ -107,6 +106,7 @@ def test_get_uas_zones__invalid_polygon_input__returns_nok(test_client, test_use
     response = test_client.post(URL, data=json.dumps(data), content_type='application/json',
                                 headers=make_basic_auth_header(test_user.username, DEFAULT_LOGIN_PASS))
 
+    assert 400 == response.status_code
     response_data = json.loads(response.data)
     assert "NOK" == response_data['genericReply']['RequestStatus']
     assert expected_exception_description == response_data['genericReply']["RequestExceptionDescription"]
@@ -224,7 +224,7 @@ def test_get_uas_zones__filter_by_updated_date_time(test_client, test_user, filt
 def _post_uas_zones_filter(test_client, test_user, filter_data):
 
     if isinstance(filter_data, UASZonesFilter):
-        filter_data = UASZonesRequestSchema().dumps(filter_data)
+        filter_data = UASZonesFilterSchema().dumps(filter_data)
     else:
         filter_data = json.dumps(filter_data)
 
@@ -233,7 +233,7 @@ def _post_uas_zones_filter(test_client, test_user, filter_data):
     return json.loads(response.data)
 
 
-@pytest.mark.parametrize('filter, expected_uas_zones', [
+@pytest.mark.parametrize('filter_data, expected_uas_zones', [
     (
         {
             'requestID': '1',
@@ -315,13 +315,13 @@ def _post_uas_zones_filter(test_client, test_user, filter_data):
     )
 ])
 def test_get_uas_zones__filter_by_airspace_volume__polygon__response_is_serialized(
-        test_client, test_user, db_uas_zone_basilique, filter, expected_uas_zones):
+        test_client, test_user, db_uas_zone_basilique, filter_data, expected_uas_zones):
 
-    # make them combatible
+    # make them compatible
     if expected_uas_zones:
         expected_uas_zones[0]['identifier'] = db_uas_zone_basilique.identifier
         expected_uas_zones[0]['name'] = db_uas_zone_basilique.name
 
-    response_data = _post_uas_zones_filter(test_client, test_user, filter)
+    response_data = _post_uas_zones_filter(test_client, test_user, filter_data)
     assert len(expected_uas_zones) == len(response_data['UASZoneList'])
     assert expected_uas_zones == response_data['UASZoneList']

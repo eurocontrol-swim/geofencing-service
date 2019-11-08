@@ -30,9 +30,9 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 import uuid
 from base64 import b64encode
 from datetime import datetime, timezone
+from typing import Optional
 
-from geofencing.common import polygon_filter_from_mongo_polygon
-from geofencing.db import MongoPolygonType
+from geofencing.common import point_list_from_geojson_polygon_coordinates, GeoJSONPolygonCoordinates
 from geofencing.db.models import AirspaceVolume, AuthorityEntity, ApplicableTimePeriod, CodeYesNoType, UASZone, \
     CodeRestrictionType, CodeUSpaceClassType, CodeZoneType, DataSource, DailySchedule, CodeWeekDay, User
 from geofencing.filters import UASZonesFilter, AirspaceVolumeFilter
@@ -48,7 +48,9 @@ NOW = datetime.now(timezone.utc)
 NOW_STRING = NOW.isoformat()
 
 
-def make_airspace_volume(polygon: MongoPolygonType, upper_limit_in_m=None, lower_limit_in_m=None) -> AirspaceVolume:
+def make_airspace_volume(polygon: GeoJSONPolygonCoordinates,
+                         upper_limit_in_m: Optional[int] = None,
+                         lower_limit_in_m: Optional[int] = None) -> AirspaceVolume:
     return AirspaceVolume(
         polygon=polygon,
         upper_limit_in_m=upper_limit_in_m,
@@ -92,7 +94,7 @@ def make_user(username=None, password=None):
     return user
 
 
-def make_uas_zone(polygon: MongoPolygonType) -> UASZone:
+def make_uas_zone(polygon: GeoJSONPolygonCoordinates) -> UASZone:
     result = UASZone()
     result.identifier = get_unique_id()[:7]
     result.name = get_unique_id()
@@ -116,7 +118,7 @@ def make_uas_zone(polygon: MongoPolygonType) -> UASZone:
 def make_uas_zones_filter_from_db_uas_zone(uas_zone: UASZone):
     uas_zones_filter = UASZonesFilter(
         airspace_volume=AirspaceVolumeFilter(
-            polygon=polygon_filter_from_mongo_polygon(uas_zone.airspace_volume.polygon),
+            polygon=point_list_from_geojson_polygon_coordinates(uas_zone.airspace_volume.polygon),
             upper_limit_in_m=uas_zone.airspace_volume.upper_limit_in_m,
             lower_limit_in_m=uas_zone.airspace_volume.lower_limit_in_m,
             upper_vertical_reference=uas_zone.airspace_volume.upper_vertical_reference,
@@ -140,25 +142,28 @@ def make_basic_auth_header(username, password):
     return result
 
 
-BASILIQUE_POLYGON: MongoPolygonType = [
+BASILIQUE_POLYGON: GeoJSONPolygonCoordinates = [
     [[50.863648, 4.329385],
      [50.865348, 4.328055],
      [50.868470, 4.317369],
      [50.867671, 4.314826],
      [50.865873, 4.315920],
      [50.862792, 4.326508],
-     [50.863648, 4.329385]]]
+     [50.863648, 4.329385]]
+]
 
 
-INTERSECTING_BASILIQUE_POLYGON: MongoPolygonType = [
+INTERSECTING_BASILIQUE_POLYGON: GeoJSONPolygonCoordinates = [
     [[50.862525, 4.328120],
      [50.865502, 4.329257],
      [50.865468, 4.323686],
-     [50.862525, 4.328120]]]
+     [50.862525, 4.328120]]
+]
 
 
-NON_INTERSECTING_BASILIQUE_POLYGON: MongoPolygonType = [
+NON_INTERSECTING_BASILIQUE_POLYGON: GeoJSONPolygonCoordinates = [
     [[50.870058, 4.325421],
      [50.867615, 4.326890],
      [50.867602, 4.321407],
-     [50.870058, 4.325421]]]
+     [50.870058, 4.325421]]
+]

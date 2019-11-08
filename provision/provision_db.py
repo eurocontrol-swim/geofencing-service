@@ -37,7 +37,7 @@ from mongoengine import connect
 from pkg_resources import resource_filename
 from swim_backend.config import load_app_config
 
-from geofencing.db import MongoPolygonType
+from geofencing.common import GeoJSONPolygonCoordinates
 from geofencing.db.models import UASZone, CodeZoneType, CodeRestrictionType, CodeYesNoType, CodeUSpaceClassType, \
     AirspaceVolume, AuthorityEntity, DailySchedule, CodeWeekDay, ApplicableTimePeriod, DataSource
 
@@ -47,7 +47,7 @@ _logger = logging.getLogger(__name__)
 
 NOW = datetime.now(timezone.utc)
 
-POLYGONS: Dict[str, MongoPolygonType] = {
+POLYGONS: Dict[str, GeoJSONPolygonCoordinates] = {
     "basilique_polygon":  [
         [[50.863648, 4.329385],
          [50.865348, 4.328055],
