@@ -34,7 +34,8 @@ from typing import Optional
 
 from geofencing.common import point_list_from_geojson_polygon_coordinates, GeoJSONPolygonCoordinates
 from geofencing.db.models import AirspaceVolume, AuthorityEntity, ApplicableTimePeriod, CodeYesNoType, UASZone, \
-    CodeRestrictionType, CodeUSpaceClassType, CodeZoneType, DataSource, DailySchedule, CodeWeekDay, User
+    CodeRestrictionType, CodeUSpaceClassType, CodeZoneType, DataSource, DailySchedule, CodeWeekDay, User, \
+    CodeVerticalReferenceType
 from geofencing.filters import UASZonesFilter, AirspaceVolumeFilter
 
 __author__ = "EUROCONTROL (SWIM)"
@@ -53,6 +54,8 @@ def make_airspace_volume(polygon: GeoJSONPolygonCoordinates,
                          lower_limit_in_m: Optional[int] = None) -> AirspaceVolume:
     return AirspaceVolume(
         polygon=polygon,
+        lower_vertical_reference=CodeVerticalReferenceType.WGS84.value,
+        upper_vertical_reference=CodeVerticalReferenceType.WGS84.value,
         upper_limit_in_m=upper_limit_in_m,
         lower_limit_in_m=lower_limit_in_m or 0
     )
@@ -109,6 +112,7 @@ def make_uas_zone(polygon: GeoJSONPolygonCoordinates) -> UASZone:
     result.authorization_requirement = make_authority()
     result.applicable_time_period = make_applicable_period()
     result.data_source = DataSource(
+        author="Author",
         creation_date_time=NOW,
     )
 

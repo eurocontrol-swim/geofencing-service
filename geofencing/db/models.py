@@ -30,8 +30,9 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 import enum
 from typing import Tuple, Any
 
-from mongoengine import EmbeddedDocument, StringField, IntField, PolygonField, ComplexDateTimeField, EmbeddedDocumentField, \
-    Document, ListField, EmbeddedDocumentListField, DictField, ValidationError, ReferenceField
+from mongoengine import EmbeddedDocument, StringField, IntField, PolygonField, ComplexDateTimeField, \
+    EmbeddedDocumentField, \
+    Document, ListField, EmbeddedDocumentListField, DictField, ValidationError, ReferenceField, EmailField, URLField
 
 from geofencing.db import AIRSPACE_VOLUME_UPPER_LIMIT_IN_M, AIRSPACE_VOLUME_LOWER_LIMIT_IN_M
 
@@ -118,13 +119,12 @@ class ApplicableTimePeriod(EmbeddedDocument):
 
 
 class AuthorityEntity(Document):
-    authority_id = StringField(primary_key=True)
     name = StringField(required=True)
-    contact_name = StringField(db_field='contactName')
-    service = StringField()
-    email = StringField()
-    site_url = StringField(db_field='siteUrl')
-    phone = StringField()
+    contact_name = StringField(db_field='contactName', required=True)
+    service = StringField(required=True)
+    email = EmailField()
+    site_url = URLField(db_field='siteURL')
+    phone = StringField(required=True)
 
     def clean(self):
         if not (self.email or self.site_url or self.phone):
@@ -146,22 +146,24 @@ class Authority(EmbeddedDocument):
 
 
 class DataSource(EmbeddedDocument):
-    # author = ReferenceField(AuthorityEntity, required=True)
+    author = StringField(max_length=200)
     creation_date_time = ComplexDateTimeField(db_field='creationDateTime', required=True)
     update_date_time = ComplexDateTimeField(db_field='endDateTime')
 
 
 class UASZone(Document):
     identifier = StringField(required=True, primary_key=True, max_length=7)
-    name = StringField(required=True)
-    type = StringField(choices=CodeZoneType.choices())
-    restriction = StringField(choices=CodeRestrictionType.choices())
+    name = StringField(required=True, max_length=200)
+    type = StringField(choices=CodeZoneType.choices(), required=True)
+    restriction = StringField(choices=CodeRestrictionType.choices(), max_length=200, required=True)
     region = IntField(min_value=0, max_value=0xffff)
-    data_capture_prohibition = StringField(db_field='dataCaptureProhibition', choices=CodeYesNoType.choices())
-    u_space_class = StringField(db_field='uSpaceClass', choices=CodeUSpaceClassType.choices())
-    message = StringField()
+    data_capture_prohibition = StringField(db_field='dataCaptureProhibition',
+                                           choices=CodeYesNoType.choices(),
+                                           required=True)
+    u_space_class = StringField(db_field='uSpaceClass', choices=CodeUSpaceClassType.choices(), max_length=200)
+    message = StringField(max_length=200)
     reason = ListField(StringField(choices=CodeZoneReasonType.choices()))
-    country = StringField(min_length=3, max_length=3)
+    country = StringField(min_length=3, max_length=3, required=True)
 
     airspace_volume = EmbeddedDocumentField(AirspaceVolume, db_field='airspaceVolume', required=True)
     applicable_time_period = EmbeddedDocumentField(ApplicableTimePeriod, db_field='applicableTimePeriod')

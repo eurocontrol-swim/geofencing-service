@@ -74,14 +74,15 @@ def test_get_uas_zones__invalid_user__returns_nok(test_client):
 
     response = test_client.post(URL, headers=make_basic_auth_header('fake_username', 'fake_password'))
 
+    assert 401 == response.status_code
     response_data = json.loads(response.data)
     assert "NOK" == response_data['genericReply']['RequestStatus']
     assert "Invalid credentials" == response_data['genericReply']["RequestExceptionDescription"]
 
 
 @pytest.mark.parametrize('polygon, expected_exception_description', [
-    ([{"LAT": 0, "LON": 0}], "[{'LAT': 0, 'LON': 0}] is too short"),
-    ([{"LAT": 1.0, "LON": 2.0}, {"LAT": 3.0, "LON": 4.0}, {"LAT": 5.0, "LON": 6.0}],
+    ([{"LAT": "0", "LON": "0"}], "[{'LAT': '0', 'LON': '0'}] is too short"),
+    ([{"LAT": "1.0", "LON": "2.0"}, {"LAT": "3.0", "LON": "4.0"}, {"LAT": "5.0", "LON": "6.0"}],
      "{'airspaceVolume': {'polygon': ['Loop is not closed']}}"),
 ])
 def test_get_uas_zones__invalid_polygon_input__returns_nok(test_client, test_user, polygon,
@@ -89,10 +90,10 @@ def test_get_uas_zones__invalid_polygon_input__returns_nok(test_client, test_use
     data = {
         "airspaceVolume": {
             "lowerLimit": 0,
-            "lowerVerticalReference": "string",
+            "lowerVerticalReference": "WGS84",
             "polygon": polygon,
             "upperLimit": 0,
-            "upperVerticalReference": "string"
+            "upperVerticalReference": "WGS84"
         },
         "endDateTime": "2019-11-05T13:10:39.315Z",
         "regions": [
@@ -116,27 +117,27 @@ def test_get_uas_zones__valid_input__returns_ok_and_empty_uas_zone_list(test_cli
     data = {
         "airspaceVolume": {
             "lowerLimit": 0,
-            "lowerVerticalReference": "string",
+            "lowerVerticalReference": "WGS84",
             "polygon": [
                 {
-                    "LAT": 1.0,
-                    "LON": 2.0
+                    "LAT": "1.0",
+                    "LON": "2.0"
                 },
                 {
-                    "LAT": 3.0,
-                    "LON": 4.0
+                    "LAT": "3.0",
+                    "LON": "4.0"
                 },
                 {
-                    "LAT": 5.0,
-                    "LON": 6.0
+                    "LAT": "5.0",
+                    "LON": "6.0"
                 },
                 {
-                    "LAT": 1.0,
-                    "LON": 2.0
+                    "LAT": "1.0",
+                    "LON": "2.0"
                 }
             ],
             "upperLimit": 0,
-            "upperVerticalReference": "string"
+            "upperVerticalReference": "WGS84"
         },
         "endDateTime": "2019-11-05T13:10:39.315Z",
         "regions": [
@@ -150,6 +151,7 @@ def test_get_uas_zones__valid_input__returns_ok_and_empty_uas_zone_list(test_cli
     response = test_client.post(URL, data=json.dumps(data), content_type='application/json',
                                 headers=make_basic_auth_header(test_user.username, DEFAULT_LOGIN_PASS))
 
+    assert 200 == response.status_code
     response_data = json.loads(response.data)
     assert "OK" == response_data['genericReply']['RequestStatus']
     assert [] == response_data['UASZoneList']
@@ -238,11 +240,11 @@ def _post_uas_zones_filter(test_client, test_user, filter_data):
         {
             'requestID': '1',
             'airspaceVolume': {
-                'polygon': [{'LON': 4.32812, 'LAT': 50.862525},
-                            {'LON': 4.329257, 'LAT': 50.865502},
-                            {'LON': 4.323686, 'LAT': 50.865468},
-                            {'LON': 4.32812, 'LAT': 50.862525}],
-                'lowerVerticalReference': '',
+                'polygon': [{'LON': '4.32812', 'LAT': '50.862525'},
+                            {'LON': '4.329257', 'LAT': '50.865502'},
+                            {'LON': '4.323686', 'LAT': '50.865468'},
+                            {'LON': '4.32812', 'LAT': '50.862525'}],
+                'lowerVerticalReference': 'WGS84',
                 'lowerLimit': 0,
                 'upperLimit': 100000,
             },
@@ -254,15 +256,15 @@ def _post_uas_zones_filter(test_client, test_user, filter_data):
         [{
             'airspaceVolume': {
                 'lowerLimit': 0,
-                'lowerVerticalReference': None,
+                'lowerVerticalReference': "WGS84",
                 'polygon': [
-                    {'LAT': 50.863648, 'LON': 4.329385},
-                    {'LAT': 50.865348, 'LON': 4.328055},
-                    {'LAT': 50.86847, 'LON': 4.317369},
-                    {'LAT': 50.867671, 'LON': 4.314826},
-                    {'LAT': 50.865873, 'LON': 4.31592},
-                    {'LAT': 50.862792, 'LON': 4.326508},
-                    {'LAT': 50.863648, 'LON': 4.329385},
+                    {'LAT': '50.863648', 'LON': '4.329385'},
+                    {'LAT': '50.865348', 'LON': '4.328055'},
+                    {'LAT': '50.86847', 'LON': '4.317369'},
+                    {'LAT': '50.867671', 'LON': '4.314826'},
+                    {'LAT': '50.865873', 'LON': '4.31592'},
+                    {'LAT': '50.862792', 'LON': '4.326508'},
+                    {'LAT': '50.863648', 'LON': '4.329385'},
                 ],
                 'upperLimit': 100000,
             },
@@ -280,6 +282,7 @@ def _post_uas_zones_filter(test_client, test_user, filter_data):
             'country': 'BEL',
             'dataCaptureProhibition': 'YES',
             'dataSource': {
+                'author': 'Author',
                 'creationDateTime': NOW_STRING,
                 'updateDateTime': NOW_STRING
             },
@@ -298,11 +301,11 @@ def _post_uas_zones_filter(test_client, test_user, filter_data):
         {
             'requestID': '1',
             'airspaceVolume': {
-                'polygon': [{'LON': 4.325421, 'LAT': 50.870058},
-                            {'LON': 4.32689, 'LAT': 50.867615},
-                            {'LON': 4.321407, 'LAT': 50.867602},
-                            {'LON': 4.325421, 'LAT': 50.870058}],
-                'lowerVerticalReference': '',
+                'polygon': [{'LON': '4.325421', 'LAT': '50.870058'},
+                            {'LON': '4.32689', 'LAT': '50.867615'},
+                            {'LON': '4.321407', 'LAT': '50.867602'},
+                            {'LON': '4.325421', 'LAT': '50.870058'}],
+                'lowerVerticalReference': 'WGS84',
                 'lowerLimit': 0,
                 'upperLimit': 100000,
             },

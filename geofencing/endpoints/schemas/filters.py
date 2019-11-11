@@ -36,8 +36,15 @@ __author__ = "EUROCONTROL (SWIM)"
 
 
 class PointFilterSchema(Schema):
-    lat = Float(data_key='LAT')
-    lon = Float(data_key='LON')
+    lat = String(data_key='LAT')
+    lon = String(data_key='LON')
+
+    @post_load
+    def convert_to_float(self, data, many, **kwargs):
+        data['lat'] = float(data['lat'])
+        data['lon'] = float(data['lon'])
+
+        return data
 
 
 def validate_polygon(value):

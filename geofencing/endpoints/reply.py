@@ -28,13 +28,11 @@ http://opensource.org/licenses/BSD-3-Clause
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
 import json
-from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
 from functools import wraps
 from typing import List, Optional
 
-from flask import jsonify, Response
 from marshmallow import ValidationError
 from swim_backend.errors import APIError
 
@@ -89,22 +87,15 @@ def handle_response(schema):
             status_code = 200
             try:
                 result = func(*args, **kwargs)
-            except APIError as e:
+            except Exception as e:
+                status_code = e.status if isinstance(e, APIError) else 500
+
                 result = Reply(
                     generic_reply=GenericReply(
                         request_status=RequestStatus.NOK.value,
                         request_exception_description=str(e)
                     )
                 )
-                status_code = APIError.status
-            except ValidationError as e:
-                result = Reply(
-                    generic_reply=GenericReply(
-                        request_status=RequestStatus.NOK.value,
-                        request_exception_description=str(e)
-                    )
-                )
-                status_code = 400
 
             return schema().dump(result), status_code
         return wrapper

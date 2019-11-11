@@ -26,7 +26,7 @@
 #
 # Details on EUROCONTROL: http://www.eurocontrol.int
 
-openapi: 3.0.0
+openapi: 3.0.2
 
 servers:
   - description: Geofencing
@@ -67,7 +67,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UASZonesReply'
-
+        '400':
+          description: Bad request error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  genericReply:
+                    $ref: '#/components/schemas/GenericReply'
+        '401':
+          description: Unauthenticated user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  genericReply:
+                    $ref: '#/components/schemas/GenericReply'
 components:
   securitySchemes:
     basicAuth:
@@ -81,21 +98,22 @@ components:
       type: object
       properties:
         identifier:
-          type: string
           description: A string of characters that uniquely identifies the UAS Zone within the State/Territory identified by the country attribute.
+          type: string
           maxLength: 7
           minLength: 7
         country:
-          type: string
           description: The State that has the authority to declare the zone.
+          type: string
           maxLength: 3
           minLength: 3
         name:
-          type: string
           description: A free text name by which the zone may be known by the public or by the UAS community
-        type:
           type: string
+          maxLength: 200
+        type:
           description: An indication whether the Zone is provided with its common definition or with a customised definition, for a particular use
+          type: string
           enum: [
             "COMMON",
             "CUSTOMIZED"
@@ -110,18 +128,20 @@ components:
             "NO_RESTRICTION"
           ]
         restrictionConditions:
+          description: An indication of the conditions under which the zone can be used
           type: array
           items:
-            description: An indication of the conditions under which the zone can be used
             type: string
+            maxLength: 200
+
         region:
-          type: integer
           description: Where applicable, identifies a region inside a State where the UAS Zone is located.
+          type: integer
           minimum: 0
           maximum: 65535
         dataCaptureProhibition:
-          type: string
           description: An indication if data capturing (such as aerial photography, etc.) is prohibited when flying in the zone.
+          type: string
           enum: [
             "YES",
             "NO"
@@ -129,8 +149,8 @@ components:
         reason:
           type: array
           items:
-            type: string
             description: A coded indication for the reason that led to the establishment of the zone.
+            type: string
             enum: [
               "AIR_TRAFFIC",
               "SENSITIVE",
@@ -142,20 +162,23 @@ components:
               "OTHER"
             ]
         uSpaceClass:
-          type: string
           description: A code that identifies the category or class of the zone applying a "USpace concept".
+          type: string
           enum: [
             "EUROCONTROL",
             "CORUS"
           ]
+          maxLength: 200
         message:
-          type: string
           description: A message to be displayed to the user of the zone
+          type: string
+          maxLength: 200
         dataSource:
           type: object
           properties:
             author:
               type: string
+              maxLength: 200
             creationDateTime:
               type: string
               format: 'date-time'
@@ -171,8 +194,8 @@ components:
                 authority:
                   $ref: '#/components/schemas/Authority'
                 intervalBefore:
-                  type: string
                   description: The minimal time interval required between notification and starting to operate in the zone, in the format PnnDTnnHnnM (ISO 8601).
+                  type: string
             requiresAuthorisationFrom:
               type: object
               properties:
@@ -183,35 +206,37 @@ components:
         airspaceVolumt:
           $ref: '#/components/schemas/AirspaceVolume'
         extendedProperties:
-          type: string
           description: The extendedProperties section is a placeholder, allowing service providers to customize the implementation and provide additional information.
+          type: string
 
     ApplicableTimePeriod:
       type: object
       properties:
         permanent:
-          type: string
           description: An indication that the area is permanent.
+          type: string
           enum: [
             "YES",
             "NO"
           ]
         startDateTime:
-          type: string
           description: The date and time when the area starts to exist.
+          type: string
           format: 'date-time'
         endDateTime:
-          type: string
           description: The date and time when the area ceases to exist.
+          type: string
           format: 'date-time'
         dailySchedule:
           type: array
+          maxItems: 7
+          minItems: 1
           items:
             type: object
             properties:
               day:
-                type: string
                 description: The day of the week
+                type: string
                 enum: [
                   "MON",
                   "TUE",
@@ -222,56 +247,83 @@ components:
                   "SUN"
                 ]
               startTime:
-                type: string
                 description: The daily start time
-                format: 'date-time'
-              endTime:
                 type: string
+                format: 'time'
+                example:
+                  '09:00:00+00:00'
+              endTime:
                 description: The daily end time
-                format: 'date-time'
+                type: string
+                format: 'time'
+                example:
+                  '18:00:00+00:00'
 
     AirspaceVolume:
       type: object
       properties:
         lowerLimit:
-          type: integer
           description: The lowest level included in the Zone (in metres). If not specified, it means that the zone starts from surface (ground)
-        lowerVerticalReference:
-          type: string
-          description: The vertical reference system used for expressing the lower limit
-        upperLimit:
           type: integer
-          description: The highest level included in the Zone (in metres). If not specified, it means that the zone extends to any possible level (unlimited).
-        upperVerticalReference:
+        lowerVerticalReference:
+          description: The vertical reference system used for expressing the lower limit
           type: string
+          enum: [
+            "AGL",
+            "AMSL",
+            "WGS84"
+          ]
+        upperLimit:
+          description: The highest level included in the Zone (in metres). If not specified, it means that the zone extends to any possible level (unlimited).
+          type: integer
+        upperVerticalReference:
           description: The vertical reference system used for expressing the upper limit
+          type: string
+          enum: [
+            "AGL",
+            "AMSL",
+            "WGS84"
+          ]
         polygon:
-          type: array
           description: The shape of the area in a projection at the surface of the Earth considered as the WGS-84 ellipsoid.
+          type: array
           minItems: 3
           items:
             type: object
             properties:
               LAT:
-                type: number
+                type: string
+                format: float
+                maxLength: 20
+                example:
+                  "50.870058"
               LON:
-                type: number
+                type: string
+                format: float
+                maxLength: 20
+                example:
+                  "4.325421"
     Authority:
       type: object
       description: A public or private authority that has responsibilities in relation with the authorisation of UAS operations within a Country.
       properties:
         name:
           type: string
+          maxLength: 200
         service:
           type: string
+          maxLength: 200
         email:
           type: string
+          format: email
         contactName:
           type: string
+          maxLength: 200
         siteURL:
           type: string
         phone:
           type: string
+          maxLength: 200
 
     UASZonesRequest:
       description: The filtering criteria of UASZone retrieving

@@ -30,7 +30,7 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 from dataclasses import dataclass
 
 from marshmallow import Schema, pre_dump, post_dump
-from marshmallow.fields import String, Nested, Integer, Dict, Float, AwareDateTime, List
+from marshmallow.fields import String, Nested, Integer, Dict, Float, AwareDateTime, List, Email, URL
 
 from geofencing.common import point_list_from_geojson_polygon_coordinates, Point
 from geofencing.endpoints.utils import get_time_from_string, make_datetime_string_aware
@@ -39,8 +39,8 @@ __author__ = "EUROCONTROL (SWIM)"
 
 
 class PointSchema(Schema):
-    lat = Float(data_key='LAT')
-    lon = Float(data_key='LON')
+    lat = String(data_key='LAT')
+    lon = String(data_key='LON')
 
 
 class AirspaceVolumeSchema(Schema):
@@ -124,8 +124,8 @@ class AuthorityEntitySchema(Schema):
     name = String(required=True)
     contact_name = String(data_key='contactName')
     service = String()
-    email = String()
-    site_url = String(data_key='siteUrl')
+    email = Email()
+    site_url = URL(data_key='siteUrl')
     phone = String()
 
 
@@ -144,7 +144,7 @@ class AuthoritySchema(Schema):
 
 
 class DataSourceSchema(Schema):
-    # author = ReferenceField(AuthorityEntity, required=True)
+    author = String(required=True)
     creation_date_time = AwareDateTime(data_key='creationDateTime', required=True)
     update_date_time = AwareDateTime(data_key='updateDateTime')
 

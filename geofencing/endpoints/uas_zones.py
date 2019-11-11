@@ -28,6 +28,8 @@ http://opensource.org/licenses/BSD-3-Clause
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
 from flask import request
+from marshmallow import ValidationError
+from swim_backend.errors import BadRequestError
 
 from geofencing.db.uas_zones import get_uas_zones as db_get_uas_zones
 from geofencing.endpoints.reply import UASZoneReply, handle_response
@@ -39,7 +41,10 @@ __author__ = "EUROCONTROL (SWIM)"
 
 @handle_response(UASZonesReplySchema)
 def get_uas_zones():
-    uas_zones_filter = UASZonesFilterSchema().load(request.get_json())
+    try:
+        uas_zones_filter = UASZonesFilterSchema().load(request.get_json())
+    except ValidationError as e:
+        raise BadRequestError(str(e))
 
     uas_zones = db_get_uas_zones(uas_zones_filter)
 
