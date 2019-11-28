@@ -39,7 +39,8 @@ from swim_backend.config import load_app_config
 
 from geofencing.common import GeoJSONPolygonCoordinates
 from geofencing.db.models import UASZone, CodeZoneType, CodeRestrictionType, CodeYesNoType, CodeUSpaceClassType, \
-    AirspaceVolume, AuthorityEntity, DailySchedule, CodeWeekDay, ApplicableTimePeriod, DataSource
+    AirspaceVolume, AuthorityEntity, DailySchedule, CodeWeekDay, ApplicableTimePeriod, DataSource, User
+from geofencing.db.users import create_user
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -137,6 +138,21 @@ def make_uas_zone(name, polygon):
     return result
 
 
+def make_user():
+    user = User()
+    user.username = 'geofencing'
+    user.password = 'geofencing'
+
+    return user
+
+
+def _save_object(obj):
+    try:
+        obj.save()
+    except Exception as e:
+        _logger.error(f"Error while saving object {obj} in DB: {str(e)}")
+
+
 if __name__ == '__main__':
 
     config_file = resource_filename(__name__, 'config.yml')
@@ -147,11 +163,14 @@ if __name__ == '__main__':
 
     connect(db=config['MONGO']['db'])
 
+    # save UASZones
     for name, polygon in POLYGONS.items():
         uas_zone = make_uas_zone(name, polygon)
-        try:
-            uas_zone.save()
-            _logger.info(f"Saved UASZone {name} in DB")
-        except Exception as e:
-            _logger.error(f"Error while saving UASZone {name} in DB: {str(e)}")
+        _save_object(uas_zone)
+        _logger.info(f"Saved UASZone {name} in DB")
+
+    # save Users
+    user = make_user()
+    create_user(user)
+    _logger.info(f"Saved user {user} in DB")
 

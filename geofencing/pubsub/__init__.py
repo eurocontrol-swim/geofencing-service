@@ -27,28 +27,22 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from marshmallow import Schema
-from marshmallow.fields import Nested, String, DateTime
-
-from geofencing.endpoints.schemas.db import UASZoneSchema
+from flask import current_app
+from subscription_manager_client.subscription_manager import SubscriptionManagerClient
+from swim_backend.local import AppContextProxy
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-class GenericReplySchema(Schema):
-    request_status = String(data_key="RequestStatus")
-    request_exception_description = String(data_key="RequestExceptionDescription")
-    request_processed_timestamp = DateTime(data_key="RequestProcessedTimestamp")
+def _get_sm_client_from_config() -> SubscriptionManagerClient:
+    return SubscriptionManagerClient.create(
+        host=current_app.config['SUBSCRIPTION-MANAGER']['host'],
+        https=current_app.config['SUBSCRIPTION-MANAGER']['https'],
+        timeout=current_app.config['SUBSCRIPTION-MANAGER']['timeout'],
+        verify=current_app.config['SUBSCRIPTION-MANAGER']['verify'],
+        username=current_app.config['GEO_SM_USER'],
+        password=current_app.config['GEO_SM_PASS']
+    )
 
 
-class ReplySchema(Schema):
-    generic_reply = Nested(GenericReplySchema, required=True, data_key="genericReply")
-
-
-class UASZonesReplySchema(ReplySchema):
-    uas_zones = Nested(UASZoneSchema, many=True, data_key="UASZoneList")
-
-
-class SubscribeToUASZonesUpdatesReplySchema(ReplySchema):
-    subscription_id = String(data_key="subscriptionID")
-    publication_location = String(data_key="publicationLocation")
+sm_client = AppContextProxy(_get_sm_client_from_config)

@@ -46,7 +46,10 @@ security:
 
 tags:
   - name: UASZones
-    description: UASZones
+    description: UASZones retrieval
+  - name: PubSub
+    description: Publish/Subscribe interface
+
 paths:
   /uas_zones/:
     post:
@@ -85,6 +88,128 @@ paths:
                 properties:
                   genericReply:
                     $ref: '#/components/schemas/GenericReply'
+
+  /subscriptions/:
+    post:
+      tags:
+        - PubSub
+      summary: creates a subscription on UASZones updates over specific airspace volume
+      operationId: geofencing.endpoints.subscriptions.create_subscription_to_uas_zones_updates
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UASZonesRequest'
+        description: UASZones subscription filtering criteria
+      responses:
+        '200':
+          description: UASZones subscription created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscribeToUASZonesUpdatesReply'
+        '400':
+          description: Bad request error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  genericReply:
+                    $ref: '#/components/schemas/GenericReply'
+        '401':
+          description: Unauthenticated user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  genericReply:
+                    $ref: '#/components/schemas/GenericReply'
+
+  /subscriptions/{subscription_id}:
+    delete:
+      tags:
+        - PubSub
+      summary: deletes a subscription on UASZones updates by its id
+      operationId: geofencing.endpoints.subscriptions.delete_subscription_to_uas_zones_updates
+      parameters:
+        - in: path
+          name: subscription_id
+          description: the id of the subscription to be updated
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successfull unsubscribe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericReply'
+        '404':
+          description: UASZonesSubscription not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  genericReply:
+                    $ref: '#/components/schemas/GenericReply'
+        '401':
+          description: Unauthenticated user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  genericReply:
+                    $ref: '#/components/schemas/GenericReply'
+
+    put:
+      tags:
+        - PubSub
+      summary: updates a subscription on UASZones updates by its id (pause, resume)
+      operationId: geofencing.endpoints.subscriptions.update_subscription_to_uas_zones_updates
+      parameters:
+        - in: path
+          name: subscription_id
+          description: the id of the subscription to be updated
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                active:
+                  type: boolean
+      responses:
+        '200':
+          description: Successfull unsubscribe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericReply'
+        '404':
+          description: UASZonesSubscription not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  genericReply:
+                    $ref: '#/components/schemas/GenericReply'
+        '401':
+          description: Unauthenticated user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  genericReply:
+                    $ref: '#/components/schemas/GenericReply'
+
 components:
   securitySchemes:
     basicAuth:
@@ -359,6 +484,17 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/UASZone'
+        genericReply:
+          $ref: '#/components/schemas/GenericReply'
+
+    SubscribeToUASZonesUpdatesReply:
+      type: object
+      properties:
+        subscriptionID:
+          type: string
+          format: uuid
+        publicationLocation:
+          type: string
         genericReply:
           $ref: '#/components/schemas/GenericReply'
 

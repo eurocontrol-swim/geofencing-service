@@ -32,7 +32,8 @@ from typing import Tuple, Any
 
 from mongoengine import EmbeddedDocument, StringField, IntField, PolygonField, ComplexDateTimeField, \
     EmbeddedDocumentField, \
-    Document, ListField, EmbeddedDocumentListField, DictField, ValidationError, ReferenceField, EmailField, URLField
+    Document, ListField, EmbeddedDocumentListField, DictField, ValidationError, ReferenceField, EmailField, URLField, \
+    BooleanField
 
 from geofencing.db import AIRSPACE_VOLUME_UPPER_LIMIT_IN_M, AIRSPACE_VOLUME_LOWER_LIMIT_IN_M
 
@@ -185,3 +186,11 @@ class User(Document):
             {'fields': ('username',), 'unique': True}
         ]
     }
+
+
+class UASZonesSubscription(Document):
+    id = StringField(required=True, primary_key=True)
+    publication_location = StringField(required=True, db_field='publicationLocation')
+    active = BooleanField(required=True)
+    uas_zones_filter = DictField(required=True)
+    topic_name = StringField(required=True)

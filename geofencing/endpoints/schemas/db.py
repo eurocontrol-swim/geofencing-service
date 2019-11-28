@@ -30,7 +30,7 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 from dataclasses import dataclass
 
 from marshmallow import Schema, pre_dump, post_dump
-from marshmallow.fields import String, Nested, Integer, Dict, Float, AwareDateTime, List, Email, URL
+from marshmallow.fields import String, Nested, Integer, Dict, Float, AwareDateTime, List, Email, URL, Boolean
 
 from geofencing.common import point_list_from_geojson_polygon_coordinates, Point
 from geofencing.endpoints.utils import get_time_from_string, make_datetime_string_aware
@@ -173,3 +173,7 @@ class UASZoneSchema(Schema):
     authority = Nested(AuthoritySchema)
     data_source = Nested(DataSourceSchema, data_key='dataSource')
     extended_properties = Dict(data_key='extendedProperties')
+
+
+class SubscriptionSchema(Schema):
+    active = Boolean()

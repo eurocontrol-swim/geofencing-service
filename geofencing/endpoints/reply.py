@@ -80,6 +80,14 @@ class UASZoneReply(Reply):
         self.uas_zones = uas_zones
 
 
+class SubscribeToUASZonesUpdatesReply(Reply):
+
+    def __init__(self, subscription_id: str, publication_location: str):
+        super().__init__()
+        self.subscription_id = subscription_id
+        self.publication_location = publication_location
+
+
 def handle_response(schema):
     def decorator(func):
         @wraps(func)

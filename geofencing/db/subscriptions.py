@@ -27,28 +27,31 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from marshmallow import Schema
-from marshmallow.fields import Nested, String, DateTime
+from typing import Optional
 
-from geofencing.endpoints.schemas.db import UASZoneSchema
+from mongoengine import DoesNotExist
+
+from geofencing.db.models import UASZonesSubscription
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-class GenericReplySchema(Schema):
-    request_status = String(data_key="RequestStatus")
-    request_exception_description = String(data_key="RequestExceptionDescription")
-    request_processed_timestamp = DateTime(data_key="RequestProcessedTimestamp")
+def get_uas_zones_subscription_by_id(subscription_id: str) -> Optional[UASZonesSubscription]:
+    try:
+        result = UASZonesSubscription.objects.get(id=subscription_id)
+    except DoesNotExist:
+        result = None
+
+    return result
 
 
-class ReplySchema(Schema):
-    generic_reply = Nested(GenericReplySchema, required=True, data_key="genericReply")
+def create_uas_zones_subscription(subscription: UASZonesSubscription):
+    subscription.save()
 
 
-class UASZonesReplySchema(ReplySchema):
-    uas_zones = Nested(UASZoneSchema, many=True, data_key="UASZoneList")
+def update_uas_zones_subscription(subscription: UASZonesSubscription):
+    subscription.save()
 
 
-class SubscribeToUASZonesUpdatesReplySchema(ReplySchema):
-    subscription_id = String(data_key="subscriptionID")
-    publication_location = String(data_key="publicationLocation")
+def delete_uas_zones_subscription(subscription: UASZonesSubscription):
+    subscription.delete()
