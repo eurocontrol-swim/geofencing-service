@@ -29,12 +29,16 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 """
 from pkg_resources import resource_filename
 
-from geofencing.app import create_app
+from geofencing.app import create_flask_app
 
 __author__ = "EUROCONTROL (SWIM)"
 
 config_file = resource_filename(__name__, 'config.yml')
-app = create_app(config_file)
+
+flask_app = create_flask_app(config_file)
 
 if __name__ == '__main__':
-    app.run()
+
+    flask_app.pub_app.run(threaded=True)
+
+    flask_app.run()

@@ -31,18 +31,18 @@ from pathlib import Path
 
 import connexion
 from mongoengine import connect
-from swagger_ui_bundle import swagger_ui_3_path
 from pkg_resources import resource_filename
-
+from swagger_ui_bundle import swagger_ui_3_path
+from swim_backend.config import load_app_config, configure_logging
 from swim_backend.flask import configure_flask
-from swim_backend.config import configure_logging, load_app_config
+from swim_pubsub.publisher import PubApp
 
 from geofencing.endpoints.reply import handle_flask_request_error
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def create_app(config_file):
+def create_flask_app(config_file: str):
     options = {'swagger_path': swagger_ui_3_path}
     connexion_app = connexion.App(__name__, options=options)
 
@@ -62,11 +62,20 @@ def create_app(config_file):
 
     connect(db=app.config['MONGO']['db'])
 
+    # configure pub_app
+    with app.app_context():
+        app.pub_app = PubApp.create_from_config(config_file)
+
+        app.publisher = app.pub_app.register_publisher(username=app.config['GEO_SM_USER'],
+                                                       password=app.config['GEO_SM_PASS'])
+
     return app
 
 
 if __name__ == '__main__':
-    config_file = resource_filename(__name__, 'config.yml')
-    app = create_app(config_file)
 
-    app.run(host="0.0.0.0", port=8080, debug=False)
+    flask_app = create_flask_app(config_file=resource_filename(__name__, 'config.yml'))
+
+    flask_app.pub_app.run(threaded=True)
+
+    flask_app.run(host="0.0.0.0", port=8000, debug=False)

@@ -31,3 +31,20 @@ LOGGING:
 
 MONGO:
   db: test
+
+SUBSCRIPTION-MANAGER:
+  host: '0.0.0.0:8080'
+  https: false
+  timeout: 30
+  verify: false
+
+BROKER:
+  host: '0.0.0.0:5671'
+  cert_db: '/secrets/rabbitmq/ca_certificate.pem'
+  cert_file: '/secrets/rabbitmq/client_certificate.pem'
+  cert_key: '/secrets/rabbitmq/client_key.pem'
+  cert_password: 'swim-ti'
+
+GEO_SM_USER: 'geofencing'
+GEO_SM_PASS: 'geofencing'
+

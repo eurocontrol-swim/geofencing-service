@@ -33,7 +33,7 @@ from pkg_resources import resource_filename
 
 from swim_backend.config import load_app_config
 
-from geofencing.app import create_app
+from geofencing.app import create_flask_app
 from geofencing.db.models import User
 from geofencing.db.users import create_user
 from tests.geofencing.utils import make_user, get_unique_id
@@ -44,7 +44,7 @@ DEFAULT_LOGIN_PASS = 'password'
 @pytest.yield_fixture(scope='session')
 def app():
     config_file = resource_filename(__name__, 'test_config.yml')
-    _app = create_app(config_file)
+    _app = create_flask_app(config_file)
     ctx = _app.app_context()
     ctx.push()
 
