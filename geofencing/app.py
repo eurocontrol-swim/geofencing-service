@@ -2,44 +2,51 @@
 Copyright 2019 EUROCONTROL
 ==========================================
 
-Redistribution and use in source and binary forms, with or without modification, are permitted provided that the 
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
 following conditions are met:
 
-1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following 
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following
    disclaimer.
-2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following 
+2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
    disclaimer in the documentation and/or other materials provided with the distribution.
-3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products 
+3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products
    derived from this software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ==========================================
 
-Editorial note: this license is an instance of the BSD license template as provided by the Open Source Initiative: 
+Editorial note: this license is an instance of the BSD license template as provided by the Open Source Initiative:
 http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
+import logging
 from pathlib import Path
+from typing import Tuple
 
 import connexion
 from mongoengine import connect
 from pkg_resources import resource_filename
 from swagger_ui_bundle import swagger_ui_3_path
 from swim_backend.config import load_app_config, configure_logging
+from swim_backend.errors import APIError
 from swim_backend.flask import configure_flask
+from swim_pubsub.core.clients import PubSubClient
+from swim_pubsub.core.errors import PubSubClientError
 from swim_pubsub.publisher import PubApp
 
 from geofencing.endpoints.reply import handle_flask_request_error
 
 __author__ = "EUROCONTROL (SWIM)"
+
+_logger = logging.getLogger(__name__)
 
 
 def create_flask_app(config_file: str):
@@ -62,14 +69,24 @@ def create_flask_app(config_file: str):
 
     connect(db=app.config['MONGO']['db'])
 
-    # configure pub_app
     with app.app_context():
-        app.pub_app = PubApp.create_from_config(config_file)
-
-        app.publisher = app.pub_app.register_publisher(username=app.config['GEO_SM_USER'],
-                                                       password=app.config['GEO_SM_PASS'])
+        app.pub_app, app.publisher = configure_pub_app(config_file)
 
     return app
+
+
+def configure_pub_app(config_file: str) -> Tuple[PubApp, PubSubClient]:
+    pub_app = PubApp.create_from_config(config_file)
+
+    try:
+        publisher = pub_app.register_publisher(username=pub_app.config['GEO_SM_USER'],
+                                               password=pub_app.config['GEO_SM_PASS'])
+        _logger.info(f"Publisher '{pub_app.config['GEO_SM_USER']}' registered in PubApp")
+    except PubSubClientError as e:
+        _logger.error(f"Publisher failed to be registered in PubApp: {str(e)}")
+        publisher = None
+
+    return pub_app, publisher
 
 
 if __name__ == '__main__':
