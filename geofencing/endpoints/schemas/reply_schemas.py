@@ -27,43 +27,32 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from typing import List, Any, Union
+from marshmallow import Schema
+from marshmallow.fields import Nested, String, DateTime
+
+from geofencing.endpoints.schemas.db_schemas import UASZoneSchema
 
 __author__ = "EUROCONTROL (SWIM)"
 
-GeoJSONPolygonCoordinates = List[List[List[Union[float, int]]]]
+
+class GenericReplySchema(Schema):
+    request_status = String(data_key="RequestStatus")
+    request_exception_description = String(data_key="RequestExceptionDescription")
+    request_processed_timestamp = DateTime(data_key="RequestProcessedTimestamp")
 
 
-class CompareMixin:
-    def __eq__(self, other: Any) -> bool:
-        return isinstance(other, self.__class__) and other.__dict__ == self.__dict__
-
-    def __ne__(self, other: Any) -> bool:
-        return not other == self
+class ReplySchema(Schema):
+    generic_reply = Nested(GenericReplySchema, required=True, data_key="genericReply")
 
 
-class Point(CompareMixin):
-
-    def __init__(self, lat: float, lon: float) -> None:
-        """
-
-        :param lat:
-        :param lon:
-        """
-        self.lat = lat
-        self.lon = lon
-
-    @classmethod
-    def from_dict(cls, object_dict):
-        return cls(
-            lat=float(object_dict['lat']),
-            lon=float(object_dict['lon']),
-        )
+class UASZonesFilterReplySchema(ReplySchema):
+    uas_zones = Nested(UASZoneSchema, many=True, data_key="UASZoneList")
 
 
-def geojson_polygon_coordinates_from_point_list(point_list: List[Point]) -> GeoJSONPolygonCoordinates:
-    return [[[pf.lat, pf.lon] for pf in point_list]]
+class UASZoneCreateReplySchema(ReplySchema):
+    uas_zone = Nested(UASZoneSchema, data_key="UASZone")
 
 
-def point_list_from_geojson_polygon_coordinates(coordinates: GeoJSONPolygonCoordinates) -> List[Point]:
-    return [Point(lat=lat, lon=lon) for lat, lon in coordinates[0]]
+class SubscribeToUASZonesUpdatesReplySchema(ReplySchema):
+    subscription_id = String(data_key="subscriptionID")
+    publication_location = String(data_key="publicationLocation")

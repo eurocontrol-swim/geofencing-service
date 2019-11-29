@@ -51,7 +51,7 @@ tags:
     description: Publish/Subscribe interface
 
 paths:
-  /uas_zones/:
+  /uas_zones/filter/:
     post:
       tags:
         - UASZones
@@ -69,9 +69,84 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UASZonesReply'
+                $ref: '#/components/schemas/UASZonesFilterReply'
         '400':
           description: Bad request error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  genericReply:
+                    $ref: '#/components/schemas/GenericReply'
+        '401':
+          description: Unauthenticated user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  genericReply:
+                    $ref: '#/components/schemas/GenericReply'
+
+  /uas_zones/:
+    post:
+      tags:
+        - UASZones
+      summary: creates a new UASZone
+      operationId: geofencing.endpoints.uas_zones.create_uas_zone
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UASZone'
+        description: UASZone object
+      responses:
+        '201':
+          description: UASZones created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UASZoneCreateReply'
+        '400':
+          description: Bad request error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  genericReply:
+                    $ref: '#/components/schemas/GenericReply'
+        '401':
+          description: Unauthenticated user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  genericReply:
+                    $ref: '#/components/schemas/GenericReply'
+  /uas_zones/{uas_zone_identifier}:
+    delete:
+      tags:
+        - UASZones
+      summary: deletes an UASZone by its identifier
+      operationId: geofencing.endpoints.uas_zones.delete_uas_zone
+      parameters:
+        - in: path
+          name: uas_zone_identifier
+          description: the unique identifier of the UASZone
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Successfull deletion
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericReply'
+        '404':
+          description: UASZone not found
           content:
             application/json:
               schema:
@@ -102,7 +177,7 @@ paths:
               $ref: '#/components/schemas/UASZonesRequest'
         description: UASZones subscription filtering criteria
       responses:
-        '200':
+        '201':
           description: UASZones subscription created
           content:
             application/json:
@@ -140,7 +215,7 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        '204':
           description: Successfull unsubscribe
           content:
             application/json:
@@ -227,11 +302,15 @@ components:
           type: string
           maxLength: 7
           minLength: 7
+          example:
+            "4rf04r0"
         country:
           description: The State that has the authority to declare the zone.
           type: string
           maxLength: 3
           minLength: 3
+          example:
+            "BEL"
         name:
           description: A free text name by which the zone may be known by the public or by the UAS community
           type: string
@@ -328,11 +407,11 @@ components:
                   $ref: '#/components/schemas/Authority'
         applicableTimePeriod:
           $ref: '#/components/schemas/ApplicableTimePeriod'
-        airspaceVolumt:
+        airspaceVolume:
           $ref: '#/components/schemas/AirspaceVolume'
         extendedProperties:
           description: The extendedProperties section is a placeholder, allowing service providers to customize the implementation and provide additional information.
-          type: string
+          type: object
 
     ApplicableTimePeriod:
       type: object
@@ -428,6 +507,20 @@ components:
                 maxLength: 20
                 example:
                   "4.325421"
+          example:
+            [{
+              "LAT": "50.862525",
+              "LON": "4.328120"
+            },{
+              "LAT": "50.865502",
+              "LON": "4.329257"
+            },{
+              "LAT": "50.865468",
+              "LON": "4.323686"
+            },{
+              "LAT": "50.862525",
+              "LON": "4.328120"
+            }]
     Authority:
       type: object
       description: A public or private authority that has responsibilities in relation with the authorisation of UAS operations within a Country.
@@ -446,6 +539,8 @@ components:
           maxLength: 200
         siteURL:
           type: string
+          example:
+            "https://www.authority.com"
         phone:
           type: string
           maxLength: 200
@@ -477,13 +572,21 @@ components:
           type: string
           format: 'date-time'
 
-    UASZonesReply:
+    UASZonesFilterReply:
       type: object
       properties:
         UASZoneList:
           type: array
           items:
             $ref: '#/components/schemas/UASZone'
+        genericReply:
+          $ref: '#/components/schemas/GenericReply'
+
+    UASZoneCreateReply:
+      type: object
+      properties:
+        UASZone:
+          $ref: '#/components/schemas/UASZone'
         genericReply:
           $ref: '#/components/schemas/GenericReply'
 

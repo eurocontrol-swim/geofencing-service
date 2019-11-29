@@ -27,43 +27,52 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from typing import List, Any, Union
+from typing import TypeVar
+
+from geofencing.events.uas_zone_handlers import uas_zone_db_save, get_topic_names, publish_topics, uas_zones_db_delete
+from geofencing.events.uas_zones_subscription_handlers import get_topic_name, publish_topic, \
+    create_sm_subscription, uas_zones_subscription_db_save
 
 __author__ = "EUROCONTROL (SWIM)"
 
-GeoJSONPolygonCoordinates = List[List[List[Union[float, int]]]]
+Context = TypeVar('Context')
 
 
-class CompareMixin:
-    def __eq__(self, other: Any) -> bool:
-        return isinstance(other, self.__class__) and other.__dict__ == self.__dict__
+class Event(list):
+    """
+    Simplistic implementation of event handling.
 
-    def __ne__(self, other: Any) -> bool:
-        return not other == self
+    A list of callables handlers. They all accept a `context` keyword parameter which is supposed to be shared
+    and updated among them.
+    The handlers will be called in ascending order by index.
+    """
+    _type = 'Generic'
 
+    def __call__(self, context: Context):
+        for handler in self:
+            handler(context)
 
-class Point(CompareMixin):
-
-    def __init__(self, lat: float, lon: float) -> None:
-        """
-
-        :param lat:
-        :param lon:
-        """
-        self.lat = lat
-        self.lon = lon
-
-    @classmethod
-    def from_dict(cls, object_dict):
-        return cls(
-            lat=float(object_dict['lat']),
-            lon=float(object_dict['lon']),
-        )
+    def __repr__(self):
+        return f"{self._type} Event({list.__repr__(self)})"
 
 
-def geojson_polygon_coordinates_from_point_list(point_list: List[Point]) -> GeoJSONPolygonCoordinates:
-    return [[[pf.lat, pf.lon] for pf in point_list]]
+create_uas_zones_subscription_event = Event([
+    get_topic_name,
+    publish_topic,
+    create_sm_subscription,
+    uas_zones_subscription_db_save
+])
 
 
-def point_list_from_geojson_polygon_coordinates(coordinates: GeoJSONPolygonCoordinates) -> List[Point]:
-    return [Point(lat=lat, lon=lon) for lat, lon in coordinates[0]]
+create_uas_zone_event = Event([
+    uas_zone_db_save,
+    get_topic_names,
+    publish_topics
+])
+
+
+delete_uas_zone_event = Event([
+    get_topic_names,
+    uas_zones_db_delete,
+    publish_topics
+])

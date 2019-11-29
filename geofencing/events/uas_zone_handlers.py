@@ -27,43 +27,50 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from typing import List, Any, Union
+import logging
+
+from flask import current_app
+from swim_pubsub.core.errors import PubSubClientError
+
+from geofencing.db.models import UASZone, UASZonesSubscription
+from geofencing.db.uas_zones import create_uas_zone as db_create_uas_zone, get_uas_zones as db_get_uas_zones
+from geofencing.db.subscriptions import get_uas_zones_subscriptions as db_get_uas_zones_subscriptions
 
 __author__ = "EUROCONTROL (SWIM)"
 
-GeoJSONPolygonCoordinates = List[List[List[Union[float, int]]]]
+_logger = logging.getLogger(__name__)
 
 
-class CompareMixin:
-    def __eq__(self, other: Any) -> bool:
-        return isinstance(other, self.__class__) and other.__dict__ == self.__dict__
-
-    def __ne__(self, other: Any) -> bool:
-        return not other == self
+class UASZoneContext:
+    def __init__(self, uas_zone: UASZone) -> None:
+        self.uas_zone = uas_zone
+        self.topic_names = []
 
 
-class Point(CompareMixin):
-
-    def __init__(self, lat: float, lon: float) -> None:
-        """
-
-        :param lat:
-        :param lon:
-        """
-        self.lat = lat
-        self.lon = lon
-
-    @classmethod
-    def from_dict(cls, object_dict):
-        return cls(
-            lat=float(object_dict['lat']),
-            lon=float(object_dict['lon']),
-        )
+def uas_zone_db_save(context: UASZoneContext) -> None:
+    db_create_uas_zone(context.uas_zone)
 
 
-def geojson_polygon_coordinates_from_point_list(point_list: List[Point]) -> GeoJSONPolygonCoordinates:
-    return [[[pf.lat, pf.lon] for pf in point_list]]
+def _uas_zone_matches_subscription(uas_zone: UASZone, subscription: UASZonesSubscription):
+    uas_zones = db_get_uas_zones(uas_zones_filter=subscription.uas_zones_filter)
+
+    return uas_zone in uas_zones
 
 
-def point_list_from_geojson_polygon_coordinates(coordinates: GeoJSONPolygonCoordinates) -> List[Point]:
-    return [Point(lat=lat, lon=lon) for lat, lon in coordinates[0]]
+def get_topic_names(context: UASZoneContext) -> None:
+    uas_zones_subscriptions = db_get_uas_zones_subscriptions()
+
+    context.topic_names = [subscription.topic_name for subscription in uas_zones_subscriptions
+                           if _uas_zone_matches_subscription(context.uas_zone, subscription)]
+
+
+def publish_topics(context: UASZoneContext) -> None:
+    for topics_name in context.topic_names:
+        try:
+            current_app.publisher.publish_topic(topics_name)
+        except PubSubClientError as e:
+            _logger.error(str(e))
+
+
+def uas_zones_db_delete(context: UASZoneContext):
+    context.uas_zone.delete()

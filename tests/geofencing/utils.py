@@ -2,27 +2,27 @@
 Copyright 2019 EUROCONTROL
 ==========================================
 
-Redistribution and use in source and binary forms, with or without modification, are permitted provided that the 
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
 following conditions are met:
 
-1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following 
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following
    disclaimer.
-2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following 
+2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
    disclaimer in the documentation and/or other materials provided with the distribution.
-3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products 
+3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products
    derived from this software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ==========================================
 
-Editorial note: this license is an instance of the BSD license template as provided by the Open Source Initiative: 
+Editorial note: this license is an instance of the BSD license template as provided by the Open Source Initiative:
 http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
@@ -35,7 +35,7 @@ from typing import Optional
 from geofencing.common import point_list_from_geojson_polygon_coordinates, GeoJSONPolygonCoordinates
 from geofencing.db.models import AirspaceVolume, AuthorityEntity, ApplicableTimePeriod, CodeYesNoType, UASZone, \
     CodeRestrictionType, CodeUSpaceClassType, CodeZoneType, DataSource, DailySchedule, CodeWeekDay, User, \
-    CodeVerticalReferenceType
+    CodeVerticalReferenceType, Authority, NotificationRequirement, AuthorizationRequirement
 from geofencing.filters import UASZonesFilter, AirspaceVolumeFilter
 
 __author__ = "EUROCONTROL (SWIM)"
@@ -61,13 +61,14 @@ def make_airspace_volume(polygon: GeoJSONPolygonCoordinates,
     )
 
 
-def make_authority() -> AuthorityEntity:
+def make_authority_entity() -> AuthorityEntity:
     result = AuthorityEntity()
-    result.authority_id = get_unique_id()
-    result.name = "AuthorityEntity"
+    result.name = get_unique_id()
     result.contact_name = "AuthorityEntity manager"
     result.service = "AuthorityEntity service"
     result.email = "auth@autority.be"
+    result.site_url = "http://www.autority.be"
+    result.phone = "234234234"
 
     return result
 
@@ -97,6 +98,26 @@ def make_user(username=None, password=None):
     return user
 
 
+def make_notification_requirement() -> NotificationRequirement:
+    return NotificationRequirement(
+        authority=make_authority_entity(),
+        interval_before='interval'
+    )
+
+
+def make_authorization_requirement() -> AuthorizationRequirement:
+    return AuthorizationRequirement(
+        authority=make_authority_entity()
+    )
+
+
+def make_authority() -> Authority:
+    return Authority(
+        requires_notification_to=make_notification_requirement(),
+        requires_authorization_from=make_authorization_requirement()
+    )
+
+
 def make_uas_zone(polygon: GeoJSONPolygonCoordinates) -> UASZone:
     result = UASZone()
     result.identifier = get_unique_id()[:7]
@@ -109,7 +130,7 @@ def make_uas_zone(polygon: GeoJSONPolygonCoordinates) -> UASZone:
     result.message = "message"
     result.country = "BEL"
     result.airspace_volume = make_airspace_volume(polygon)
-    result.authorization_requirement = make_authority()
+    result.authority = make_authority()
     result.applicable_time_period = make_applicable_period()
     result.data_source = DataSource(
         author="Author",

@@ -2,38 +2,40 @@
 Copyright 2019 EUROCONTROL
 ==========================================
 
-Redistribution and use in source and binary forms, with or without modification, are permitted provided that the 
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
 following conditions are met:
 
-1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following 
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following
    disclaimer.
-2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following 
+2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
    disclaimer in the documentation and/or other materials provided with the distribution.
-3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products 
+3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products
    derived from this software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ==========================================
 
-Editorial note: this license is an instance of the BSD license template as provided by the Open Source Initiative: 
+Editorial note: this license is an instance of the BSD license template as provided by the Open Source Initiative:
 http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from dataclasses import dataclass
-
-from marshmallow import Schema, pre_dump, post_dump
+from marshmallow import Schema, pre_dump, post_dump, pre_load, post_load
 from marshmallow.fields import String, Nested, Integer, Dict, Float, AwareDateTime, List, Email, URL, Boolean
 
-from geofencing.common import point_list_from_geojson_polygon_coordinates, Point
-from geofencing.endpoints.utils import get_time_from_string, make_datetime_string_aware
+from geofencing.common import point_list_from_geojson_polygon_coordinates, geojson_polygon_coordinates_from_point_list,\
+    Point
+from geofencing.db.models import UASZone, AuthorityEntity
+from geofencing.endpoints.schemas.filters_schemas import validate_polygon
+from geofencing.endpoints.utils import time_str_from_datetime_str, make_datetime_string_aware, \
+    datetime_str_from_time_str
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -44,14 +46,14 @@ class PointSchema(Schema):
 
 
 class AirspaceVolumeSchema(Schema):
-    polygon = Nested(PointSchema, many=True)
+    polygon = Nested(PointSchema, many=True, validate=validate_polygon)
     lower_limit_in_m = Integer(data_key="lowerLimit", missing=None)
     lower_vertical_reference = String(data_key="lowerVerticalReference", missing=None)
     upper_limit_in_m = Integer(data_key="upperLimit", missing=None)
-    upper_vertival_reference = String(data_key="upperVerticalReference", missing=None)
+    upper_vertical_reference = String(data_key="upperVerticalReference", missing=None)
 
     @pre_dump
-    def handle_geojson_polygon(self, item, many, **kwargs):
+    def handle_geojson_polygon_dump(self, item, many, **kwargs):
         """
         Converts a GeoJSON polygon (as it is found in a mongo polygon field) to a list of Point i.e.:
 
@@ -77,8 +79,17 @@ class AirspaceVolumeSchema(Schema):
         :param kwargs:
         :return:
         """
+        coordinates = item['polygon']['coordinates'] if 'coordinates' in item['polygon'] else item['polygon']
 
-        item['polygon']: List[Point] = point_list_from_geojson_polygon_coordinates(item['polygon']['coordinates'])
+        item['polygon']: List[Point] = point_list_from_geojson_polygon_coordinates(coordinates)
+
+        return item
+
+    @post_load
+    def handle_geojson_polygon_load(self, item, **kwargs):
+        point_list = [Point.from_dict(coords) for coords in item['polygon']]
+
+        item['polygon'] = geojson_polygon_coordinates_from_point_list(point_list)
 
         return item
 
@@ -88,8 +99,15 @@ class DailyScheduleSchema(Schema):
     start_time = AwareDateTime(data_key='startTime', required=True)
     end_time = AwareDateTime(data_key='endTime', required=True)
 
+    @pre_load
+    def convert_time_to_datetime(self, data, **kwargs):
+        data['startTime'] = datetime_str_from_time_str(data['startTime'])
+        data['endTime'] = datetime_str_from_time_str(data['endTime'])
+
+        return data
+
     @post_dump
-    def handle_time_format(self, data, many, **kwargs):
+    def handle_time_format(self, data, **kwargs):
         """
         Makes the dumped datetimes timezone aware as it seems that this info is not kept in mongodb
         TODO: to be checked
@@ -99,8 +117,9 @@ class DailyScheduleSchema(Schema):
         :param kwargs:
         :return:
         """
-        data['startTime'] = get_time_from_string(make_datetime_string_aware(data['startTime']))
-        data['endTime'] = get_time_from_string(make_datetime_string_aware(data['endTime']))
+
+        data['startTime'] = time_str_from_datetime_str(make_datetime_string_aware(data['startTime']))
+        data['endTime'] = time_str_from_datetime_str(make_datetime_string_aware(data['endTime']))
 
         return data
 
@@ -125,8 +144,12 @@ class AuthorityEntitySchema(Schema):
     contact_name = String(data_key='contactName')
     service = String()
     email = Email()
-    site_url = URL(data_key='siteUrl')
+    site_url = URL(data_key='siteURL')
     phone = String()
+
+    @post_load
+    def make_mongo_object(self, data, **kwargs):
+        return AuthorityEntity(**data)
 
 
 class NotificationRequirementSchema(Schema):
@@ -161,6 +184,7 @@ class UASZoneSchema(Schema):
     name = String(required=True)
     type = String()
     restriction = String()
+    restriction_conditions = List(String(), data_key='restrictionConditions')
     region = Integer()
     data_capture_prohibition = String(data_key='dataCaptureProhibition')
     u_space_class = String(data_key='uSpaceClass')
@@ -173,6 +197,10 @@ class UASZoneSchema(Schema):
     authority = Nested(AuthoritySchema)
     data_source = Nested(DataSourceSchema, data_key='dataSource')
     extended_properties = Dict(data_key='extendedProperties')
+
+    @post_load
+    def make_mongo_object(self, data, **kwargs):
+        return UASZone(**data)
 
 
 class SubscriptionSchema(Schema):

@@ -30,26 +30,40 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 import hashlib
 import json
 import uuid
-from abc import ABC, abstractmethod
 from functools import partial
-from typing import Optional, List, Type
+from typing import Optional
 
 from flask import current_app
 from subscription_manager_client.models import Subscription as SMSubscription, Topic as SMTopic
+from subscription_manager_client.subscription_manager import SubscriptionManagerClient
+from swim_backend.local import AppContextProxy
 from swim_pubsub.core.topics import Topic
 
 from geofencing.db.models import UASZonesSubscription
 from geofencing.db.uas_zones import get_uas_zones as db_get_uas_zones
 from geofencing.db.subscriptions import create_uas_zones_subscription as db_create_uas_zones_subscription
-from geofencing.endpoints.schemas.filters import UASZonesFilterSchema
+from geofencing.endpoints.schemas.filters_schemas import UASZonesFilterSchema
 from geofencing.filters import UASZonesFilter
-from geofencing.pubsub import sm_client
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
+def _get_sm_client_from_config() -> SubscriptionManagerClient:
+    return SubscriptionManagerClient.create(
+        host=current_app.config['SUBSCRIPTION-MANAGER']['host'],
+        https=current_app.config['SUBSCRIPTION-MANAGER']['https'],
+        timeout=current_app.config['SUBSCRIPTION-MANAGER']['timeout'],
+        verify=current_app.config['SUBSCRIPTION-MANAGER']['verify'],
+        username=current_app.config['GEO_SM_USER'],
+        password=current_app.config['GEO_SM_PASS']
+    )
+
+
+sm_client = AppContextProxy(_get_sm_client_from_config)
+
+
 class UASZonesSubscriptionContext:
-    def __init__(self, uas_zones_filter: UASZonesFilter):
+    def __init__(self, uas_zones_filter: UASZonesFilter) -> None:
         self.uas_zones_filter: UASZonesFilter = uas_zones_filter
         self.topic_name: Optional[str] = None
         self.sm_topic: Optional[SMTopic] = None
@@ -57,71 +71,34 @@ class UASZonesSubscriptionContext:
         self.uas_zones_subscription: Optional[UASZonesSubscription] = None
 
 
-class Builder(ABC):
-
-    @classmethod
-    @abstractmethod
-    def build(cls, context: UASZonesSubscriptionContext):
-        pass
+def get_topic_name(context: UASZonesSubscriptionContext) -> None:
+    uas_zones_filter_dict = UASZonesFilterSchema().dump(context.uas_zones_filter)
+    context.topic_name = hashlib.sha1(json.dumps(uas_zones_filter_dict).encode()).hexdigest()
 
 
-class TopicNameBuilder(Builder):
+def publish_topic(context: UASZonesSubscriptionContext) -> None:
+    topic = Topic(topic_name=context.topic_name,
+                  data_handler=partial(db_get_uas_zones, uas_zones_filter=context.uas_zones_filter))
 
-    @classmethod
-    def build(cls, context: UASZonesSubscriptionContext):
-        uas_zones_filter_dict = UASZonesFilterSchema().dump(context.uas_zones_filter)
-        context.topic_name = hashlib.sha1(json.dumps(uas_zones_filter_dict).encode()).hexdigest()
+    current_app.publisher.register_topic(topic)
 
-
-class TopicPublisherBuilder(Builder):
-
-    @classmethod
-    def build(cls, context: UASZonesSubscriptionContext):
-        topic = Topic(topic_name=context.topic_name,
-                      data_handler=partial(db_get_uas_zones, uas_zones_filter=context.uas_zones_filter))
-
-        current_app.publisher.register_topic(topic)
-
-        current_app.publisher.publish_topic(context.topic_name)
+    current_app.publisher.publish_topic(context.topic_name)
 
 
-class SMSubscriptionBuilder(Builder):
+def create_sm_subscription(context: UASZonesSubscriptionContext) -> None:
+    sm_subscription = SMSubscription(topic_id=context.sm_topic.id)
 
-    @classmethod
-    def build(cls, context: UASZonesSubscriptionContext):
-        sm_subscription = SMSubscription(topic_id=context.sm_topic.id)
-
-        context.sm_subscription = sm_client.post_subscription(sm_subscription)
+    context.sm_subscription = sm_client.post_subscription(sm_subscription)
 
 
-class UASZonesSubscriptionBuilder(Builder):
+def uas_zones_subscription_db_save(context: UASZonesSubscriptionContext) -> None:
+    subscription = UASZonesSubscription()
+    subscription.id = uuid.uuid4().hex,
+    subscription.topic_name = context.topic_name,
+    subscription.publication_location = context.sm_subscription.queue,
+    subscription.uas_zones_filter = context.uas_zones_filter
+    subscription.active = True
 
-    @classmethod
-    def build(cls, context: UASZonesSubscriptionContext):
-        subscription = UASZonesSubscription()
-        subscription.id = uuid.uuid4().hex,
-        subscription.topic_name = context.topic_name,
-        subscription.publication_location = context.sm_subscription.queue,
-        subscription.uas_zones_filter = context.uas_zones_filter
-        subscription.active = True
+    db_create_uas_zones_subscription(subscription)
 
-        db_create_uas_zones_subscription(subscription)
-
-        context.uas_zones_subscription = subscription
-
-
-_UAS_ZONES_SUBSCRIPTIONS_BUILDERS: List[Type[Builder]] = [
-    TopicNameBuilder,
-    TopicPublisherBuilder,
-    SMSubscriptionBuilder,
-    UASZonesSubscriptionBuilder
-]
-
-
-def _build_uas_zones_subscribtion(context: UASZonesSubscriptionContext, builders: List[Type[Builder]]):
-    for builder in builders:
-        builder.build(context)
-
-
-def build_uas_zones_subscribtion(context: UASZonesSubscriptionContext) -> None:
-    return _build_uas_zones_subscribtion(context=context, builders=_UAS_ZONES_SUBSCRIPTIONS_BUILDERS)
+    context.uas_zones_subscription = subscription

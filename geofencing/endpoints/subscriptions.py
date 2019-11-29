@@ -28,6 +28,7 @@ http://opensource.org/licenses/BSD-3-Clause
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
 import logging
+from typing import Tuple
 
 from flask import request
 from marshmallow import ValidationError
@@ -37,10 +38,11 @@ from geofencing.db.subscriptions import update_uas_zones_subscription as db_upda
     get_uas_zones_subscription_by_id, delete_uas_zones_subscription as db_delete_uas_zones_subscription
 from geofencing.endpoints.reply import handle_response, SubscribeToUASZonesUpdatesReply, Reply, GenericReply, \
     RequestStatus
-from geofencing.endpoints.schemas.db import SubscriptionSchema
-from geofencing.endpoints.schemas.reply import SubscribeToUASZonesUpdatesReplySchema, ReplySchema
-from geofencing.endpoints.schemas.filters import UASZonesFilterSchema
-from geofencing.pubsub.uas_zones_subscription_builder import build_uas_zones_subscribtion, UASZonesSubscriptionContext
+from geofencing.endpoints.schemas.db_schemas import SubscriptionSchema
+from geofencing.endpoints.schemas.reply_schemas import SubscribeToUASZonesUpdatesReplySchema, ReplySchema
+from geofencing.endpoints.schemas.filters_schemas import UASZonesFilterSchema
+from geofencing.events.uas_zones_subscription_handlers import UASZonesSubscriptionContext
+from geofencing.events.events import create_uas_zones_subscription_event
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -48,7 +50,11 @@ _logger = logging.getLogger(__name__)
 
 
 @handle_response(SubscribeToUASZonesUpdatesReplySchema)
-def create_subscription_to_uas_zones_updates():
+def create_subscription_to_uas_zones_updates() -> Tuple[SubscribeToUASZonesUpdatesReply, int]:
+    """
+
+    :return:
+    """
     try:
         uas_zones_filter = UASZonesFilterSchema().load(request.get_json())
     except ValidationError as e:
@@ -56,15 +62,20 @@ def create_subscription_to_uas_zones_updates():
 
     context = UASZonesSubscriptionContext(uas_zones_filter=uas_zones_filter)
 
-    build_uas_zones_subscribtion(context=context)
+    create_uas_zones_subscription_event(context=context)
 
     uas_zones_subscription = context.uas_zones_subscription
 
-    return SubscribeToUASZonesUpdatesReply(uas_zones_subscription.id, uas_zones_subscription.publication_location)
+    return SubscribeToUASZonesUpdatesReply(uas_zones_subscription.id, uas_zones_subscription.publication_location), 201
 
 
 @handle_response(ReplySchema)
-def update_subscription_to_uas_zones_updates(subscription_id: str):
+def update_subscription_to_uas_zones_updates(subscription_id: str) -> Tuple[Reply, int]:
+    """
+
+    :param subscription_id:
+    :return:
+    """
     subscription = get_uas_zones_subscription_by_id(subscription_id)
 
     if subscription is None:
@@ -79,11 +90,16 @@ def update_subscription_to_uas_zones_updates(subscription_id: str):
 
     db_update_uas_zones_subscription(subscription)
 
-    return Reply(generic_reply=GenericReply(request_status=RequestStatus.OK.value))
+    return Reply(generic_reply=GenericReply(request_status=RequestStatus.OK.value)), 200
 
 
 @handle_response(ReplySchema)
-def delete_subscription_to_uas_zones_updates(subscription_id: str):
+def delete_subscription_to_uas_zones_updates(subscription_id: str) -> Tuple[Reply, int]:
+    """
+
+    :param subscription_id:
+    :return:
+    """
     subscription = get_uas_zones_subscription_by_id(subscription_id)
 
     if subscription is None:
@@ -91,4 +107,4 @@ def delete_subscription_to_uas_zones_updates(subscription_id: str):
 
     db_delete_uas_zones_subscription(subscription)
 
-    return Reply(generic_reply=GenericReply(request_status=RequestStatus.OK.value))
+    return Reply(generic_reply=GenericReply(request_status=RequestStatus.OK.value)), 204
