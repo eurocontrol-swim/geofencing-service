@@ -27,7 +27,10 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from typing import List, Any, Union
+from datetime import datetime
+from typing import List, Any, Union, Dict
+
+from dateutil import parser
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -59,6 +62,12 @@ class Point(CompareMixin):
             lat=float(object_dict['lat']),
             lon=float(object_dict['lon']),
         )
+
+    def to_dict(self) -> Dict[str, float]:
+        return {
+            "lat": self.lat,
+            "lon": self.lon
+        }
 
 
 def geojson_polygon_coordinates_from_point_list(point_list: List[Point]) -> GeoJSONPolygonCoordinates:

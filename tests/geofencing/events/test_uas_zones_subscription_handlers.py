@@ -27,53 +27,29 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-import logging
+from unittest.mock import Mock
 
-from flask import current_app
-from swim_pubsub.core.errors import PubSubClientError
-
-from geofencing.db.models import UASZone, UASZonesSubscription
-from geofencing.db.uas_zones import create_uas_zone as db_create_uas_zone, get_uas_zones as db_get_uas_zones
-from geofencing.db.subscriptions import get_uas_zones_subscriptions as db_get_uas_zones_subscriptions
-from geofencing.filters import UASZonesFilter
+from geofencing.events.uas_zones_subscription_handlers import UASZonesSubscriptionContext, publish_topic
+from tests.geofencing.utils import make_uas_zones_filter_from_db_uas_zone, BASILIQUE_POLYGON, make_uas_zone
 
 __author__ = "EUROCONTROL (SWIM)"
 
-_logger = logging.getLogger(__name__)
 
+def test_publish_topic(test_client):
+    app = test_client.application
 
-class UASZoneContext:
-    def __init__(self, uas_zone: UASZone) -> None:
-        self.uas_zone = uas_zone
-        self.topic_names = []
+    mock_register_topic = Mock()
+    mock_publish_topic = Mock()
+    app.publisher.register_topic = mock_register_topic
+    app.publisher.publish_topic = mock_publish_topic
 
+    uas_zone = make_uas_zone(BASILIQUE_POLYGON)
+    uas_zones_filter = make_uas_zones_filter_from_db_uas_zone(uas_zone)
+    context = UASZonesSubscriptionContext(uas_zones_filter=uas_zones_filter)
+    context.topic_name = 'topic_name1'
 
-def uas_zone_db_save(context: UASZoneContext) -> None:
-    db_create_uas_zone(context.uas_zone)
+    publish_topic(context)
+    mock_register_topic_arg = mock_register_topic.call_args[0][0]
+    assert context.topic_name == mock_register_topic_arg.name
 
-
-def _uas_zone_matches_subscription(uas_zone: UASZone, subscription: UASZonesSubscription):
-    uas_zones_filter = UASZonesFilter.from_dict(subscription.uas_zones_filter)
-
-    uas_zones = db_get_uas_zones(uas_zones_filter=uas_zones_filter)
-
-    return uas_zone in uas_zones
-
-
-def get_relevant_topic_names(context: UASZoneContext) -> None:
-    uas_zones_subscriptions = db_get_uas_zones_subscriptions()
-
-    context.topic_names = [subscription.topic_name for subscription in uas_zones_subscriptions
-                           if _uas_zone_matches_subscription(context.uas_zone, subscription)]
-
-
-def publish_relevant_topics(context: UASZoneContext) -> None:
-    for topics_name in context.topic_names:
-        try:
-            current_app.publisher.publish_topic(topics_name)
-        except PubSubClientError as e:
-            _logger.error(str(e))
-
-
-def uas_zones_db_delete(context: UASZoneContext):
-    context.uas_zone.delete()
+    mock_publish_topic.assert_called_once_with(context.topic_name, context=context.uas_zones_filter)

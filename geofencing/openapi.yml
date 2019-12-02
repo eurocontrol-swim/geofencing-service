@@ -213,7 +213,7 @@ paths:
           name: subscription_id
           description: the id of the subscription to be updated
           schema:
-            type: integer
+            type: string
       responses:
         '204':
           description: Successfull unsubscribe
@@ -250,7 +250,7 @@ paths:
           name: subscription_id
           description: the id of the subscription to be updated
           schema:
-            type: integer
+            type: string
       requestBody:
         content:
           application/json:

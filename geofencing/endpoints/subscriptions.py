@@ -41,8 +41,7 @@ from geofencing.endpoints.reply import handle_response, SubscribeToUASZonesUpdat
 from geofencing.endpoints.schemas.db_schemas import SubscriptionSchema
 from geofencing.endpoints.schemas.reply_schemas import SubscribeToUASZonesUpdatesReplySchema, ReplySchema
 from geofencing.endpoints.schemas.filters_schemas import UASZonesFilterSchema
-from geofencing.events.uas_zones_subscription_handlers import UASZonesSubscriptionContext
-from geofencing.events.events import create_uas_zones_subscription_event
+from geofencing.events import events
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -60,11 +59,7 @@ def create_subscription_to_uas_zones_updates() -> Tuple[SubscribeToUASZonesUpdat
     except ValidationError as e:
         raise BadRequestError(str(e))
 
-    context = UASZonesSubscriptionContext(uas_zones_filter=uas_zones_filter)
-
-    create_uas_zones_subscription_event(context=context)
-
-    uas_zones_subscription = context.uas_zones_subscription
+    uas_zones_subscription = events.create_uas_zones_subscription_event(uas_zones_filter=uas_zones_filter)
 
     return SubscribeToUASZonesUpdatesReply(uas_zones_subscription.id, uas_zones_subscription.publication_location), 201
 

@@ -29,9 +29,10 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 """
 from typing import TypeVar
 
-from geofencing.events.uas_zone_handlers import uas_zone_db_save, get_topic_names, publish_topics, uas_zones_db_delete
-from geofencing.events.uas_zones_subscription_handlers import get_topic_name, publish_topic, \
-    create_sm_subscription, uas_zones_subscription_db_save
+from geofencing.db.models import UASZonesSubscription, UASZone
+from geofencing.events import uas_zone_handlers
+from geofencing.events import uas_zones_subscription_handlers
+from geofencing.filters import UASZonesFilter
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -52,27 +53,52 @@ class Event(list):
         for handler in self:
             handler(context)
 
+        return context
+
     def __repr__(self):
         return f"{self._type} Event({list.__repr__(self)})"
 
 
-create_uas_zones_subscription_event = Event([
-    get_topic_name,
-    publish_topic,
-    create_sm_subscription,
-    uas_zones_subscription_db_save
+_create_uas_zones_subscription_event = Event([
+    uas_zones_subscription_handlers.get_topic_name,
+    uas_zones_subscription_handlers.publish_topic,
+    uas_zones_subscription_handlers.get_or_create_sm_topic,
+    uas_zones_subscription_handlers.create_sm_subscription,
+    uas_zones_subscription_handlers.uas_zones_subscription_db_save
 ])
 
 
-create_uas_zone_event = Event([
-    uas_zone_db_save,
-    get_topic_names,
-    publish_topics
+def create_uas_zones_subscription_event(uas_zones_filter: UASZonesFilter) -> UASZonesSubscription:
+    context = uas_zones_subscription_handlers.UASZonesSubscriptionContext(uas_zones_filter=uas_zones_filter)
+
+    _create_uas_zones_subscription_event(context=context)
+
+    return context.uas_zones_subscription
+
+
+_create_uas_zone_event = Event([
+    uas_zone_handlers.uas_zone_db_save,
+    uas_zone_handlers.get_relevant_topic_names,
+    uas_zone_handlers.publish_relevant_topics
 ])
 
 
-delete_uas_zone_event = Event([
-    get_topic_names,
-    uas_zones_db_delete,
-    publish_topics
+def create_uas_zone_event(uas_zone: UASZone) -> UASZone:
+    context = uas_zone_handlers.UASZoneContext(uas_zone=uas_zone)
+
+    _create_uas_zone_event(context=context)
+
+    return context.uas_zone
+
+
+_delete_uas_zone_event = Event([
+    uas_zone_handlers.get_relevant_topic_names,
+    uas_zone_handlers.uas_zones_db_delete,
+    uas_zone_handlers.publish_relevant_topics
 ])
+
+
+def delete_uas_zone_event(uas_zone: UASZone) -> None:
+    context = uas_zone_handlers.UASZoneContext(uas_zone=uas_zone)
+
+    _delete_uas_zone_event(context=context)

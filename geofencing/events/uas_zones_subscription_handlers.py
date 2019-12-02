@@ -30,8 +30,7 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 import hashlib
 import json
 import uuid
-from functools import partial
-from typing import Optional
+from typing import Optional, Any, List
 
 from flask import current_app
 from subscription_manager_client.models import Subscription as SMSubscription, Topic as SMTopic
@@ -76,13 +75,25 @@ def get_topic_name(context: UASZonesSubscriptionContext) -> None:
     context.topic_name = hashlib.sha1(json.dumps(uas_zones_filter_dict).encode()).hexdigest()
 
 
+def data_handler(context: Optional[Any] = None):
+    return db_get_uas_zones(uas_zones_filter=context)
+
+
 def publish_topic(context: UASZonesSubscriptionContext) -> None:
-    topic = Topic(topic_name=context.topic_name,
-                  data_handler=partial(db_get_uas_zones, uas_zones_filter=context.uas_zones_filter))
+    topic = Topic(topic_name=context.topic_name, data_handler=data_handler)
 
     current_app.publisher.register_topic(topic)
 
-    current_app.publisher.publish_topic(context.topic_name)
+    current_app.publisher.publish_topic(context.topic_name, context=context.uas_zones_filter)
+
+
+def get_or_create_sm_topic(context: UASZonesSubscriptionContext) -> None:
+    sm_topics: List[SMTopic] = sm_client.get_topics()
+
+    try:
+        context.sm_topic = [topic for topic in sm_topics if topic.name == context.topic_name][0]
+    except IndexError:
+        context.sm_topic = sm_client.post_topic(SMTopic(name=context.topic_name))
 
 
 def create_sm_subscription(context: UASZonesSubscriptionContext) -> None:
@@ -96,7 +107,7 @@ def uas_zones_subscription_db_save(context: UASZonesSubscriptionContext) -> None
     subscription.id = uuid.uuid4().hex,
     subscription.topic_name = context.topic_name,
     subscription.publication_location = context.sm_subscription.queue,
-    subscription.uas_zones_filter = context.uas_zones_filter
+    subscription.uas_zones_filter = context.uas_zones_filter.to_dict()
     subscription.active = True
 
     db_create_uas_zones_subscription(subscription)

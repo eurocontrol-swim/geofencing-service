@@ -30,12 +30,12 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 import uuid
 from base64 import b64encode
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Optional, Dict
 
 from geofencing.common import point_list_from_geojson_polygon_coordinates, GeoJSONPolygonCoordinates
 from geofencing.db.models import AirspaceVolume, AuthorityEntity, ApplicableTimePeriod, CodeYesNoType, UASZone, \
     CodeRestrictionType, CodeUSpaceClassType, CodeZoneType, DataSource, DailySchedule, CodeWeekDay, User, \
-    CodeVerticalReferenceType, Authority, NotificationRequirement, AuthorizationRequirement
+    CodeVerticalReferenceType, Authority, NotificationRequirement, AuthorizationRequirement, UASZonesSubscription
 from geofencing.filters import UASZonesFilter, AirspaceVolumeFilter
 
 __author__ = "EUROCONTROL (SWIM)"
@@ -140,7 +140,7 @@ def make_uas_zone(polygon: GeoJSONPolygonCoordinates) -> UASZone:
     return result
 
 
-def make_uas_zones_filter_from_db_uas_zone(uas_zone: UASZone):
+def make_uas_zones_filter_from_db_uas_zone(uas_zone: UASZone) -> UASZonesFilter:
     uas_zones_filter = UASZonesFilter(
         airspace_volume=AirspaceVolumeFilter(
             polygon=point_list_from_geojson_polygon_coordinates(uas_zone.airspace_volume.polygon),
@@ -159,12 +159,23 @@ def make_uas_zones_filter_from_db_uas_zone(uas_zone: UASZone):
     return uas_zones_filter
 
 
-def make_basic_auth_header(username, password):
+def make_basic_auth_header(username, password) -> Dict[str, str]:
     basic_auth_str = b64encode(bytes(f'{username}:{password}', 'utf-8'))
 
     result = {'Authorization': f"Basic {basic_auth_str.decode('utf-8')}"}
 
     return result
+
+
+def make_uas_zones_subscription() -> UASZonesSubscription:
+    subscription = UASZonesSubscription()
+    subscription.id = get_unique_id()
+    subscription.publication_location = get_unique_id()
+    subscription.active = True
+    subscription.uas_zones_filter = {'airspace_volume': {}}
+    subscription.topic_name = get_unique_id()
+
+    return subscription
 
 
 BASILIQUE_POLYGON: GeoJSONPolygonCoordinates = [

@@ -30,6 +30,7 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 import json
 from datetime import timedelta
 from typing import Dict, Any, Tuple
+from unittest import mock
 
 import pytest
 
@@ -47,6 +48,7 @@ __author__ = "EUROCONTROL (SWIM)"
 
 URL_UAS_ZONES_FILTER = f'{BASE_PATH}/uas_zones/filter/'
 URL_UAS_ZONES = f'{BASE_PATH}/uas_zones/'
+
 
 @pytest.fixture
 def db_uas_zone_basilique():
@@ -160,7 +162,7 @@ def uas_zone_input():
     }
 
 
-def test_get_uas_zones__invalid_user__returns_nok(test_client):
+def test_get_uas_zones__invalid_user__returns_nok__401(test_client):
 
     response = test_client.post(URL_UAS_ZONES_FILTER, headers=make_basic_auth_header('fake_username', 'fake_password'))
 
@@ -175,7 +177,7 @@ def test_get_uas_zones__invalid_user__returns_nok(test_client):
     ([{"LAT": "1.0", "LON": "2.0"}, {"LAT": "3.0", "LON": "4.0"}, {"LAT": "5.0", "LON": "6.0"}],
      "{'airspaceVolume': {'polygon': ['Loop is not closed']}}"),
 ])
-def test_get_uas_zones__invalid_polygon_input__returns_nok(test_client, test_user, polygon,
+def test_get_uas_zones__invalid_polygon_input__returns_nok__400(test_client, test_user, polygon,
                                                            expected_exception_description):
     data = {
         "airspaceVolume": {
@@ -203,7 +205,7 @@ def test_get_uas_zones__invalid_polygon_input__returns_nok(test_client, test_use
     assert expected_exception_description == response_data['genericReply']["RequestExceptionDescription"]
 
 
-def test_get_uas_zones__valid_input__returns_ok_and_empty_uas_zone_list(test_client, test_user):
+def test_get_uas_zones__valid_input__returns_ok_and_empty_uas_zone_list__200(test_client, test_user):
     data = {
         "airspaceVolume": {
             "lowerLimit": 0,
@@ -250,42 +252,49 @@ def test_get_uas_zones__valid_input__returns_ok_and_empty_uas_zone_list(test_cli
 def test_get_uas_zones__filter_by_airspace_volume__polygon(test_client, test_user,
                                                            filter_with_intersecting_airspace_volume,
                                                            filter_with_non_intersecting_airspace_volume):
-    response_data, status_code = _post_uas_zones_filter(test_client, test_user, filter_with_intersecting_airspace_volume)
+    response_data, status_code = _post_uas_zones_filter(test_client, test_user,
+                                                        filter_with_intersecting_airspace_volume)
     assert 200 == status_code
     assert 1 == len(response_data['UASZoneList'])
 
-    response_data, status_code = _post_uas_zones_filter(test_client, test_user, filter_with_non_intersecting_airspace_volume)
+    response_data, status_code = _post_uas_zones_filter(test_client, test_user,
+                                                        filter_with_non_intersecting_airspace_volume)
     assert 200 == status_code
     assert 0 == len(response_data['UASZoneList'])
 
 
 def test_get_uas_zones__filter_by_airspace_volume__upper_lower_limit(test_client, test_user,
                                                                      filter_with_intersecting_airspace_volume):
-    response_data, status_code = _post_uas_zones_filter(test_client, test_user, filter_with_intersecting_airspace_volume)
+    response_data, status_code = _post_uas_zones_filter(test_client, test_user,
+                                                        filter_with_intersecting_airspace_volume)
     assert 200 == status_code
     assert 1 == len(response_data['UASZoneList'])
 
     filter_with_intersecting_airspace_volume.airspace_volume.upper_limit_in_m -= 1
-    response_data, status_code = _post_uas_zones_filter(test_client, test_user, filter_with_intersecting_airspace_volume)
+    response_data, status_code = _post_uas_zones_filter(test_client, test_user,
+                                                        filter_with_intersecting_airspace_volume)
     assert 200 == status_code
     assert 0 == len(response_data['UASZoneList'])
 
     filter_with_intersecting_airspace_volume.airspace_volume.upper_limit_in_m += 1
     filter_with_intersecting_airspace_volume.airspace_volume.lower_limit_in_m += 1
-    response_data, status_code = _post_uas_zones_filter(test_client, test_user, filter_with_intersecting_airspace_volume)
+    response_data, status_code = _post_uas_zones_filter(test_client, test_user,
+                                                        filter_with_intersecting_airspace_volume)
     assert 200 == status_code
     assert 0 == len(response_data['UASZoneList'])
 
 
 def test_get_uas_zones__filter_by_regions(test_client, test_user, filter_with_intersecting_airspace_volume):
 
-    response_data, status_code = _post_uas_zones_filter(test_client, test_user, filter_with_intersecting_airspace_volume)
+    response_data, status_code = _post_uas_zones_filter(test_client, test_user,
+                                                        filter_with_intersecting_airspace_volume)
     assert 200 == status_code
     assert 1 == len(response_data['UASZoneList'])
 
     filter_with_intersecting_airspace_volume.regions = [100000]
 
-    response_data, status_code = _post_uas_zones_filter(test_client, test_user, filter_with_intersecting_airspace_volume)
+    response_data, status_code = _post_uas_zones_filter(test_client, test_user,
+                                                        filter_with_intersecting_airspace_volume)
     assert 200 == status_code
     assert 0 == len(response_data['UASZoneList'])
 
@@ -293,20 +302,23 @@ def test_get_uas_zones__filter_by_regions(test_client, test_user, filter_with_in
 def test_get_uas_zones__filter_by_applicable_time_period(test_client, test_user,
                                                          filter_with_intersecting_airspace_volume):
 
-    response_data, status_code = _post_uas_zones_filter(test_client, test_user, filter_with_intersecting_airspace_volume)
+    response_data, status_code = _post_uas_zones_filter(test_client, test_user,
+                                                        filter_with_intersecting_airspace_volume)
     assert 200 == status_code
     assert 1 == len(response_data['UASZoneList'])
 
     filter_with_intersecting_airspace_volume.start_date_time += timedelta(days=1)
 
-    response_data, status_code = _post_uas_zones_filter(test_client, test_user, filter_with_intersecting_airspace_volume)
+    response_data, status_code = _post_uas_zones_filter(test_client, test_user,
+                                                        filter_with_intersecting_airspace_volume)
     assert 200 == status_code
     assert 0 == len(response_data['UASZoneList'])
 
     filter_with_intersecting_airspace_volume.start_date_time -= timedelta(days=1)
     filter_with_intersecting_airspace_volume.end_date_time -= timedelta(days=1)
 
-    response_data, status_code = _post_uas_zones_filter(test_client, test_user, filter_with_intersecting_airspace_volume)
+    response_data, status_code = _post_uas_zones_filter(test_client, test_user,
+                                                        filter_with_intersecting_airspace_volume)
     assert 200 == status_code
     assert 0 == len(response_data['UASZoneList'])
 
@@ -314,13 +326,15 @@ def test_get_uas_zones__filter_by_applicable_time_period(test_client, test_user,
 def test_get_uas_zones__filter_by_updated_date_time(test_client, test_user, filter_with_intersecting_airspace_volume):
     filter_with_intersecting_airspace_volume.updated_after_date_time -= timedelta(days=1)
 
-    response_data, status_code = _post_uas_zones_filter(test_client, test_user, filter_with_intersecting_airspace_volume)
+    response_data, status_code = _post_uas_zones_filter(test_client, test_user,
+                                                        filter_with_intersecting_airspace_volume)
     assert 200 == status_code
     assert 1 == len(response_data['UASZoneList'])
 
     filter_with_intersecting_airspace_volume.updated_after_date_time += timedelta(days=2)
 
-    response_data, status_code = _post_uas_zones_filter(test_client, test_user, filter_with_intersecting_airspace_volume)
+    response_data, status_code = _post_uas_zones_filter(test_client, test_user,
+                                                        filter_with_intersecting_airspace_volume)
     assert 200 == status_code
     assert 0 == len(response_data['UASZoneList'])
 
@@ -513,14 +527,17 @@ def test_create_uas_zone___invalid_user__returns_nok__401(test_client):
 def test_create_uas_zone__valid_input__object_is_saved__returns_ok__201(test_client, test_user, uas_zone_input,
                                                                         expected_uas_zone_output):
 
-    response = test_client.post(URL_UAS_ZONES, data=json.dumps(uas_zone_input), content_type='application/json',
-                                headers=make_basic_auth_header(test_user.username, DEFAULT_LOGIN_PASS))
+    uas_zone = make_uas_zone(BASILIQUE_POLYGON)
 
-    response_data = json.loads(response.data)
+    with mock.patch('geofencing.events.events.create_uas_zone_event', return_value=uas_zone):
+        response = test_client.post(URL_UAS_ZONES, data=json.dumps(uas_zone_input), content_type='application/json',
+                                    headers=make_basic_auth_header(test_user.username, DEFAULT_LOGIN_PASS))
 
-    assert 201 == response.status_code
-    assert "OK" == response_data['genericReply']['RequestStatus']
-    assert expected_uas_zone_output == response_data['UASZone']
+        response_data = json.loads(response.data)
+
+        assert 201 == response.status_code
+        assert "OK" == response_data['genericReply']['RequestStatus']
+        assert expected_uas_zone_output == response_data['UASZone']
 
 
 def test_create_uas_zone__invalid_airspace_volume__not_enough_points__returns_nok__400(test_client, test_user,
@@ -535,7 +552,8 @@ def test_create_uas_zone__invalid_airspace_volume__not_enough_points__returns_no
 
     assert 400 == response.status_code
     assert "NOK" == response_data['genericReply']['RequestStatus']
-    assert "[{'LAT': '50.862525', 'LON': '4.32812'}] is too short" == response_data['genericReply']['RequestExceptionDescription']
+    assert "[{'LAT': '50.862525', 'LON': '4.32812'}] is too short" == \
+           response_data['genericReply']['RequestExceptionDescription']
 
 
 def test_create_uas_zone__invalid_airspace_volume__not_closing_loop__returns_nok__400(test_client, test_user,
@@ -550,7 +568,8 @@ def test_create_uas_zone__invalid_airspace_volume__not_closing_loop__returns_nok
 
     assert 400 == response.status_code
     assert "NOK" == response_data['genericReply']['RequestStatus']
-    assert "{'airspaceVolume': {'polygon': ['Loop is not closed']}}" == response_data['genericReply']['RequestExceptionDescription']
+    assert "{'airspaceVolume': {'polygon': ['Loop is not closed']}}" == \
+           response_data['genericReply']['RequestExceptionDescription']
 
 
 @pytest.mark.parametrize('invalid_identifier, expected_message', [
@@ -590,7 +609,8 @@ def test_delete_uas_zone___invalid_identifier__returns_nok__404(test_client, tes
     assert 404 == response.status_code
     response_data = json.loads(response.data)
     assert "NOK" == response_data['genericReply']['RequestStatus']
-    assert "UASZone with identifier 'invalid_identifier' does not exist" == response_data['genericReply']["RequestExceptionDescription"]
+    assert "UASZone with identifier 'invalid_identifier' does not exist" == \
+           response_data['genericReply']["RequestExceptionDescription"]
 
 
 def test_delete_uas_zone___valid_identifier__uas_zone_is_deleted__returns_ok__204(test_client, test_user,

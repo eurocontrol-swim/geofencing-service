@@ -27,53 +27,61 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-import logging
+import pytest
+from mongoengine import DoesNotExist
 
-from flask import current_app
-from swim_pubsub.core.errors import PubSubClientError
-
-from geofencing.db.models import UASZone, UASZonesSubscription
-from geofencing.db.uas_zones import create_uas_zone as db_create_uas_zone, get_uas_zones as db_get_uas_zones
-from geofencing.db.subscriptions import get_uas_zones_subscriptions as db_get_uas_zones_subscriptions
-from geofencing.filters import UASZonesFilter
+from geofencing.db.models import UASZonesSubscription
+from geofencing.db.subscriptions import get_uas_zones_subscriptions, get_uas_zones_subscription_by_id, \
+    create_uas_zones_subscription, update_uas_zones_subscription, delete_uas_zones_subscription
+from tests.geofencing.utils import make_uas_zones_subscription
 
 __author__ = "EUROCONTROL (SWIM)"
 
-_logger = logging.getLogger(__name__)
+
+def test_get_uas_zones_subscriptions():
+    subscription = make_uas_zones_subscription()
+    subscription.save()
+
+    db_subscriptions = get_uas_zones_subscriptions()
+    assert 1 == len(db_subscriptions)
+    assert subscription in db_subscriptions
 
 
-class UASZoneContext:
-    def __init__(self, uas_zone: UASZone) -> None:
-        self.uas_zone = uas_zone
-        self.topic_names = []
+def test_get_uas_zones_subscriptionby_id():
+    subscription1 = make_uas_zones_subscription()
+    subscription2 = make_uas_zones_subscription()
+    subscription1.save()
+
+    assert get_uas_zones_subscription_by_id(subscription2.id) is None
+    assert subscription1 == get_uas_zones_subscription_by_id(subscription1.id)
 
 
-def uas_zone_db_save(context: UASZoneContext) -> None:
-    db_create_uas_zone(context.uas_zone)
+def test_create_uas_zones_subscription():
+    subscription = make_uas_zones_subscription()
+
+    create_uas_zones_subscription(subscription)
+
+    assert subscription == UASZonesSubscription.objects.get(id=subscription.id)
 
 
-def _uas_zone_matches_subscription(uas_zone: UASZone, subscription: UASZonesSubscription):
-    uas_zones_filter = UASZonesFilter.from_dict(subscription.uas_zones_filter)
+def test_update_uas_zones_subscription():
+    subscription = make_uas_zones_subscription()
+    subscription.save()
 
-    uas_zones = db_get_uas_zones(uas_zones_filter=uas_zones_filter)
+    subscription.topic_name = 'new_name'
 
-    return uas_zone in uas_zones
+    update_uas_zones_subscription(subscription)
 
+    db_subscription = UASZonesSubscription.objects.get(id=subscription.id)
 
-def get_relevant_topic_names(context: UASZoneContext) -> None:
-    uas_zones_subscriptions = db_get_uas_zones_subscriptions()
-
-    context.topic_names = [subscription.topic_name for subscription in uas_zones_subscriptions
-                           if _uas_zone_matches_subscription(context.uas_zone, subscription)]
+    assert subscription.topic_name == db_subscription.topic_name
 
 
-def publish_relevant_topics(context: UASZoneContext) -> None:
-    for topics_name in context.topic_names:
-        try:
-            current_app.publisher.publish_topic(topics_name)
-        except PubSubClientError as e:
-            _logger.error(str(e))
+def test_delete_uas_zones_subscription():
+    subscription = make_uas_zones_subscription()
+    subscription.save()
 
+    delete_uas_zones_subscription(subscription)
 
-def uas_zones_db_delete(context: UASZoneContext):
-    context.uas_zone.delete()
+    with pytest.raises(DoesNotExist):
+        UASZonesSubscription.objects.get(id=subscription.id)
