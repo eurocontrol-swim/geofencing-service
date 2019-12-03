@@ -30,7 +30,7 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 from functools import reduce
 from typing import List, Optional
 
-from mongoengine import Q, DoesNotExist, NotUniqueError
+from mongoengine import Q, DoesNotExist
 
 from geofencing.db.models import UASZone, AuthorityEntity
 from geofencing.filters import UASZonesFilter
@@ -39,6 +39,11 @@ __author__ = "EUROCONTROL (SWIM)"
 
 
 def get_uas_zones_by_identifier(uas_zone_identifier: str) -> Optional[UASZone]:
+    """
+    Retrieves a UASZone by its identifier
+    :param uas_zone_identifier:
+    :return:
+    """
     try:
         result = UASZone.objects.get(identifier=uas_zone_identifier)
     except DoesNotExist:
@@ -72,28 +77,7 @@ def get_uas_zones(uas_zones_filter: UASZonesFilter) -> List[UASZone]:
     return UASZone.objects(query).all()
 
 
-def _save_authority_entity_if_not_exists(authority_entity: AuthorityEntity) -> AuthorityEntity:
-    try:
-        return AuthorityEntity.objects.get(name=authority_entity.name)
-    except DoesNotExist:
-        authority_entity.save()
-        return authority_entity
-
-
 def create_uas_zone(uas_zone: UASZone):
-    # save first the referenced documents
-    if uas_zone.authority and \
-            uas_zone.authority.requires_notification_to and \
-            uas_zone.authority.requires_notification_to.authority:
-        uas_zone.authority.requires_notification_to.authority = _save_authority_entity_if_not_exists(
-            uas_zone.authority.requires_notification_to.authority)
-
-    if uas_zone.authority and \
-            uas_zone.authority.requires_authorization_from and \
-            uas_zone.authority.requires_authorization_from.authority:
-        uas_zone.authority.requires_authorization_from.authority = _save_authority_entity_if_not_exists(
-            uas_zone.authority.requires_authorization_from.authority)
-
     uas_zone.save()
 
 

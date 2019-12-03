@@ -35,7 +35,7 @@ from unittest import mock
 import pytest
 
 from geofencing import BASE_PATH
-from geofencing.db.uas_zones import get_uas_zones_by_identifier
+from geofencing.db.uas_zones import get_uas_zones_by_identifier, create_uas_zone as db_create_uas_zone
 from geofencing.endpoints.schemas.filters_schemas import UASZonesFilterSchema
 from geofencing.filters import UASZonesFilter
 from tests.conftest import DEFAULT_LOGIN_PASS
@@ -528,6 +528,10 @@ def test_create_uas_zone__valid_input__object_is_saved__returns_ok__201(test_cli
                                                                         expected_uas_zone_output):
 
     uas_zone = make_uas_zone(BASILIQUE_POLYGON)
+
+    # saving the expected uas_zone at this point contradicts a bit the nature of this test but here we are actually
+    # testing the event outcome
+    db_create_uas_zone(uas_zone)
 
     with mock.patch('geofencing.events.events.create_uas_zone_event', return_value=uas_zone):
         response = test_client.post(URL_UAS_ZONES, data=json.dumps(uas_zone_input), content_type='application/json',

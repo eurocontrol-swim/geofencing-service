@@ -33,7 +33,7 @@ from typing import Tuple, Any
 from mongoengine import EmbeddedDocument, StringField, IntField, PolygonField, ComplexDateTimeField, \
     EmbeddedDocumentField, \
     Document, ListField, EmbeddedDocumentListField, DictField, ValidationError, ReferenceField, EmailField, URLField, \
-    BooleanField
+    BooleanField, DoesNotExist
 
 from geofencing.db import AIRSPACE_VOLUME_UPPER_LIMIT_IN_M, AIRSPACE_VOLUME_LOWER_LIMIT_IN_M
 
@@ -132,6 +132,14 @@ class AuthorityEntity(Document):
             raise ValidationError(f"One of email, site_url, phone must be defined.")
 
 
+def _save_authority_entity_if_not_exists(authority_entity: AuthorityEntity) -> AuthorityEntity:
+    try:
+        return AuthorityEntity.objects.get(name=authority_entity.name)
+    except DoesNotExist:
+        authority_entity.save()
+        return authority_entity
+
+
 class NotificationRequirement(EmbeddedDocument):
     authority = ReferenceField(AuthorityEntity, required=True)
     interval_before = StringField(db_field='intervalBefore', required=True)
@@ -177,19 +185,39 @@ class UASZone(Document):
         if self.data_source.update_date_time is None:
             self.data_source.update_date_time = self.data_source.creation_date_time
 
+        # save reference documents beforehand
+        self.notification_authority = _save_authority_entity_if_not_exists(self.notification_authority)
+        self.authorization_authority = _save_authority_entity_if_not_exists(self.authorization_authority)
+
+    def _has_notification_authority(self):
+        return self.authority and \
+                self.authority.requires_notification_to and \
+                self.authority.requires_notification_to.authority
+
+    def _has_authorization_authority(self):
+        return self.authority and \
+                self.authority.requires_authorization_from and \
+                self.authority.requires_authorization_from.authority
+
     @property
     def notification_authority(self):
-        if self.authority and \
-                self.authority.requires_notification_to and \
-                self.authority.requires_notification_to.authority:
+        if self._has_notification_authority():
             return self.authority.requires_notification_to.authority
+
+    @notification_authority.setter
+    def notification_authority(self, authority_entity: AuthorityEntity):
+        if self._has_notification_authority():
+            self.authority.requires_notification_to.authority = authority_entity
 
     @property
     def authorization_authority(self):
-        if self.authority and \
-                self.authority.requires_authorization_from and \
-                self.authority.requires_authorization_from.authority:
+        if self._has_authorization_authority():
             return self.authority.requires_authorization_from.authority
+
+    @authorization_authority.setter
+    def authorization_authority(self, authority_entity: AuthorityEntity):
+        if self._has_authorization_authority():
+            self.authority.requires_authorization_from.authority = authority_entity
 
 
 class User(Document):

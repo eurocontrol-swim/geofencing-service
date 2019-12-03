@@ -37,10 +37,19 @@ __author__ = "EUROCONTROL (SWIM)"
 
 
 def get_uas_zones_subscriptions() -> List[UASZonesSubscription]:
+    """
+    Retrieve all the subscriptions from DB
+    :return:
+    """
     return UASZonesSubscription.objects.all()
 
 
 def get_uas_zones_subscription_by_id(subscription_id: str) -> Optional[UASZonesSubscription]:
+    """
+    Retrieves a subscription based on its id
+    :param subscription_id:
+    :return:
+    """
     try:
         result = UASZonesSubscription.objects.get(id=subscription_id)
     except DoesNotExist:
@@ -50,12 +59,24 @@ def get_uas_zones_subscription_by_id(subscription_id: str) -> Optional[UASZonesS
 
 
 def create_uas_zones_subscription(subscription: UASZonesSubscription):
+    """
+    Saves a subscription in DB
+    :param subscription:
+    """
     subscription.save()
 
 
 def update_uas_zones_subscription(subscription: UASZonesSubscription):
+    """
+    Updates a subscription in DB
+    :param subscription:
+    """
     subscription.save()
 
 
 def delete_uas_zones_subscription(subscription: UASZonesSubscription):
+    """
+    Deletes a subscription in DB
+    :param subscription:
+    """
     subscription.delete()
