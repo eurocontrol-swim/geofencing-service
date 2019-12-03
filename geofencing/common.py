@@ -27,10 +27,7 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from datetime import datetime
 from typing import List, Any, Union, Dict
-
-from dateutil import parser
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -71,8 +68,50 @@ class Point(CompareMixin):
 
 
 def geojson_polygon_coordinates_from_point_list(point_list: List[Point]) -> GeoJSONPolygonCoordinates:
+    """
+        Converts a list of Point to a list of GeoJSON polygon coordinates.
+
+        Example:
+        this list of points:
+        [
+             Point(lat=50.863648, lon=4.329385),
+             Point(lat=50.865348, lon=4.328055),
+             Point(lat=50.86847, lon=4.317369),
+             Point(lat=50.863648, lon=4.329385)
+        ]
+        will be converted to:
+        [
+            [[50.863648, 4.329385],
+             [50.865348, 4.328055],
+             [50.86847, 4.317369],
+             [50.863648, 4.329385]]
+        ]
+    :param point_list:
+    :return:
+    """
     return [[[pf.lat, pf.lon] for pf in point_list]]
 
 
 def point_list_from_geojson_polygon_coordinates(coordinates: GeoJSONPolygonCoordinates) -> List[Point]:
+    """
+        Converts a list of GeoJSON polygon coordinates to a list of Point.
+
+        Example:
+        this list of coordinates:
+        [
+            [[50.863648, 4.329385],
+             [50.865348, 4.328055],
+             [50.86847, 4.317369],
+             [50.863648, 4.329385]]
+        ]
+        will be converted to:
+        [
+             Point(lat=50.863648, lon=4.329385),
+             Point(lat=50.865348, lon=4.328055),
+             Point(lat=50.86847, lon=4.317369),
+             Point(lat=50.863648, lon=4.329385)
+        ]
+    :param coordinates:
+    :return:
+    """
     return [Point(lat=lat, lon=lon) for lat, lon in coordinates[0]]

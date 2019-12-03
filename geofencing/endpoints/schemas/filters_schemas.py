@@ -40,7 +40,7 @@ class PointFilterSchema(Schema):
     lon = String(data_key='LON')
 
     @post_load
-    def convert_to_float(self, data, many, **kwargs):
+    def convert_to_float(self, data, **kwargs):
         data['lat'] = float(data['lat'])
         data['lon'] = float(data['lon'])
 
@@ -72,5 +72,5 @@ class UASZonesFilterSchema(Schema):
     updated_after_date_time = AwareDateTime(data_key='updatedAfterDateTime')
 
     @post_load
-    def load_filter(self, item, many, **kwargs):
+    def load_filter(self, item, **kwargs):
         return UASZonesFilter.from_dict(item)

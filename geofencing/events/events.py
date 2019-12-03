@@ -59,46 +59,74 @@ class Event(list):
         return f"{self._type} Event({list.__repr__(self)})"
 
 
-_create_uas_zones_subscription_event = Event([
+""" The sequence of handlers to be applied in order upon creating a new subscription"""
+CREATE_UAS_ZONES_SUBSCRIPTION_HANDLERS = [
     uas_zones_subscription_handlers.get_topic_name,
     uas_zones_subscription_handlers.publish_topic,
     uas_zones_subscription_handlers.get_or_create_sm_topic,
     uas_zones_subscription_handlers.create_sm_subscription,
     uas_zones_subscription_handlers.uas_zones_subscription_db_save
-])
+]
+
+""" The sequence of handlers to be applied in order upon creating a new UASZone"""
+CREATE_UAS_ZONE_EVENT = [
+    uas_zone_handlers.uas_zone_db_save,
+    uas_zone_handlers.get_relevant_topic_names,
+    uas_zone_handlers.publish_relevant_topics
+]
+
+
+""" The sequence of handlers to be applied in order upon deleting a new UASZone"""
+DELETE_UAS_ZONE_EVENT = [
+    uas_zone_handlers.get_relevant_topic_names,
+    uas_zone_handlers.uas_zones_db_delete,
+    uas_zone_handlers.publish_relevant_topics
+]
 
 
 def create_uas_zones_subscription_event(uas_zones_filter: UASZonesFilter) -> UASZonesSubscription:
+    """
+    Handles the event of creating a new subscription by creating the relevant context and applying the respective
+    handlers in order
+
+    :param uas_zones_filter:
+    :return:
+    """
     context = uas_zones_subscription_handlers.UASZonesSubscriptionContext(uas_zones_filter=uas_zones_filter)
 
-    _create_uas_zones_subscription_event(context=context)
+    event = Event(CREATE_UAS_ZONES_SUBSCRIPTION_HANDLERS)
+
+    event(context=context)
 
     return context.uas_zones_subscription
 
 
-_create_uas_zone_event = Event([
-    uas_zone_handlers.uas_zone_db_save,
-    uas_zone_handlers.get_relevant_topic_names,
-    uas_zone_handlers.publish_relevant_topics
-])
-
-
 def create_uas_zone_event(uas_zone: UASZone) -> UASZone:
+    """
+    Handles the event of creating a new UASZone by creating the relevant context and applying the respective
+    handlers in order
+
+    :param uas_zone:
+    :return:
+    """
     context = uas_zone_handlers.UASZoneContext(uas_zone=uas_zone)
 
-    _create_uas_zone_event(context=context)
+    event = Event(CREATE_UAS_ZONE_EVENT)
+
+    event(context=context)
 
     return context.uas_zone
 
 
-_delete_uas_zone_event = Event([
-    uas_zone_handlers.get_relevant_topic_names,
-    uas_zone_handlers.uas_zones_db_delete,
-    uas_zone_handlers.publish_relevant_topics
-])
-
-
 def delete_uas_zone_event(uas_zone: UASZone) -> None:
+    """
+    Handles the event of deleting a UASZone by creating the relevant context and applying the respective
+    handlers in order
+
+    :param uas_zone:
+    """
     context = uas_zone_handlers.UASZoneContext(uas_zone=uas_zone)
 
-    _delete_uas_zone_event(context=context)
+    event = Event(DELETE_UAS_ZONE_EVENT)
+
+    event(context=context)

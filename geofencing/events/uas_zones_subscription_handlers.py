@@ -38,7 +38,7 @@ from subscription_manager_client.subscription_manager import SubscriptionManager
 from swim_backend.local import AppContextProxy
 from swim_pubsub.core.topics import Topic
 
-from geofencing.db.models import UASZonesSubscription
+from geofencing.db.models import UASZonesSubscription, UASZone
 from geofencing.db.uas_zones import get_uas_zones as db_get_uas_zones
 from geofencing.db.subscriptions import create_uas_zones_subscription as db_create_uas_zones_subscription
 from geofencing.endpoints.schemas.filters_schemas import UASZonesFilterSchema
@@ -63,23 +63,52 @@ sm_client = AppContextProxy(_get_sm_client_from_config)
 
 class UASZonesSubscriptionContext:
     def __init__(self, uas_zones_filter: UASZonesFilter) -> None:
+        """
+
+        :param uas_zones_filter: The filtering criteria of the subscription
+        """
         self.uas_zones_filter: UASZonesFilter = uas_zones_filter
+
+        """Holds the new topic name where the new subscription will be subscribed to"""
         self.topic_name: Optional[str] = None
+
+        """Holds the topic of the Subscription Manager"""
         self.sm_topic: Optional[SMTopic] = None
+
+        """Holds the subscription of the Subscription Manager"""
         self.sm_subscription: Optional[SMSubscription] = None
+
+        """Holds the UASZone subscription that is eventually created"""
         self.uas_zones_subscription: Optional[UASZonesSubscription] = None
 
 
 def get_topic_name(context: UASZonesSubscriptionContext) -> None:
+    """
+    Hashes the json of the subscription filter criteria in order to create a unique topic name
+
+    :param context:
+    """
     uas_zones_filter_dict = UASZonesFilterSchema().dump(context.uas_zones_filter)
     context.topic_name = hashlib.sha1(json.dumps(uas_zones_filter_dict).encode()).hexdigest()
 
 
-def data_handler(context: Optional[Any] = None):
+def data_handler(context: Optional[Any] = None) -> List[UASZone]:
+    """
+    The data handler that will be called every time the topic is triggered for publishing.
+
+    :param context: Mandatory parameter required by `swim-pubsub`. Here it contains the UASZone filtering criteria of
+                    the subscription
+    :return:
+    """
     return db_get_uas_zones(uas_zones_filter=context)
 
 
 def publish_topic(context: UASZonesSubscriptionContext) -> None:
+    """
+    It publishes the topic in the broker after having registered it in the publisher.
+
+    :param context:
+    """
     topic = Topic(topic_name=context.topic_name, data_handler=data_handler)
 
     current_app.publisher.register_topic(topic)
@@ -88,6 +117,11 @@ def publish_topic(context: UASZonesSubscriptionContext) -> None:
 
 
 def get_or_create_sm_topic(context: UASZonesSubscriptionContext) -> None:
+    """
+    Checks if the topic_name alrady exists in Susbcription Manager and it creates it if not
+
+    :param context:
+    """
     sm_topics: List[SMTopic] = sm_client.get_topics()
 
     try:
@@ -97,12 +131,22 @@ def get_or_create_sm_topic(context: UASZonesSubscriptionContext) -> None:
 
 
 def create_sm_subscription(context: UASZonesSubscriptionContext) -> None:
+    """
+    Creates a new subscription in Subscription Manager
+
+    :param context:
+    """
     sm_subscription = SMSubscription(topic_id=context.sm_topic.id)
 
     context.sm_subscription = sm_client.post_subscription(sm_subscription)
 
 
 def uas_zones_subscription_db_save(context: UASZonesSubscriptionContext) -> None:
+    """
+    Creates and saves the UASZoneSubscription
+
+    :param context:
+    """
     subscription = UASZonesSubscription()
     subscription.id = uuid.uuid4().hex,
     subscription.topic_name = context.topic_name,

@@ -78,8 +78,16 @@ def get_uas_zones(uas_zones_filter: UASZonesFilter) -> List[UASZone]:
 
 
 def create_uas_zone(uas_zone: UASZone):
+    """
+    Saves the uas_zone in DB
+    :param uas_zone:
+    """
     uas_zone.save()
 
 
 def delete_uas_zone(uas_zone: UASZone):
+    """
+    Deletes the uas_zone from DB
+    :param uas_zone:
+    """
     uas_zone.delete()

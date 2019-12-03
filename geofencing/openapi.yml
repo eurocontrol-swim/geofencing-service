@@ -56,7 +56,7 @@ paths:
       tags:
         - UASZones
       summary: retrieves UASZones based on the provided filtering criteria
-      operationId: geofencing.endpoints.uas_zones.get_uas_zones
+      operationId: geofencing.endpoints.uas_zones.filter_uas_zones
       requestBody:
         content:
           application/json:

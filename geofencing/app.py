@@ -32,11 +32,11 @@ from pathlib import Path
 from typing import Tuple
 
 import connexion
+from flask import Flask
 from mongoengine import connect
 from pkg_resources import resource_filename
 from swagger_ui_bundle import swagger_ui_3_path
 from swim_backend.config import load_app_config, configure_logging
-from swim_backend.errors import APIError
 from swim_backend.flask import configure_flask
 from swim_pubsub.core.clients import PubSubClient
 from swim_pubsub.core.errors import PubSubClientError
@@ -49,7 +49,13 @@ __author__ = "EUROCONTROL (SWIM)"
 _logger = logging.getLogger(__name__)
 
 
-def create_flask_app(config_file: str):
+def create_flask_app(config_file: str) -> Flask:
+    """
+    Creates and configures the Flask app.
+
+    :param config_file:
+    :return:
+    """
     options = {'swagger_path': swagger_ui_3_path}
     connexion_app = connexion.App(__name__, options=options)
 
@@ -69,6 +75,8 @@ def create_flask_app(config_file: str):
 
     connect(db=app.config['MONGO']['db'])
 
+    # the PubApp and well as the broker publisher of the Geofencing Service will be added as flask app properties for
+    # easier usage across the project
     with app.app_context():
         app.pub_app, app.publisher = configure_pub_app(config_file)
 
@@ -76,6 +84,12 @@ def create_flask_app(config_file: str):
 
 
 def configure_pub_app(config_file: str) -> Tuple[PubApp, PubSubClient]:
+    """
+    Creates and configures the PubApp and it resisteres the Geofencing Service broker publisher.
+
+    :param config_file:
+    :return:
+    """
     pub_app = PubApp.create_from_config(config_file)
 
     try:
@@ -93,6 +107,7 @@ if __name__ == '__main__':
 
     flask_app = create_flask_app(config_file=resource_filename(__name__, 'config.yml'))
 
+    # the PubApp is started in threaded mode in order to be able to use its publisher across the project
     flask_app.pub_app.run(threaded=True)
 
     flask_app.run(host="0.0.0.0", port=8000, debug=False)

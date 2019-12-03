@@ -32,19 +32,47 @@ from datetime import datetime, timezone
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def time_str_from_datetime_str(date_string):
+def time_str_from_datetime_str(date_string: str) -> str:
+    """
+    Extracts the time parts of a datetime.
+
+    Example:
+        2019-12-03T09:00:00.12345 will be converted to:
+        09:00:00.12345
+
+    :param date_string:
+    :return:
+    """
     return date_string.split('T')[1]
 
 
 def datetime_str_from_time_str(time_str: str) -> str:
+    """
+    Applies a dummy date on a time string for further storage as datetime
+
+    :param time_str:
+    :return:
+    """
     return f"2000-01-01T{time_str}"
 
 
-def make_datetime_string_aware(dt: str):
+def make_datetime_string_aware(dt: str) -> str:
+    """
+    Applies UTC timezone on a datetime string,
+
+    :param dt:
+    :return:
+    """
     return make_datetime_aware(datetime.fromisoformat(dt)).isoformat()
 
 
 def make_datetime_aware(dt: datetime) -> datetime:
+    """
+    Applies UTC timezone of a datetime
+
+    :param dt:
+    :return:
+    """
     return dt.replace(tzinfo=timezone.utc)
 
 

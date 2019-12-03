@@ -31,9 +31,9 @@ import json
 from datetime import datetime, timezone
 from enum import Enum
 from functools import wraps
-from typing import List, Optional
+from typing import List, Optional, Type
 
-from marshmallow import ValidationError
+from marshmallow import Schema
 from swim_backend.errors import APIError
 
 from geofencing.db.models import UASZone
@@ -68,6 +68,7 @@ class Reply:
 
     def __init__(self, generic_reply: Optional[GenericReply] = None):
         """
+        The main reply object of the endpoints. All endpoints should inherit from here.
         :param generic_reply:
         """
         self.generic_reply = generic_reply or GenericReply(RequestStatus.OK.value)
@@ -95,7 +96,13 @@ class SubscribeToUASZonesUpdatesReply(Reply):
         self.publication_location = publication_location
 
 
-def handle_response(schema):
+def handle_response(schema: Type[Schema]):
+    """
+    Handles the response by dumping the returned object using the provided schema class and by handling any possible
+    exception
+    :param schema: the schema class
+    :return:
+    """
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -116,7 +123,11 @@ def handle_response(schema):
 
 
 def handle_flask_request_error(response):
-
+    """
+    All the API related exceptions will be wrapped here in the Reply object
+    :param response:
+    :return:
+    """
     if response.status_code != 200 and response.json and 'detail' in response.json:
         reply = Reply(generic_reply=GenericReply(
             request_status=RequestStatus.NOK.value,

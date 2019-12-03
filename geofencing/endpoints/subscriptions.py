@@ -51,6 +51,9 @@ _logger = logging.getLogger(__name__)
 @handle_response(SubscribeToUASZonesUpdatesReplySchema)
 def create_subscription_to_uas_zones_updates() -> Tuple[SubscribeToUASZonesUpdatesReply, int]:
     """
+    POST /subscriptions/
+
+    Expected HTTP codes: 201, 400, 401, 500
 
     :return:
     """
@@ -67,6 +70,9 @@ def create_subscription_to_uas_zones_updates() -> Tuple[SubscribeToUASZonesUpdat
 @handle_response(ReplySchema)
 def update_subscription_to_uas_zones_updates(subscription_id: str) -> Tuple[Reply, int]:
     """
+    PUT /subscriptions/{subscription_id}
+
+    Expected HTTP codes: 200, 400, 401, 404, 500
 
     :param subscription_id:
     :return:
@@ -91,6 +97,9 @@ def update_subscription_to_uas_zones_updates(subscription_id: str) -> Tuple[Repl
 @handle_response(ReplySchema)
 def delete_subscription_to_uas_zones_updates(subscription_id: str) -> Tuple[Reply, int]:
     """
+    DELETE /subscriptions/{subscription_id}
+
+    Expected HTTP codes: 204, 400, 401, 404, 500
 
     :param subscription_id:
     :return:

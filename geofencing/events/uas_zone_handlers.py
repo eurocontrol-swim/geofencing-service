@@ -44,7 +44,13 @@ _logger = logging.getLogger(__name__)
 
 class UASZoneContext:
     def __init__(self, uas_zone: UASZone) -> None:
+        """
+
+        :param uas_zone: the UASZone to be created or deleted
+        """
         self.uas_zone = uas_zone
+
+        """Holds the topic names of the subscriptions whose filter_zone intersect the provided UASZone """
         self.topic_names = []
 
 
@@ -53,6 +59,12 @@ def uas_zone_db_save(context: UASZoneContext) -> None:
 
 
 def _uas_zone_matches_subscription(uas_zone: UASZone, subscription: UASZonesSubscription):
+    """
+    Checks if the provided UASZone coincides in the filter_zone of the provices subscription
+    :param uas_zone:
+    :param subscription:
+    :return:
+    """
     uas_zones_filter = UASZonesFilter.from_dict(subscription.uas_zones_filter)
 
     uas_zones = db_get_uas_zones(uas_zones_filter=uas_zones_filter)
@@ -61,6 +73,10 @@ def _uas_zone_matches_subscription(uas_zone: UASZone, subscription: UASZonesSubs
 
 
 def get_relevant_topic_names(context: UASZoneContext) -> None:
+    """
+    Rettrieves the topic_names of the subscriptions whose filter_zone intersects the UASZone in context
+    :param context:
+    """
     uas_zones_subscriptions = db_get_uas_zones_subscriptions()
 
     context.topic_names = [subscription.topic_name for subscription in uas_zones_subscriptions
@@ -68,6 +84,10 @@ def get_relevant_topic_names(context: UASZoneContext) -> None:
 
 
 def publish_relevant_topics(context: UASZoneContext) -> None:
+    """
+    Publishes the relevant topics in the broker by triggering its data_handler
+    :param context:
+    """
     for topics_name in context.topic_names:
         try:
             current_app.publisher.publish_topic(topics_name)
@@ -76,4 +96,8 @@ def publish_relevant_topics(context: UASZoneContext) -> None:
 
 
 def uas_zones_db_delete(context: UASZoneContext):
+    """
+    Deletes the UASZone in context
+    :param context:
+    """
     context.uas_zone.delete()

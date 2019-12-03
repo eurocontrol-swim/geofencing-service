@@ -45,8 +45,11 @@ __author__ = "EUROCONTROL (SWIM)"
 
 
 @handle_response(UASZonesFilterReplySchema)
-def get_uas_zones() -> Tuple[UASZoneFilterReply, int]:
+def filter_uas_zones() -> Tuple[UASZoneFilterReply, int]:
     """
+    POST /uas_zones/filter
+
+    Expected HTTP codes: 200, 400, 401, 500
 
     :return:
     """
@@ -63,7 +66,9 @@ def get_uas_zones() -> Tuple[UASZoneFilterReply, int]:
 @handle_response(UASZoneCreateReplySchema)
 def create_uas_zone() -> Tuple[UASZoneCreateReply, int]:
     """
+    POST /uas_zones/
 
+    Expected HTTP codes: 201, 400, 401, 500
     :return:
     """
     try:
@@ -79,6 +84,9 @@ def create_uas_zone() -> Tuple[UASZoneCreateReply, int]:
 @handle_response(ReplySchema)
 def delete_uas_zone(uas_zone_identifier: str) -> Tuple[Reply, int]:
     """
+    DELETE /uas_zones/{uas_zone_identifier}
+
+    Expected HTTP codes: 204, 400, 401, 404, 500
 
     :param uas_zone_identifier:
     :return:

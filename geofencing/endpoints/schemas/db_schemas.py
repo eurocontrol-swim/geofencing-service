@@ -53,7 +53,7 @@ class AirspaceVolumeSchema(Schema):
     upper_vertical_reference = String(data_key="upperVerticalReference", missing=None)
 
     @pre_dump
-    def handle_geojson_polygon_dump(self, item, many, **kwargs):
+    def handle_geojson_polygon_dump(self, item, **kwargs):
         """
         Converts a GeoJSON polygon (as it is found in a mongo polygon field) to a list of Point i.e.:
 
@@ -87,6 +87,28 @@ class AirspaceVolumeSchema(Schema):
 
     @post_load
     def handle_geojson_polygon_load(self, item, **kwargs):
+        """
+        Converts a list of point coordinates to GeoJSON polygon coordinates:
+
+        Example:
+        this list of points:
+        [
+             {"lat": 50.863648, "lon": 4.329385},
+             {"lat": 50.865348, "lon": 4.328055},
+             {"lat": 50.86847, "lon": 4.317369},
+             {"lat": 50.863648, "lon": 4.329385}
+        ]
+        will be converted to:
+        [
+            [[50.863648, 4.329385],
+             [50.865348, 4.328055],
+             [50.86847, 4.317369],
+             [50.863648, 4.329385]]
+        ]
+        :param item:
+        :param kwargs:
+        :return:
+        """
         point_list = [Point.from_dict(coords) for coords in item['polygon']]
 
         item['polygon'] = geojson_polygon_coordinates_from_point_list(point_list)
@@ -131,7 +153,7 @@ class ApplicableTimePeriodSchema(Schema):
     daily_schedule = Nested(DailyScheduleSchema, many=True, data_key='dailySchedule')
 
     @post_dump
-    def handle_datetime_awareness(self, data, many, **kwargs):
+    def handle_datetime_awareness(self, data, **kwargs):
         data["startDateTime"] = make_datetime_string_aware(data["startDateTime"])
         data["endDateTime"] = make_datetime_string_aware(data["endDateTime"])
 
@@ -149,6 +171,12 @@ class AuthorityEntitySchema(Schema):
 
     @post_load
     def make_mongo_object(self, data, **kwargs):
+        """
+        A document schema will be eventually loaded in a mongoengine object for possible storing in DB
+        :param data:
+        :param kwargs:
+        :return:
+        """
         return AuthorityEntity(**data)
 
 
@@ -172,7 +200,7 @@ class DataSourceSchema(Schema):
     update_date_time = AwareDateTime(data_key='updateDateTime')
 
     @post_dump
-    def handle_datetime_awareness(self, data, many, **kwargs):
+    def handle_datetime_awareness(self, data, **kwargs):
         data["creationDateTime"] = make_datetime_string_aware(data["creationDateTime"])
         data["updateDateTime"] = make_datetime_string_aware(data["updateDateTime"])
 
@@ -200,6 +228,12 @@ class UASZoneSchema(Schema):
 
     @post_load
     def make_mongo_object(self, data, **kwargs):
+        """
+        A document schema will be eventually loaded in a mongoengine object for possible storing in DB
+        :param data:
+        :param kwargs:
+        :return:
+        """
         return UASZone(**data)
 
 
