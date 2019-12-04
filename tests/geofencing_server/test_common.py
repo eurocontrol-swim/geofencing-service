@@ -27,27 +27,25 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from setuptools import setup, find_packages
+import pytest
+
+from geofencing_server.common import geojson_polygon_coordinates_from_point_list, point_list_from_geojson_polygon_coordinates,\
+    Point
 
 __author__ = "EUROCONTROL (SWIM)"
 
-setup(
-    name='geofencing_server',
-    version='0.0.1',
-    description='Geofencing',
-    author='EUROCONTROL (SWIM)',
-    author_email='',
-    packages=find_packages(exclude=['tests']),
-    url='https://github.com/eurocontrol-swim/geofencing',
-    install_requires=[
-    ],
-    tests_require=[
-        'pytest',
-        'pytest-cov'
-    ],
-    package_data={'': ['openapi.yml']},
-    include_package_data=True,
-    platforms=['Any'],
-    license='see LICENSE',
-    zip_safe=False
-)
+
+@pytest.mark.parametrize('point_list, expected_geojson_polygon_coordinates', [
+    ([Point(1, 2), Point(3, 4), Point(5, 6)],
+     [[[1, 2], [3, 4], [5, 6]]])
+])
+def test_geojson_polygon_coordinates_from_point_list(point_list, expected_geojson_polygon_coordinates):
+    assert expected_geojson_polygon_coordinates == geojson_polygon_coordinates_from_point_list(point_list)
+
+
+@pytest.mark.parametrize('geojson_polygon_coordinates, expected_point_list', [
+    ([[[1, 2], [3, 4], [5, 6]]],
+     [Point(1, 2), Point(3, 4), Point(5, 6)])
+])
+def test_point_list_from_geojson_polygon_coordinatesn(geojson_polygon_coordinates, expected_point_list):
+    assert expected_point_list == point_list_from_geojson_polygon_coordinates(geojson_polygon_coordinates)

@@ -28,11 +28,13 @@ LOGGING:
     connexion:
       level: INFO
 
-TESTING: True
+    proton:
+      level: INFO
 
+DEBUG: False
 
 MONGO:
-  db: test
+  db: geodb
 
 SUBSCRIPTION-MANAGER:
   host: '0.0.0.0:8080'
@@ -49,4 +51,3 @@ BROKER:
 
 GEOFENCING_SERVER_SM_USER: 'geofencing_server'
 GEOFENCING_SERVER_SM_PASS: 'geofencing_server'
-

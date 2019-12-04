@@ -3,7 +3,7 @@ FROM swim-base.conda
 LABEL maintainer="SWIM EUROCONTROL <http://www.eurocontrol.int>"
 
 ENV PATH="/opt/conda/envs/app/bin:$PATH"
-ENV GEOFENCING_DB_NAME='geodb'
+ENV GEOFENCING_SERVER_DB_NAME='geodb'
 
 RUN mkdir -p /app
 WORKDIR /app

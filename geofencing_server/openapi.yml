@@ -1,0 +1,616 @@
+# Copyright 2019 EUROCONTROL
+# ==========================================
+#
+# Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
+# following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following
+#    disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
+#    disclaimer in the documentation and/or other materials provided with the distribution.
+# 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products
+#    derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+# INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# ==========================================
+#
+# Editorial note: this license is an instance of the BSD license template as provided by the Open Source Initiative:
+# http://opensource.org/licenses/BSD-3-Clause
+#
+# Details on EUROCONTROL: http://www.eurocontrol.int
+
+openapi: 3.0.2
+
+servers:
+  - description: Geofencing
+    url: /geofencing-server/api/1.0
+info:
+  description: Geofencing
+  version: "1.0.0"
+  title: Geofencing API
+#  contact:
+#    email: you@your-company.com
+#  license:
+#    name: Apache 2.0
+#    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+
+security:
+  - basicAuth: []
+
+tags:
+  - name: UASZones
+    description: UASZones retrieval
+  - name: PubSub
+    description: Publish/Subscribe interface
+
+paths:
+  /uas_zones/filter/:
+    post:
+      tags:
+        - UASZones
+      summary: retrieves UASZones based on the provided filtering criteria
+      operationId: geofencing_server.endpoints.uas_zones.filter_uas_zones
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UASZonesRequest'
+        description: UASZone filtering criteria
+      responses:
+        '200':
+          description: UASZones retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UASZonesFilterReply'
+        '400':
+          description: Bad request error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  genericReply:
+                    $ref: '#/components/schemas/GenericReply'
+        '401':
+          description: Unauthenticated user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  genericReply:
+                    $ref: '#/components/schemas/GenericReply'
+
+  /uas_zones/:
+    post:
+      tags:
+        - UASZones
+      summary: creates a new UASZone
+      operationId: geofencing_server.endpoints.uas_zones.create_uas_zone
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UASZone'
+        description: UASZone object
+      responses:
+        '201':
+          description: UASZones created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UASZoneCreateReply'
+        '400':
+          description: Bad request error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  genericReply:
+                    $ref: '#/components/schemas/GenericReply'
+        '401':
+          description: Unauthenticated user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  genericReply:
+                    $ref: '#/components/schemas/GenericReply'
+  /uas_zones/{uas_zone_identifier}:
+    delete:
+      tags:
+        - UASZones
+      summary: deletes an UASZone by its identifier
+      operationId: geofencing_server.endpoints.uas_zones.delete_uas_zone
+      parameters:
+        - in: path
+          name: uas_zone_identifier
+          description: the unique identifier of the UASZone
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Successfull deletion
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericReply'
+        '404':
+          description: UASZone not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  genericReply:
+                    $ref: '#/components/schemas/GenericReply'
+        '401':
+          description: Unauthenticated user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  genericReply:
+                    $ref: '#/components/schemas/GenericReply'
+
+  /subscriptions/:
+    post:
+      tags:
+        - PubSub
+      summary: creates a subscription on UASZones updates over specific airspace volume
+      operationId: geofencing_server.endpoints.subscriptions.create_subscription_to_uas_zones_updates
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UASZonesRequest'
+        description: UASZones subscription filtering criteria
+      responses:
+        '201':
+          description: UASZones subscription created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscribeToUASZonesUpdatesReply'
+        '400':
+          description: Bad request error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  genericReply:
+                    $ref: '#/components/schemas/GenericReply'
+        '401':
+          description: Unauthenticated user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  genericReply:
+                    $ref: '#/components/schemas/GenericReply'
+
+  /subscriptions/{subscription_id}:
+    delete:
+      tags:
+        - PubSub
+      summary: deletes a subscription on UASZones updates by its id
+      operationId: geofencing_server.endpoints.subscriptions.delete_subscription_to_uas_zones_updates
+      parameters:
+        - in: path
+          name: subscription_id
+          description: the id of the subscription to be updated
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Successfull unsubscribe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericReply'
+        '404':
+          description: UASZonesSubscription not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  genericReply:
+                    $ref: '#/components/schemas/GenericReply'
+        '401':
+          description: Unauthenticated user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  genericReply:
+                    $ref: '#/components/schemas/GenericReply'
+
+    put:
+      tags:
+        - PubSub
+      summary: updates a subscription on UASZones updates by its id (pause, resume)
+      operationId: geofencing_server.endpoints.subscriptions.update_subscription_to_uas_zones_updates
+      parameters:
+        - in: path
+          name: subscription_id
+          description: the id of the subscription to be updated
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                active:
+                  type: boolean
+      responses:
+        '200':
+          description: Successfull unsubscribe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericReply'
+        '404':
+          description: UASZonesSubscription not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  genericReply:
+                    $ref: '#/components/schemas/GenericReply'
+        '401':
+          description: Unauthenticated user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  genericReply:
+                    $ref: '#/components/schemas/GenericReply'
+
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      x-basicInfoFunc: geofencing_server.auth.basic_auth
+
+  schemas:
+    UASZone:
+      description: The UASZone object
+      type: object
+      properties:
+        identifier:
+          description: A string of characters that uniquely identifies the UAS Zone within the State/Territory identified by the country attribute.
+          type: string
+          maxLength: 7
+          minLength: 7
+          example:
+            "4rf04r0"
+        country:
+          description: The State that has the authority to declare the zone.
+          type: string
+          maxLength: 3
+          minLength: 3
+          example:
+            "BEL"
+        name:
+          description: A free text name by which the zone may be known by the public or by the UAS community
+          type: string
+          maxLength: 200
+        type:
+          description: An indication whether the Zone is provided with its common definition or with a customised definition, for a particular use
+          type: string
+          enum: [
+            "COMMON",
+            "CUSTOMIZED"
+          ]
+        restriction:
+          type: string
+          description: An indication if flying in the zone is permitted, conditional or forbidden.
+          enum: [
+            "PROHIBITED",
+            "REQ_AUTHORISATION",
+            "CONDITIONAL",
+            "NO_RESTRICTION"
+          ]
+        restrictionConditions:
+          description: An indication of the conditions under which the zone can be used
+          type: array
+          items:
+            type: string
+            maxLength: 200
+
+        region:
+          description: Where applicable, identifies a region inside a State where the UAS Zone is located.
+          type: integer
+          minimum: 0
+          maximum: 65535
+        dataCaptureProhibition:
+          description: An indication if data capturing (such as aerial photography, etc.) is prohibited when flying in the zone.
+          type: string
+          enum: [
+            "YES",
+            "NO"
+          ]
+        reason:
+          type: array
+          items:
+            description: A coded indication for the reason that led to the establishment of the zone.
+            type: string
+            enum: [
+              "AIR_TRAFFIC",
+              "SENSITIVE",
+              "PRIVACY",
+              "POPULATION",
+              "NATURE",
+              "NOISE",
+              "FOREIGN_TERRITORY",
+              "OTHER"
+            ]
+        uSpaceClass:
+          description: A code that identifies the category or class of the zone applying a "USpace concept".
+          type: string
+          enum: [
+            "EUROCONTROL",
+            "CORUS"
+          ]
+          maxLength: 200
+        message:
+          description: A message to be displayed to the user of the zone
+          type: string
+          maxLength: 200
+        dataSource:
+          type: object
+          properties:
+            author:
+              type: string
+              maxLength: 200
+            creationDateTime:
+              type: string
+              format: 'date-time'
+            updateDateTime:
+              type: string
+              format: 'date-time'
+        authority:
+          type: object
+          properties:
+            requiresNotificationTo:
+              type: object
+              properties:
+                authority:
+                  $ref: '#/components/schemas/Authority'
+                intervalBefore:
+                  description: The minimal time interval required between notification and starting to operate in the zone, in the format PnnDTnnHnnM (ISO 8601).
+                  type: string
+            requiresAuthorisationFrom:
+              type: object
+              properties:
+                authority:
+                  $ref: '#/components/schemas/Authority'
+        applicableTimePeriod:
+          $ref: '#/components/schemas/ApplicableTimePeriod'
+        airspaceVolume:
+          $ref: '#/components/schemas/AirspaceVolume'
+        extendedProperties:
+          description: The extendedProperties section is a placeholder, allowing service providers to customize the implementation and provide additional information.
+          type: object
+
+    ApplicableTimePeriod:
+      type: object
+      properties:
+        permanent:
+          description: An indication that the area is permanent.
+          type: string
+          enum: [
+            "YES",
+            "NO"
+          ]
+        startDateTime:
+          description: The date and time when the area starts to exist.
+          type: string
+          format: 'date-time'
+        endDateTime:
+          description: The date and time when the area ceases to exist.
+          type: string
+          format: 'date-time'
+        dailySchedule:
+          type: array
+          maxItems: 7
+          minItems: 1
+          items:
+            type: object
+            properties:
+              day:
+                description: The day of the week
+                type: string
+                enum: [
+                  "MON",
+                  "TUE",
+                  "WED",
+                  "THU",
+                  "FRI",
+                  "SAT",
+                  "SUN"
+                ]
+              startTime:
+                description: The daily start time
+                type: string
+                format: 'time'
+                example:
+                  '09:00:00+00:00'
+              endTime:
+                description: The daily end time
+                type: string
+                format: 'time'
+                example:
+                  '18:00:00+00:00'
+
+    AirspaceVolume:
+      type: object
+      properties:
+        lowerLimit:
+          description: The lowest level included in the Zone (in metres). If not specified, it means that the zone starts from surface (ground)
+          type: integer
+        lowerVerticalReference:
+          description: The vertical reference system used for expressing the lower limit
+          type: string
+          enum: [
+            "AGL",
+            "AMSL",
+            "WGS84"
+          ]
+        upperLimit:
+          description: The highest level included in the Zone (in metres). If not specified, it means that the zone extends to any possible level (unlimited).
+          type: integer
+        upperVerticalReference:
+          description: The vertical reference system used for expressing the upper limit
+          type: string
+          enum: [
+            "AGL",
+            "AMSL",
+            "WGS84"
+          ]
+        polygon:
+          description: The shape of the area in a projection at the surface of the Earth considered as the WGS-84 ellipsoid.
+          type: array
+          minItems: 3
+          items:
+            type: object
+            properties:
+              LAT:
+                type: string
+                format: float
+                maxLength: 20
+                example:
+                  "50.870058"
+              LON:
+                type: string
+                format: float
+                maxLength: 20
+                example:
+                  "4.325421"
+          example:
+            [{
+              "LAT": "50.862525",
+              "LON": "4.328120"
+            },{
+              "LAT": "50.865502",
+              "LON": "4.329257"
+            },{
+              "LAT": "50.865468",
+              "LON": "4.323686"
+            },{
+              "LAT": "50.862525",
+              "LON": "4.328120"
+            }]
+    Authority:
+      type: object
+      description: A public or private authority that has responsibilities in relation with the authorisation of UAS operations within a Country.
+      properties:
+        name:
+          type: string
+          maxLength: 200
+        service:
+          type: string
+          maxLength: 200
+        email:
+          type: string
+          format: email
+        contactName:
+          type: string
+          maxLength: 200
+        siteURL:
+          type: string
+          example:
+            "https://www.authority.com"
+        phone:
+          type: string
+          maxLength: 200
+
+    UASZonesRequest:
+      description: The filtering criteria of UASZone retrieving
+      type: object
+      required:
+        - airspaceVolume
+        - startDateTime
+        - endDateTime
+        - requestID
+      properties:
+        airspaceVolume:
+          $ref: '#/components/schemas/AirspaceVolume'
+        regions:
+          type: array
+          items:
+            type: integer
+        startDateTime:
+          type: string
+          format: 'date-time'
+        endDateTime:
+          type: string
+          format: 'date-time'
+        requestID:
+          type: string
+        updatedAfterDateTime:
+          type: string
+          format: 'date-time'
+
+    UASZonesFilterReply:
+      type: object
+      properties:
+        UASZoneList:
+          type: array
+          items:
+            $ref: '#/components/schemas/UASZone'
+        genericReply:
+          $ref: '#/components/schemas/GenericReply'
+
+    UASZoneCreateReply:
+      type: object
+      properties:
+        UASZone:
+          $ref: '#/components/schemas/UASZone'
+        genericReply:
+          $ref: '#/components/schemas/GenericReply'
+
+    SubscribeToUASZonesUpdatesReply:
+      type: object
+      properties:
+        subscriptionID:
+          type: string
+          format: uuid
+        publicationLocation:
+          type: string
+        genericReply:
+          $ref: '#/components/schemas/GenericReply'
+
+    GenericReply:
+      type: object
+      properties:
+        RequestStatus:
+          type: string
+          enum: [
+            "OK",
+            "NOK"
+          ]
+        RequestExceptionDescription:
+          type: string
+        RequestProcessedTimeStamp:
+          type: string

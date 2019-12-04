@@ -27,27 +27,32 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from setuptools import setup, find_packages
+from marshmallow import Schema
+from marshmallow.fields import Nested, String, DateTime
+
+from geofencing_server.endpoints.schemas.db_schemas import UASZoneSchema
 
 __author__ = "EUROCONTROL (SWIM)"
 
-setup(
-    name='geofencing_server',
-    version='0.0.1',
-    description='Geofencing',
-    author='EUROCONTROL (SWIM)',
-    author_email='',
-    packages=find_packages(exclude=['tests']),
-    url='https://github.com/eurocontrol-swim/geofencing',
-    install_requires=[
-    ],
-    tests_require=[
-        'pytest',
-        'pytest-cov'
-    ],
-    package_data={'': ['openapi.yml']},
-    include_package_data=True,
-    platforms=['Any'],
-    license='see LICENSE',
-    zip_safe=False
-)
+
+class GenericReplySchema(Schema):
+    request_status = String(data_key="RequestStatus")
+    request_exception_description = String(data_key="RequestExceptionDescription")
+    request_processed_timestamp = DateTime(data_key="RequestProcessedTimestamp")
+
+
+class ReplySchema(Schema):
+    generic_reply = Nested(GenericReplySchema, required=True, data_key="genericReply")
+
+
+class UASZonesFilterReplySchema(ReplySchema):
+    uas_zones = Nested(UASZoneSchema, many=True, data_key="UASZoneList")
+
+
+class UASZoneCreateReplySchema(ReplySchema):
+    uas_zone = Nested(UASZoneSchema, data_key="UASZone")
+
+
+class SubscribeToUASZonesUpdatesReplySchema(ReplySchema):
+    subscription_id = String(data_key="subscriptionID")
+    publication_location = String(data_key="publicationLocation")

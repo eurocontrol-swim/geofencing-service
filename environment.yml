@@ -1,4 +1,4 @@
-name: geofencing
+name: geofencing_server
 dependencies:
   - _libgcc_mutex=0.1=main
   - atomicwrites=1.3.0=py37_1
