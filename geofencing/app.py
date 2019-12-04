@@ -75,7 +75,7 @@ def create_flask_app(config_file: str) -> Flask:
 
     connect(db=app.config['MONGO']['db'])
 
-    # the PubApp and well as the broker publisher of the Geofencing Service will be added as flask app properties for
+    # the PubApp as well as the broker publisher of the Geofencing Service will be added as flask app properties for
     # easier usage across the project
     with app.app_context():
         app.pub_app, app.publisher = configure_pub_app(config_file)
@@ -93,9 +93,9 @@ def configure_pub_app(config_file: str) -> Tuple[PubApp, PubSubClient]:
     pub_app = PubApp.create_from_config(config_file)
 
     try:
-        publisher = pub_app.register_publisher(username=pub_app.config['GEO_SM_USER'],
-                                               password=pub_app.config['GEO_SM_PASS'])
-        _logger.info(f"Publisher '{pub_app.config['GEO_SM_USER']}' registered in PubApp")
+        publisher = pub_app.register_publisher(username=pub_app.config['GEOFENCING_SM_USER'],
+                                               password=pub_app.config['GEOFENCING_SM_PASS'])
+        _logger.info(f"Publisher '{pub_app.config['GEOFENCING_SM_USER']}' registered in PubApp")
     except PubSubClientError as e:
         _logger.error(f"Publisher failed to be registered in PubApp: {str(e)}")
         publisher = None
@@ -103,11 +103,14 @@ def configure_pub_app(config_file: str) -> Tuple[PubApp, PubSubClient]:
     return pub_app, publisher
 
 
-if __name__ == '__main__':
-
+def run_appication(host="0.0.0.0", port=8000, debug=True):
     flask_app = create_flask_app(config_file=resource_filename(__name__, 'config.yml'))
 
     # the PubApp is started in threaded mode in order to be able to use its publisher across the project
     flask_app.pub_app.run(threaded=True)
 
-    flask_app.run(host="0.0.0.0", port=8000, debug=False)
+    flask_app.run(host=host, port=port, debug=debug)
+
+
+if __name__ == '__main__':
+    run_appication()

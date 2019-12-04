@@ -48,5 +48,5 @@ BROKER:
   cert_key: '/secrets/rabbitmq/client_key.pem'
   cert_password: 'swim-ti'
 
-GEO_SM_USER: 'geofencing'
-GEO_SM_PASS: 'geofencing'
+GEOFENCING_SM_USER: 'geofencing'
+GEOFENCING_SM_PASS: 'geofencing'
