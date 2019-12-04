@@ -29,8 +29,8 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 """
 import pytest
 
-from geofencing_server.common import geojson_polygon_coordinates_from_point_list, point_list_from_geojson_polygon_coordinates,\
-    Point
+from geofencing_server.common import geojson_polygon_coordinates_from_point_list, \
+    point_list_from_geojson_polygon_coordinates, Point
 
 __author__ = "EUROCONTROL (SWIM)"
 

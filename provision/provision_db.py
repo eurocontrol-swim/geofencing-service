@@ -39,7 +39,7 @@ from pkg_resources import resource_filename
 from swim_backend.config import load_app_config
 
 from geofencing_server.common import GeoJSONPolygonCoordinates
-from geofencing_server.db.models import UASZone, CodeZoneType, CodeRestrictionType, CodeYesNoType, CodeUSpaceClassType, \
+from geofencing_server.db.models import UASZone, CodeZoneType, CodeRestrictionType, CodeYesNoType, CodeUSpaceClassType,\
     AirspaceVolume, AuthorityEntity, DailySchedule, CodeWeekDay, ApplicableTimePeriod, DataSource, User
 from geofencing_server.db.users import create_user
 

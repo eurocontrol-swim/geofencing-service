@@ -32,7 +32,7 @@ from typing import List, Optional
 
 from mongoengine import Q, DoesNotExist
 
-from geofencing_server.db.models import UASZone, AuthorityEntity
+from geofencing_server.db.models import UASZone
 from geofencing_server.filters import UASZonesFilter
 
 __author__ = "EUROCONTROL (SWIM)"

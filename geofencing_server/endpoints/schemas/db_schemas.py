@@ -28,10 +28,10 @@ http://opensource.org/licenses/BSD-3-Clause
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
 from marshmallow import Schema, pre_dump, post_dump, pre_load, post_load
-from marshmallow.fields import String, Nested, Integer, Dict, Float, AwareDateTime, List, Email, URL, Boolean
+from marshmallow.fields import String, Nested, Integer, Dict, AwareDateTime, List, Email, URL, Boolean
 
-from geofencing_server.common import point_list_from_geojson_polygon_coordinates, geojson_polygon_coordinates_from_point_list,\
-    Point
+from geofencing_server.common import point_list_from_geojson_polygon_coordinates, \
+    geojson_polygon_coordinates_from_point_list, Point
 from geofencing_server.db.models import UASZone, AuthorityEntity
 from geofencing_server.endpoints.schemas.filters_schemas import validate_polygon
 from geofencing_server.endpoints.utils import time_str_from_datetime_str, make_datetime_string_aware, \

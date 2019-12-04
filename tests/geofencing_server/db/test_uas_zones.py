@@ -53,7 +53,8 @@ def db_uas_zone():
 @pytest.fixture
 def filter_with_intersecting_airspace_volume(db_uas_zone):
     uas_zones_filter = make_uas_zones_filter_from_db_uas_zone(db_uas_zone)
-    uas_zones_filter.airspace_volume.polygon = point_list_from_geojson_polygon_coordinates(INTERSECTING_BASILIQUE_POLYGON)
+    uas_zones_filter.airspace_volume.polygon = point_list_from_geojson_polygon_coordinates(
+        INTERSECTING_BASILIQUE_POLYGON)
 
     return uas_zones_filter
 
@@ -61,7 +62,8 @@ def filter_with_intersecting_airspace_volume(db_uas_zone):
 @pytest.fixture
 def filter_with_non_intersecting_airspace_volume(db_uas_zone):
     uas_zones_filter = make_uas_zones_filter_from_db_uas_zone(db_uas_zone)
-    uas_zones_filter.airspace_volume.polygon = point_list_from_geojson_polygon_coordinates(NON_INTERSECTING_BASILIQUE_POLYGON)
+    uas_zones_filter.airspace_volume.polygon = point_list_from_geojson_polygon_coordinates(
+        NON_INTERSECTING_BASILIQUE_POLYGON)
 
     return uas_zones_filter
 
