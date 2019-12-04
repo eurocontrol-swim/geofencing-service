@@ -1,0 +1,28 @@
+FROM swim-base.conda
+
+LABEL maintainer="SWIM EUROCONTROL <http://www.eurocontrol.int>"
+
+ENV PATH="/opt/conda/envs/app/bin:$PATH"
+ENV GEOFENCING_DB_NAME='geodb'
+
+RUN mkdir -p /app
+WORKDIR /app
+
+COPY requirements.yml requirements.yml
+RUN conda env create --name app -f requirements.yml
+
+COPY ./geofencing/ ./geofencing/
+COPY ./provision ./provision/
+
+COPY . /source/
+RUN set -x \
+    && pip install /source \
+    && rm -rf /source
+
+RUN groupadd -r geofencing && useradd --no-log-init -md /home/geofencing -r -g geofencing geofencing
+
+RUN chown -R geofencing:geofencing /app
+
+USER geofencing
+
+CMD ["python", "/app/geofencing/app.py"]
