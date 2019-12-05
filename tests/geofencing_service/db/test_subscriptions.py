@@ -27,27 +27,61 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from setuptools import setup, find_packages
+import pytest
+from mongoengine import DoesNotExist
+
+from geofencing_service.db.models import UASZonesSubscription
+from geofencing_service.db.subscriptions import get_uas_zones_subscriptions, get_uas_zones_subscription_by_id, \
+    create_uas_zones_subscription, update_uas_zones_subscription, delete_uas_zones_subscription
+from tests.geofencing_service.utils import make_uas_zones_subscription
 
 __author__ = "EUROCONTROL (SWIM)"
 
-setup(
-    name='geofencing_service',
-    version='0.0.1',
-    description='Geofencing',
-    author='EUROCONTROL (SWIM)',
-    author_email='',
-    packages=find_packages(exclude=['tests']),
-    url='https://github.com/eurocontrol-swim/geofencing-service',
-    install_requires=[
-    ],
-    tests_require=[
-        'pytest',
-        'pytest-cov'
-    ],
-    package_data={'': ['openapi.yml']},
-    include_package_data=True,
-    platforms=['Any'],
-    license='see LICENSE',
-    zip_safe=False
-)
+
+def test_get_uas_zones_subscriptions():
+    subscription = make_uas_zones_subscription()
+    subscription.save()
+
+    db_subscriptions = get_uas_zones_subscriptions()
+    assert 1 == len(db_subscriptions)
+    assert subscription in db_subscriptions
+
+
+def test_get_uas_zones_subscriptionby_id():
+    subscription1 = make_uas_zones_subscription()
+    subscription2 = make_uas_zones_subscription()
+    subscription1.save()
+
+    assert get_uas_zones_subscription_by_id(subscription2.id) is None
+    assert subscription1 == get_uas_zones_subscription_by_id(subscription1.id)
+
+
+def test_create_uas_zones_subscription():
+    subscription = make_uas_zones_subscription()
+
+    create_uas_zones_subscription(subscription)
+
+    assert subscription == UASZonesSubscription.objects.get(id=subscription.id)
+
+
+def test_update_uas_zones_subscription():
+    subscription = make_uas_zones_subscription()
+    subscription.save()
+
+    subscription.topic_name = 'new_name'
+
+    update_uas_zones_subscription(subscription)
+
+    db_subscription = UASZonesSubscription.objects.get(id=subscription.id)
+
+    assert subscription.topic_name == db_subscription.topic_name
+
+
+def test_delete_uas_zones_subscription():
+    subscription = make_uas_zones_subscription()
+    subscription.save()
+
+    delete_uas_zones_subscription(subscription)
+
+    with pytest.raises(DoesNotExist):
+        UASZonesSubscription.objects.get(id=subscription.id)

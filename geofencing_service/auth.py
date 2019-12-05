@@ -27,27 +27,49 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from setuptools import setup, find_packages
+import typing as t
+
+from flask import request
+from werkzeug.security import check_password_hash
+
+from swim_backend.errors import UnauthorizedError
+from geofencing_service.db.models import User
+from geofencing_service.db.users import get_user_by_username
 
 __author__ = "EUROCONTROL (SWIM)"
 
-setup(
-    name='geofencing_service',
-    version='0.0.1',
-    description='Geofencing',
-    author='EUROCONTROL (SWIM)',
-    author_email='',
-    packages=find_packages(exclude=['tests']),
-    url='https://github.com/eurocontrol-swim/geofencing-service',
-    install_requires=[
-    ],
-    tests_require=[
-        'pytest',
-        'pytest-cov'
-    ],
-    package_data={'': ['openapi.yml']},
-    include_package_data=True,
-    platforms=['Any'],
-    license='see LICENSE',
-    zip_safe=False
-)
+
+def basic_auth(username: str, password: str, required_scopes: t.Optional[t.List[str]] = None) -> t.Dict[str, t.Any]:
+    """
+    Implements basic authentication. The function will be called from the connexion library after it has decoded the
+    base64 encoded string "username:password" by the client.
+    The authenticated user will be added in the global Flask request for further usage.
+    :param username:
+    :param password:
+    :param required_scopes: it is required by connexion but OPENAPI 3 specs do not foresee scopes for basic
+                            authentication
+    :return:
+    """
+    try:
+        user = validate_credentials(username, password)
+    except ValueError as e:
+        raise UnauthorizedError(str(e))
+
+    request.user = user
+
+    return {}
+
+
+def validate_credentials(username: str, password: str) -> User:
+    """
+    Checks if the provided username and password belong to an existing user in DB
+    :param username:
+    :param password:
+    :return:
+    """
+    user = get_user_by_username(username)
+
+    if not user or not check_password_hash(user.password, password):
+        raise ValueError('Invalid credentials')
+
+    return user

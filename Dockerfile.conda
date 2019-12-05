@@ -3,7 +3,7 @@ FROM swim-base.conda
 LABEL maintainer="SWIM EUROCONTROL <http://www.eurocontrol.int>"
 
 ENV PATH="/opt/conda/envs/app/bin:$PATH"
-ENV GEOFENCING_SERVER_DB_NAME='geodb'
+ENV GEOFENCING_SERVICE_DB_NAME='geodb'
 
 RUN mkdir -p /app
 WORKDIR /app
@@ -11,7 +11,7 @@ WORKDIR /app
 COPY requirements.yml requirements.yml
 RUN conda env create --name app -f requirements.yml
 
-COPY ./geofencing/ ./geofencing/
+COPY ./geofencing_service/ ./geofencing_service/
 COPY ./provision ./provision/
 
 COPY . /source/
@@ -25,4 +25,4 @@ RUN chown -R geofencing:geofencing /app
 
 USER geofencing
 
-CMD ["python", "/app/geofencing/app.py"]
+CMD ["python", "/app/geofencing_service/app.py"]

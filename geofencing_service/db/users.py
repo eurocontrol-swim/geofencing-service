@@ -27,27 +27,37 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from setuptools import setup, find_packages
+from typing import Union
+
+from mongoengine import MultipleObjectsReturned, DoesNotExist
+from swim_backend.auth.auth import hash_password
+
+from geofencing_service.db.models import User
 
 __author__ = "EUROCONTROL (SWIM)"
 
-setup(
-    name='geofencing_service',
-    version='0.0.1',
-    description='Geofencing',
-    author='EUROCONTROL (SWIM)',
-    author_email='',
-    packages=find_packages(exclude=['tests']),
-    url='https://github.com/eurocontrol-swim/geofencing-service',
-    install_requires=[
-    ],
-    tests_require=[
-        'pytest',
-        'pytest-cov'
-    ],
-    package_data={'': ['openapi.yml']},
-    include_package_data=True,
-    platforms=['Any'],
-    license='see LICENSE',
-    zip_safe=False
-)
+
+def get_user_by_username(username: str) -> Union[User, None]:
+    """
+    Retrieves a User by its username
+    :param username:
+    :return:
+    """
+    try:
+        result = User.objects.get(username=username)
+    except (DoesNotExist, MultipleObjectsReturned):
+        result = None
+
+    return result
+
+
+def create_user(user: User) -> User:
+    """
+    Saves the user in DB after hashing its password
+    :param user:
+    :return:
+    """
+    # hash password
+    user.password = hash_password(user.password)
+
+    return user.save()

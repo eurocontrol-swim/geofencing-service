@@ -35,10 +35,10 @@ from pkg_resources import resource_filename
 
 from swim_backend.config import load_app_config
 
-from geofencing_server.app import create_flask_app
-from geofencing_server.db.models import User
-from geofencing_server.db.users import create_user
-from tests.geofencing_server.utils import make_user, get_unique_id
+from geofencing_service.app import create_flask_app
+from geofencing_service.db.models import User
+from geofencing_service.db.users import create_user
+from tests.geofencing_service.utils import make_user, get_unique_id
 
 DEFAULT_LOGIN_PASS = 'password'
 

@@ -27,27 +27,29 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from setuptools import setup, find_packages
+from unittest.mock import Mock
+
+from geofencing_service.events.uas_zones_subscription_handlers import UASZonesSubscriptionContext, publish_topic
+from tests.geofencing_service.utils import make_uas_zones_filter_from_db_uas_zone, BASILIQUE_POLYGON, make_uas_zone
 
 __author__ = "EUROCONTROL (SWIM)"
 
-setup(
-    name='geofencing_service',
-    version='0.0.1',
-    description='Geofencing',
-    author='EUROCONTROL (SWIM)',
-    author_email='',
-    packages=find_packages(exclude=['tests']),
-    url='https://github.com/eurocontrol-swim/geofencing-service',
-    install_requires=[
-    ],
-    tests_require=[
-        'pytest',
-        'pytest-cov'
-    ],
-    package_data={'': ['openapi.yml']},
-    include_package_data=True,
-    platforms=['Any'],
-    license='see LICENSE',
-    zip_safe=False
-)
+
+def test_publish_topic(test_client):
+    app = test_client.application
+
+    mock_register_topic = Mock()
+    mock_publish_topic = Mock()
+    app.publisher.register_topic = mock_register_topic
+    app.publisher.publish_topic = mock_publish_topic
+
+    uas_zone = make_uas_zone(BASILIQUE_POLYGON)
+    uas_zones_filter = make_uas_zones_filter_from_db_uas_zone(uas_zone)
+    context = UASZonesSubscriptionContext(uas_zones_filter=uas_zones_filter)
+    context.topic_name = 'topic_name1'
+
+    publish_topic(context)
+    mock_register_topic_arg = mock_register_topic.call_args[0][0]
+    assert context.topic_name == mock_register_topic_arg.name
+
+    mock_publish_topic.assert_called_once_with(context.topic_name, context=context.uas_zones_filter)

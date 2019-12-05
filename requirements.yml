@@ -1,4 +1,4 @@
-name: geofencing_server
+name: geofencing_service
 dependencies:
 - python
 - pytest

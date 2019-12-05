@@ -23,31 +23,14 @@ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ==========================================
 
 Editorial note: this license is an instance of the BSD license template as provided by the Open Source Initiative:
-http://opensource.org/licenses/BSD-3-Clause
+http://opensource.org/licenses/BSD-3-Clause1
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from setuptools import setup, find_packages
+from functools import partial
+
+from geofencing_service.app import run_appication
 
 __author__ = "EUROCONTROL (SWIM)"
 
-setup(
-    name='geofencing_service',
-    version='0.0.1',
-    description='Geofencing',
-    author='EUROCONTROL (SWIM)',
-    author_email='',
-    packages=find_packages(exclude=['tests']),
-    url='https://github.com/eurocontrol-swim/geofencing-service',
-    install_requires=[
-    ],
-    tests_require=[
-        'pytest',
-        'pytest-cov'
-    ],
-    package_data={'': ['openapi.yml']},
-    include_package_data=True,
-    platforms=['Any'],
-    license='see LICENSE',
-    zip_safe=False
-)
+app = partial(run_appication, debug=False)

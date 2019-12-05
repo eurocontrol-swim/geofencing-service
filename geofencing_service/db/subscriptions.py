@@ -27,27 +27,56 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from setuptools import setup, find_packages
+from typing import Optional, List
+
+from mongoengine import DoesNotExist
+
+from geofencing_service.db.models import UASZonesSubscription
 
 __author__ = "EUROCONTROL (SWIM)"
 
-setup(
-    name='geofencing_service',
-    version='0.0.1',
-    description='Geofencing',
-    author='EUROCONTROL (SWIM)',
-    author_email='',
-    packages=find_packages(exclude=['tests']),
-    url='https://github.com/eurocontrol-swim/geofencing-service',
-    install_requires=[
-    ],
-    tests_require=[
-        'pytest',
-        'pytest-cov'
-    ],
-    package_data={'': ['openapi.yml']},
-    include_package_data=True,
-    platforms=['Any'],
-    license='see LICENSE',
-    zip_safe=False
-)
+
+def get_uas_zones_subscriptions() -> List[UASZonesSubscription]:
+    """
+    Retrieve all the subscriptions from DB
+    :return:
+    """
+    return UASZonesSubscription.objects.all()
+
+
+def get_uas_zones_subscription_by_id(subscription_id: str) -> Optional[UASZonesSubscription]:
+    """
+    Retrieves a subscription based on its id
+    :param subscription_id:
+    :return:
+    """
+    try:
+        result = UASZonesSubscription.objects.get(id=subscription_id)
+    except DoesNotExist:
+        result = None
+
+    return result
+
+
+def create_uas_zones_subscription(subscription: UASZonesSubscription):
+    """
+    Saves a subscription in DB
+    :param subscription:
+    """
+    subscription.save()
+
+
+def update_uas_zones_subscription(subscription: UASZonesSubscription):
+    """
+    Updates a subscription in DB
+    :param subscription:
+    """
+    subscription.save()
+
+
+def delete_uas_zones_subscription(subscription: UASZonesSubscription):
+    """
+    Deletes a subscription in DB
+    :param subscription:
+    """
+    subscription.delete()

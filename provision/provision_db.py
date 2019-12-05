@@ -38,10 +38,10 @@ from mongoengine import connect
 from pkg_resources import resource_filename
 from swim_backend.config import load_app_config
 
-from geofencing_server.common import GeoJSONPolygonCoordinates
-from geofencing_server.db.models import UASZone, CodeZoneType, CodeRestrictionType, CodeYesNoType, CodeUSpaceClassType,\
+from geofencing_service.common import GeoJSONPolygonCoordinates
+from geofencing_service.db.models import UASZone, CodeZoneType, CodeRestrictionType, CodeYesNoType, CodeUSpaceClassType,\
     AirspaceVolume, AuthorityEntity, DailySchedule, CodeWeekDay, ApplicableTimePeriod, DataSource, User
-from geofencing_server.db.users import create_user
+from geofencing_service.db.users import create_user
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -141,8 +141,8 @@ def make_uas_zone(name, polygon):
 
 def make_user():
     user = User()
-    user.username = os.environ['GEOFENCING_SERVER_USER']
-    user.password = os.environ['GEOFENCING_SERVER_PASS']
+    user.username = os.environ['GEOFENCING_SERVICE_USER']
+    user.password = os.environ['GEOFENCING_SERVICE_PASS']
 
     return user
 

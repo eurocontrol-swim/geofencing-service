@@ -27,27 +27,50 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from setuptools import setup, find_packages
+from marshmallow import post_load, Schema, ValidationError
+from marshmallow.fields import Nested, AwareDateTime, String, List, Integer
+
+from geofencing_service.filters import UASZonesFilter
 
 __author__ = "EUROCONTROL (SWIM)"
 
-setup(
-    name='geofencing_service',
-    version='0.0.1',
-    description='Geofencing',
-    author='EUROCONTROL (SWIM)',
-    author_email='',
-    packages=find_packages(exclude=['tests']),
-    url='https://github.com/eurocontrol-swim/geofencing-service',
-    install_requires=[
-    ],
-    tests_require=[
-        'pytest',
-        'pytest-cov'
-    ],
-    package_data={'': ['openapi.yml']},
-    include_package_data=True,
-    platforms=['Any'],
-    license='see LICENSE',
-    zip_safe=False
-)
+
+class PointFilterSchema(Schema):
+    lat = String(data_key='LAT')
+    lon = String(data_key='LON')
+
+    @post_load
+    def convert_to_float(self, data, **kwargs):
+        data['lat'] = float(data['lat'])
+        data['lon'] = float(data['lon'])
+
+        return data
+
+
+def validate_polygon(value):
+    if len(value) < 3:
+        raise ValidationError('Loop must have at least 3 different vertices')
+
+    if value[0] != value[-1]:
+        raise ValidationError('Loop is not closed')
+
+
+class AirspaceVolumeFilterSchema(Schema):
+    polygon = Nested(PointFilterSchema, many=True, validate=validate_polygon)
+    lower_limit_in_m = Integer(data_key="lowerLimit", missing=None)
+    lower_vertical_reference = String(data_key="lowerVerticalReference", missing=None)
+    upper_limit_in_m = Integer(data_key="upperLimit", missing=None)
+    upper_vertival_reference = String(data_key="upperVerticalReference", missing=None)
+
+
+class UASZonesFilterSchema(Schema):
+    airspace_volume = Nested(AirspaceVolumeFilterSchema, data_key='airspaceVolume')
+    start_date_time = AwareDateTime(data_key='startDateTime')
+    end_date_time = AwareDateTime(data_key='endDateTime')
+    request_id = String(data_key='requestID')
+    regions = List(Integer)
+    updated_after_date_time = AwareDateTime(data_key='updatedAfterDateTime')
+
+    @post_load
+    def load_filter(self, item, **kwargs):
+        return UASZonesFilter.from_dict(item)
