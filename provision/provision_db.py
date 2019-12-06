@@ -39,8 +39,10 @@ from pkg_resources import resource_filename
 from swim_backend.config import load_app_config
 
 from geofencing_service.common import GeoJSONPolygonCoordinates
-from geofencing_service.db.models import UASZone, CodeZoneType, CodeRestrictionType, CodeYesNoType, CodeUSpaceClassType,\
-    AirspaceVolume, AuthorityEntity, DailySchedule, CodeWeekDay, ApplicableTimePeriod, DataSource, User
+from geofencing_service.db.models import UASZone, CodeZoneType, CodeRestrictionType, CodeYesNoType, CodeUSpaceClassType, \
+    AirspaceVolume, AuthorityEntity, DailySchedule, CodeWeekDay, ApplicableTimePeriod, DataSource, User, \
+    NotificationRequirement, AuthorizationRequirement, Authority
+from geofencing_service.db.uas_zones import create_uas_zone
 from geofencing_service.db.users import create_user
 
 __author__ = "EUROCONTROL (SWIM)"
@@ -90,15 +92,34 @@ def get_unique_id():
     return uuid.uuid4().hex
 
 
-def make_authority() -> AuthorityEntity:
+def make_authority_entity() -> AuthorityEntity:
     result = AuthorityEntity()
-    result.authority_id = get_unique_id()
-    result.name = "AuthorityEntity"
+    result.name = get_unique_id()
     result.contact_name = "AuthorityEntity manager"
     result.service = "AuthorityEntity service"
     result.email = "auth@autority.be"
 
     return result
+
+
+def make_notification_requirement() -> NotificationRequirement:
+    return NotificationRequirement(
+        authority=make_authority_entity(),
+        interval_before='interval'
+    )
+
+
+def make_authorization_requirement() -> AuthorizationRequirement:
+    return AuthorizationRequirement(
+        authority=make_authority_entity()
+    )
+
+
+def make_authority() -> Authority:
+    return Authority(
+        requires_notification_to=make_notification_requirement(),
+        requires_authorization_from=make_authorization_requirement()
+    )
 
 
 def make_daily_schedule():
@@ -131,6 +152,7 @@ def make_uas_zone(name, polygon):
     result.country = "BEL"
     result.airspace_volume = AirspaceVolume(polygon=polygon)
     result.authorization_requirement = make_authority()
+    result.notification_authority = make_authority()
     result.applicable_time_period = make_applicable_period()
     result.data_source = DataSource(
         creation_date_time=NOW,
@@ -147,13 +169,6 @@ def make_user():
     return user
 
 
-def _save_object(obj):
-    try:
-        obj.save()
-    except Exception as e:
-        _logger.error(f"Error while saving object {obj} in DB: {str(e)}")
-
-
 if __name__ == '__main__':
 
     config_file = resource_filename(__name__, 'config.yml')
@@ -167,8 +182,11 @@ if __name__ == '__main__':
     # save UASZones
     for name, polygon in POLYGONS.items():
         uas_zone = make_uas_zone(name, polygon)
-        _save_object(uas_zone)
-        _logger.info(f"Saved UASZone {name} in DB")
+        try:
+            create_uas_zone(uas_zone)
+            _logger.info(f"Saved UASZone {name} in DB")
+        except Exception as e:
+            _logger.error(f"Error while saving object {uas_zone} in DB: {str(e)}")
 
     # save Geofencing User
     geofencing_user = make_user()

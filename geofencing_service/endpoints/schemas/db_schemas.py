@@ -191,7 +191,7 @@ class AuthorizationRequirementSchema(Schema):
 
 class AuthoritySchema(Schema):
     requires_notification_to = Nested(NotificationRequirementSchema, data_key="requiresNotificationTo")
-    requires_authorization_from = Nested(AuthorizationRequirementSchema, data_key="requiresAuthorisationFrom")
+    requires_authorization_from = Nested(AuthorizationRequirementSchema, data_key="requiresAuthorizationFrom")
 
 
 class DataSourceSchema(Schema):

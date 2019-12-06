@@ -151,7 +151,7 @@ class AuthorizationRequirement(EmbeddedDocument):
 
 class Authority(EmbeddedDocument):
     requires_notification_to = EmbeddedDocumentField(NotificationRequirement, db_field="requiresNotificationTo")
-    requires_authorization_from = EmbeddedDocumentField(AuthorizationRequirement, db_field="requiresAuthorisationFrom")
+    requires_authorization_from = EmbeddedDocumentField(AuthorizationRequirement, db_field="requiresAuthorizationFrom")
 
 
 class DataSource(EmbeddedDocument):
@@ -186,8 +186,10 @@ class UASZone(Document):
             self.data_source.update_date_time = self.data_source.creation_date_time
 
         # save reference documents beforehand
-        self.notification_authority = _save_authority_entity_if_not_exists(self.notification_authority)
-        self.authorization_authority = _save_authority_entity_if_not_exists(self.authorization_authority)
+        if self.notification_authority:
+            self.notification_authority = _save_authority_entity_if_not_exists(self.notification_authority)
+        if self.authorization_authority:
+            self.authorization_authority = _save_authority_entity_if_not_exists(self.authorization_authority)
 
     def _has_notification_authority(self):
         return self.authority and \

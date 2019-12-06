@@ -118,7 +118,7 @@ def uas_zone_input():
             "startDateTime": "2019-11-29T10:30:16.548Z"
         },
         "authority": {
-            "requiresAuthorisationFrom": {
+            "requiresAuthorizationFrom": {
                 "authority": {
                     "contactName": "string",
                     "email": "user@example.com",
@@ -398,7 +398,7 @@ def _post_uas_zones_filter(test_client, test_user, filter_data) -> Tuple[Dict[st
                 'permanent': 'YES',
                 'startDateTime': '2020-01-01T00:00:00+00:00',
             },
-            'authority': {'requiresAuthorisationFrom': {'authority': {'contactName': 'AuthorityEntity '
+            'authority': {'requiresAuthorizationFrom': {'authority': {'contactName': 'AuthorityEntity '
                                                                            'manager',
                                                             'email': 'auth@autority.be',
                                                             'name': '175d280099fb48eea5da490ac12f816a',
@@ -461,7 +461,7 @@ def test_get_uas_zones__filter_by_airspace_volume__polygon__response_is_serializ
     if expected_uas_zones:
         expected_uas_zones[0]['identifier'] = db_uas_zone_basilique.identifier
         expected_uas_zones[0]['name'] = db_uas_zone_basilique.name
-        expected_uas_zones[0]['authority']['requiresAuthorisationFrom']['authority']['name'] = \
+        expected_uas_zones[0]['authority']['requiresAuthorizationFrom']['authority']['name'] = \
             db_uas_zone_basilique.authorization_authority.name
         expected_uas_zones[0]['authority']['requiresNotificationTo']['authority']['name'] = \
             db_uas_zone_basilique.notification_authority.name
@@ -497,7 +497,7 @@ def test_create_uas_zone___invalid_user__returns_nok__401(test_client):
                                'endDateTime': '2019-11-29T10:30:16.548000+00:00',
                                'permanent': 'YES',
                                'startDateTime': '2019-11-29T10:30:16.548000+00:00'},
-      'authority': {'requiresAuthorisationFrom': {'authority': {'contactName': 'string',
+      'authority': {'requiresAuthorizationFrom': {'authority': {'contactName': 'string',
                                                                 'email': 'user@example.com',
                                                                 'name': 'string',
                                                                 'phone': 'string',

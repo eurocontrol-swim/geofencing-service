@@ -400,7 +400,7 @@ components:
                 intervalBefore:
                   description: The minimal time interval required between notification and starting to operate in the zone, in the format PnnDTnnHnnM (ISO 8601).
                   type: string
-            requiresAuthorisationFrom:
+            requiresAuthorizationFrom:
               type: object
               properties:
                 authority:
@@ -523,7 +523,7 @@ components:
             }]
     Authority:
       type: object
-      description: A public or private authority that has responsibilities in relation with the authorisation of UAS operations within a Country.
+      description: A public or private authority that has responsibilities in relation with the authorization of UAS operations within a Country.
       properties:
         name:
           type: string
