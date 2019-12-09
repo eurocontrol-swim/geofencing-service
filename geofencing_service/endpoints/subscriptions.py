@@ -64,7 +64,10 @@ def create_subscription_to_uas_zones_updates() -> Tuple[SubscribeToUASZonesUpdat
 
     uas_zones_subscription = events.create_uas_zones_subscription_event(uas_zones_filter=uas_zones_filter)
 
-    return SubscribeToUASZonesUpdatesReply(uas_zones_subscription.id, uas_zones_subscription.publication_location), 201
+    reply = SubscribeToUASZonesUpdatesReply(subscription_id=uas_zones_subscription.id,
+                                            publication_location=uas_zones_subscription.sm_subscription.queue)
+
+    return reply, 201
 
 
 @handle_response(ReplySchema)
@@ -77,9 +80,9 @@ def update_subscription_to_uas_zones_updates(subscription_id: str) -> Tuple[Repl
     :param subscription_id:
     :return:
     """
-    subscription = get_uas_zones_subscription_by_id(subscription_id)
+    uas_zones_subscription = get_uas_zones_subscription_by_id(subscription_id)
 
-    if subscription is None:
+    if uas_zones_subscription is None:
         raise NotFoundError(f"Subscription with id {subscription_id} does not exist")
 
     try:
@@ -87,9 +90,9 @@ def update_subscription_to_uas_zones_updates(subscription_id: str) -> Tuple[Repl
     except ValidationError as e:
         raise BadRequestError(str(e))
 
-    subscription.active = updated_subscription_dict['active']
+    uas_zones_subscription.active = updated_subscription_dict['active']
 
-    db_update_uas_zones_subscription(subscription)
+    events.update_uas_zones_subscription_event(uas_zones_subscription=uas_zones_subscription)
 
     return Reply(generic_reply=GenericReply(request_status=RequestStatus.OK.value)), 200
 
@@ -104,11 +107,11 @@ def delete_subscription_to_uas_zones_updates(subscription_id: str) -> Tuple[Repl
     :param subscription_id:
     :return:
     """
-    subscription = get_uas_zones_subscription_by_id(subscription_id)
+    uas_zones_subscription = get_uas_zones_subscription_by_id(subscription_id)
 
-    if subscription is None:
+    if uas_zones_subscription is None:
         raise NotFoundError(f"Subscription with id {subscription_id} does not exist")
 
-    db_delete_uas_zones_subscription(subscription)
+    events.delete_uas_zones_subscription_event(uas_zones_subscription=uas_zones_subscription)
 
     return Reply(generic_reply=GenericReply(request_status=RequestStatus.OK.value)), 204

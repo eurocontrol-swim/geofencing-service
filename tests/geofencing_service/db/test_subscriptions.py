@@ -74,7 +74,7 @@ def test_update_uas_zones_subscription():
 
     db_subscription = UASZonesSubscription.objects.get(id=subscription.id)
 
-    assert subscription.topic_name == db_subscription.topic_name
+    assert subscription.sm_subscription.topic_name == db_subscription.sm_subscription.topic_name
 
 
 def test_delete_uas_zones_subscription():

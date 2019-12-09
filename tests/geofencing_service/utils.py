@@ -27,6 +27,7 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
+import random
 import uuid
 from base64 import b64encode
 from datetime import datetime, timezone
@@ -35,7 +36,8 @@ from typing import Optional, Dict
 from geofencing_service.common import point_list_from_geojson_polygon_coordinates, GeoJSONPolygonCoordinates
 from geofencing_service.db.models import AirspaceVolume, AuthorityEntity, ApplicableTimePeriod, CodeYesNoType, UASZone, \
     CodeRestrictionType, CodeUSpaceClassType, CodeZoneType, DataSource, DailySchedule, CodeWeekDay, User, \
-    CodeVerticalReferenceType, Authority, NotificationRequirement, AuthorizationRequirement, UASZonesSubscription
+    CodeVerticalReferenceType, Authority, NotificationRequirement, AuthorizationRequirement, UASZonesSubscription, \
+    GeofencingSMSubscription
 from geofencing_service.filters import UASZonesFilter, AirspaceVolumeFilter
 
 __author__ = "EUROCONTROL (SWIM)"
@@ -167,13 +169,20 @@ def make_basic_auth_header(username, password) -> Dict[str, str]:
     return result
 
 
+def make_geofencing_sm_subscription() -> GeofencingSMSubscription:
+    return GeofencingSMSubscription(
+        id=random.randint(0, 1000),
+        queue=get_unique_id(),
+        topic_name=get_unique_id()
+    )
+
+
 def make_uas_zones_subscription() -> UASZonesSubscription:
     subscription = UASZonesSubscription()
     subscription.id = get_unique_id()
-    subscription.publication_location = get_unique_id()
+    subscription.sm_subscription = make_geofencing_sm_subscription()
     subscription.active = True
     subscription.uas_zones_filter = {'airspace_volume': {}}
-    subscription.topic_name = get_unique_id()
 
     return subscription
 

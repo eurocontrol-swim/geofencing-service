@@ -85,8 +85,8 @@ def test_get_relevant_topic_names():
     context = UASZoneContext(uas_zone=uas_zone_basilique)
     get_relevant_topic_names(context=context)
 
-    assert intersecting_uas_zones_subscription.topic_name in context.topic_names
-    assert non_intersecting_uas_zones_subscription.topic_name not in context.topic_names
+    assert intersecting_uas_zones_subscription.sm_subscription.topic_name in context.topic_names
+    assert non_intersecting_uas_zones_subscription.sm_subscription.topic_name not in context.topic_names
 
 
 def test_publish_relevent_topics__all_topics_are_published(test_client):

@@ -29,6 +29,7 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 """
 import json
 from unittest import mock
+from unittest.mock import Mock
 
 import pytest
 from mongoengine import DoesNotExist
@@ -133,7 +134,7 @@ def test_create_subscription_to_uas_zones_updates__valid_input__returns_ok_and_c
         response_data = json.loads(response.data)
         assert "OK" == response_data['genericReply']['RequestStatus']
         assert uas_zones_subscription.id == response_data['subscriptionID']
-        assert uas_zones_subscription.publication_location == response_data['publicationLocation']
+        assert uas_zones_subscription.sm_subscription.queue == response_data['publicationLocation']
 
 
 def test_update_subscription_to_uas_zones_updates__invalid_user__returns_nok_401(test_client):
@@ -176,9 +177,16 @@ def test_update_subscription_to_uas_zones_updates__invalid_data__returns_nok_400
     assert "NOK" == response_data['genericReply']['RequestStatus']
 
 
-def test_update_subscription_to_uas_zones_updates__is_updated__returns_ok_200(test_client, test_user):
+@mock.patch('geofencing_service.events.uas_zones_subscription_handlers.sm_client')
+def test_update_subscription_to_uas_zones_updates__is_updated__returns_ok_200(mock_sm_client, test_client, test_user):
+
     uas_zones_subscription = make_uas_zones_subscription()
     uas_zones_subscription.save()
+
+    sm_subscription = Mock()
+    sm_subscription.id = uas_zones_subscription.sm_subscription.id
+    mock_sm_client.get_subscription_by_id = Mock(return_value=sm_subscription)
+    mock_sm_client.put_subscription = Mock()
 
     data = {
         "active": not uas_zones_subscription.active
@@ -194,6 +202,8 @@ def test_update_subscription_to_uas_zones_updates__is_updated__returns_ok_200(te
     updated_subscription = UASZonesSubscription.objects.get(id=uas_zones_subscription.id)
 
     assert updated_subscription.active == (not uas_zones_subscription.active)
+    mock_sm_client.get_subscription_by_id.assert_called_once_with(uas_zones_subscription.sm_subscription.id)
+    mock_sm_client.put_subscription.assert_called_once_with(sm_subscription.id, sm_subscription)
 
 
 def test_delete_subscription_to_uas_zones_updates__invalid_user__returns_nok_401(test_client):
@@ -220,7 +230,10 @@ def test_delete_subscription_to_uas_zones_updates__invalid_subscription_id__retu
            response_data['genericReply']["RequestExceptionDescription"]
 
 
-def test_update_subscription_to_uas_zones_updates__is_deleted__returns_ok_204(test_client, test_user):
+@mock.patch('geofencing_service.events.uas_zones_subscription_handlers.sm_client')
+def test_delete_subscription_to_uas_zones_updates__is_deleted__returns_ok_204(mock_sm_client, test_client, test_user):
+    mock_sm_client.delete_subscription_by_id = Mock()
+
     uas_zones_subscription = make_uas_zones_subscription()
     uas_zones_subscription.save()
 
@@ -231,3 +244,5 @@ def test_update_subscription_to_uas_zones_updates__is_deleted__returns_ok_204(te
 
     with pytest.raises(DoesNotExist):
         UASZonesSubscription.objects.get(id=uas_zones_subscription.id)
+
+    mock_sm_client.delete_subscription_by_id.assert_called_once_with(uas_zones_subscription.sm_subscription.id)

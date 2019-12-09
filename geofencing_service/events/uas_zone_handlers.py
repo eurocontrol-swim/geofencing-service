@@ -79,7 +79,7 @@ def get_relevant_topic_names(context: UASZoneContext) -> None:
     """
     uas_zones_subscriptions = db_get_uas_zones_subscriptions()
 
-    context.topic_names = [subscription.topic_name for subscription in uas_zones_subscriptions
+    context.topic_names = [subscription.sm_subscription.topic_name for subscription in uas_zones_subscriptions
                            if _uas_zone_matches_subscription(context.uas_zone, subscription)]
 
 

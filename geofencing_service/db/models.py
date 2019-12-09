@@ -233,9 +233,14 @@ class User(Document):
     }
 
 
+class GeofencingSMSubscription(EmbeddedDocument):
+    id = IntField(required=True)
+    queue = StringField(required=True)
+    topic_name = StringField(required=True)
+
+
 class UASZonesSubscription(Document):
     id = StringField(required=True, primary_key=True)
-    publication_location = StringField(required=True, db_field='publicationLocation')
+    sm_subscription = EmbeddedDocumentField(GeofencingSMSubscription, required=True)
     active = BooleanField(required=True)
     uas_zones_filter = DictField(required=True)
-    topic_name = StringField(required=True)

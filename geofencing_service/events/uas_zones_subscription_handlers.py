@@ -30,7 +30,7 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 import hashlib
 import json
 import uuid
-from typing import Optional, Any, List
+from typing import Optional, Any, List, Dict
 
 from flask import current_app
 from subscription_manager_client.models import Subscription as SMSubscription, Topic as SMTopic
@@ -38,9 +38,11 @@ from subscription_manager_client.subscription_manager import SubscriptionManager
 from swim_backend.local import AppContextProxy
 from swim_pubsub.core.topics import Topic
 
-from geofencing_service.db.models import UASZonesSubscription, UASZone
+from geofencing_service.db.models import UASZonesSubscription, UASZone, GeofencingSMSubscription
 from geofencing_service.db.uas_zones import get_uas_zones as db_get_uas_zones
-from geofencing_service.db.subscriptions import create_uas_zones_subscription as db_create_uas_zones_subscription
+from geofencing_service.db.subscriptions import create_uas_zones_subscription as db_create_uas_zones_subscription,\
+    update_uas_zones_subscription as db_update_uas_zones_subscription, \
+    delete_uas_zones_subscription as db_delete_uas_zones_subscription
 from geofencing_service.endpoints.schemas.filters_schemas import UASZonesFilterSchema
 from geofencing_service.filters import UASZonesFilter
 
@@ -53,20 +55,20 @@ def _get_sm_client_from_config() -> SubscriptionManagerClient:
         https=current_app.config['SUBSCRIPTION-MANAGER']['https'],
         timeout=current_app.config['SUBSCRIPTION-MANAGER']['timeout'],
         verify=current_app.config['SUBSCRIPTION-MANAGER']['verify'],
-        username=current_app.config['GEO_SM_USER'],
-        password=current_app.config['GEO_SM_PASS']
+        username=current_app.config['GEOFENCING_SERVICE_SM_USER'],
+        password=current_app.config['GEOFENCING_SERVICE_SM_PASS']
     )
 
 
 sm_client = AppContextProxy(_get_sm_client_from_config)
 
 
-class UASZonesSubscriptionContext:
+class UASZonesSubscriptionCreateContext:
     def __init__(self, uas_zones_filter: UASZonesFilter) -> None:
         """
-
         :param uas_zones_filter: The filtering criteria of the subscription
         """
+
         self.uas_zones_filter: UASZonesFilter = uas_zones_filter
 
         """Holds the new topic name where the new subscription will be subscribed to"""
@@ -82,7 +84,15 @@ class UASZonesSubscriptionContext:
         self.uas_zones_subscription: Optional[UASZonesSubscription] = None
 
 
-def get_topic_name(context: UASZonesSubscriptionContext) -> None:
+class UASZonesSubscriptionUpdateContext:
+    def __init__(self, uas_zones_subscription: UASZonesSubscription) -> None:
+        """
+        :param uas_zones_subscription:
+        """
+        self.uas_zones_subscription = uas_zones_subscription
+
+
+def get_topic_name(context: UASZonesSubscriptionCreateContext) -> None:
     """
     Hashes the json of the subscription filter criteria in order to create a unique topic name
 
@@ -103,7 +113,7 @@ def data_handler(context: Optional[Any] = None) -> List[UASZone]:
     return db_get_uas_zones(uas_zones_filter=context)
 
 
-def publish_topic(context: UASZonesSubscriptionContext) -> None:
+def publish_topic(context: UASZonesSubscriptionCreateContext) -> None:
     """
     It publishes the topic in the broker after having registered it in the publisher.
 
@@ -116,7 +126,7 @@ def publish_topic(context: UASZonesSubscriptionContext) -> None:
     current_app.publisher.publish_topic(context.topic_name, context=context.uas_zones_filter)
 
 
-def get_or_create_sm_topic(context: UASZonesSubscriptionContext) -> None:
+def get_or_create_sm_topic(context: UASZonesSubscriptionCreateContext) -> None:
     """
     Checks if the topic_name alrady exists in Susbcription Manager and it creates it if not
 
@@ -130,7 +140,7 @@ def get_or_create_sm_topic(context: UASZonesSubscriptionContext) -> None:
         context.sm_topic = sm_client.post_topic(SMTopic(name=context.topic_name))
 
 
-def create_sm_subscription(context: UASZonesSubscriptionContext) -> None:
+def create_sm_subscription(context: UASZonesSubscriptionCreateContext) -> None:
     """
     Creates a new subscription in Subscription Manager
 
@@ -141,7 +151,7 @@ def create_sm_subscription(context: UASZonesSubscriptionContext) -> None:
     context.sm_subscription = sm_client.post_subscription(sm_subscription)
 
 
-def uas_zones_subscription_db_save(context: UASZonesSubscriptionContext) -> None:
+def uas_zones_subscription_db_save(context: UASZonesSubscriptionCreateContext) -> None:
     """
     Creates and saves the UASZoneSubscription
 
@@ -149,11 +159,34 @@ def uas_zones_subscription_db_save(context: UASZonesSubscriptionContext) -> None
     """
     subscription = UASZonesSubscription()
     subscription.id = uuid.uuid4().hex,
-    subscription.topic_name = context.topic_name,
-    subscription.publication_location = context.sm_subscription.queue,
+    subscription.sm_subscription = GeofencingSMSubscription(
+        id=context.sm_subscription.id,
+        queue=context.sm_subscription.queue,
+        topic_name=context.topic_name
+    )
     subscription.uas_zones_filter = context.uas_zones_filter.to_dict()
     subscription.active = True
 
     db_create_uas_zones_subscription(subscription)
 
     context.uas_zones_subscription = subscription
+
+
+def update_sm_subscription(context: UASZonesSubscriptionUpdateContext) -> None:
+    sm_subscription = sm_client.get_subscription_by_id(context.uas_zones_subscription.sm_subscription.id)
+
+    sm_subscription.active = context.uas_zones_subscription.active
+
+    sm_client.put_subscription(sm_subscription.id, sm_subscription)
+
+
+def uas_zones_subscription_db_update(context: UASZonesSubscriptionUpdateContext) -> None:
+    db_update_uas_zones_subscription(context.uas_zones_subscription)
+
+
+def delete_sm_subscription(context: UASZonesSubscriptionUpdateContext) -> None:
+    sm_client.delete_subscription_by_id(context.uas_zones_subscription.sm_subscription.id)
+
+
+def uas_zones_subscription_db_delete(context: UASZonesSubscriptionUpdateContext) -> None:
+    db_delete_uas_zones_subscription(context.uas_zones_subscription)

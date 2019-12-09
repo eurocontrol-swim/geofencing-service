@@ -27,9 +27,13 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
+from unittest import mock
 from unittest.mock import Mock
 
-from geofencing_service.events.uas_zones_subscription_handlers import UASZonesSubscriptionContext, publish_topic
+from subscription_manager_client.models import Topic
+
+from geofencing_service.events.uas_zones_subscription_handlers import UASZonesSubscriptionCreateContext, publish_topic, \
+    get_or_create_sm_topic
 from tests.geofencing_service.utils import make_uas_zones_filter_from_db_uas_zone, BASILIQUE_POLYGON, make_uas_zone
 
 __author__ = "EUROCONTROL (SWIM)"
@@ -45,7 +49,7 @@ def test_publish_topic(test_client):
 
     uas_zone = make_uas_zone(BASILIQUE_POLYGON)
     uas_zones_filter = make_uas_zones_filter_from_db_uas_zone(uas_zone)
-    context = UASZonesSubscriptionContext(uas_zones_filter=uas_zones_filter)
+    context = UASZonesSubscriptionCreateContext(uas_zones_filter=uas_zones_filter)
     context.topic_name = 'topic_name1'
 
     publish_topic(context)
@@ -53,3 +57,33 @@ def test_publish_topic(test_client):
     assert context.topic_name == mock_register_topic_arg.name
 
     mock_publish_topic.assert_called_once_with(context.topic_name, context=context.uas_zones_filter)
+
+
+@mock.patch('geofencing_service.events.uas_zones_subscription_handlers.sm_client')
+def test_get_or_create_sm_topic__topic_is_found_and_returned(mock_sm_client, test_client):
+    topic_name = 'topic'
+    topic = Topic(name=topic_name)
+
+    mock_sm_client.get_topics = Mock(return_value=[topic])
+
+    context = UASZonesSubscriptionCreateContext(Mock())
+    context.topic_name = topic_name
+
+    get_or_create_sm_topic(context)
+
+    assert topic == context.sm_topic
+
+
+@mock.patch('geofencing_service.events.uas_zones_subscription_handlers.sm_client')
+def test_get_or_create_sm_topic__topic_is_not_found_and_is_created(mock_sm_client, test_client):
+    not_existent_topic_name = 'topic'
+    mock_sm_client.get_topics = Mock(return_value=[])
+    mock_sm_client.post_topic = Mock()
+
+    context = UASZonesSubscriptionCreateContext(Mock())
+    context.topic_name = not_existent_topic_name
+
+    get_or_create_sm_topic(context)
+
+    topic_to_create = mock_sm_client.post_topic.call_args[0][0]
+    assert not_existent_topic_name == topic_to_create.name
