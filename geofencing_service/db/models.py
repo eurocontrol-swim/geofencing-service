@@ -99,10 +99,12 @@ class CodeVerticalReferenceType(Choice):
 class AirspaceVolume(EmbeddedDocument):
     lower_limit_in_m = IntField(db_field='lowerLimit', default=AIRSPACE_VOLUME_LOWER_LIMIT_IN_M)
     lower_vertical_reference = StringField(db_field='lowerVerticalReference',
-                                           choices=CodeVerticalReferenceType.choices())
+                                           choices=CodeVerticalReferenceType.choices(),
+                                           default=CodeVerticalReferenceType.WGS84.value)
     upper_limit_in_m = IntField(db_field='upperLimit', default=AIRSPACE_VOLUME_UPPER_LIMIT_IN_M)
     upper_vertical_reference = StringField(db_field='upperVerticalReference',
-                                           choices=CodeVerticalReferenceType.choices())
+                                           choices=CodeVerticalReferenceType.choices(),
+                                           default=CodeVerticalReferenceType.WGS84.value)
     polygon = PolygonField(required=True)
 
 
@@ -134,10 +136,11 @@ class AuthorityEntity(Document):
 
 def _save_authority_entity_if_not_exists(authority_entity: AuthorityEntity) -> AuthorityEntity:
     try:
-        return AuthorityEntity.objects.get(name=authority_entity.name)
+        AuthorityEntity.objects.get(name=authority_entity.name)
     except DoesNotExist:
         authority_entity.save()
-        return authority_entity
+
+    return authority_entity
 
 
 class NotificationRequirement(EmbeddedDocument):
@@ -185,41 +188,26 @@ class UASZone(Document):
         if self.data_source.update_date_time is None:
             self.data_source.update_date_time = self.data_source.creation_date_time
 
+        authorization_authority = self.get_authorization_authority()
+        notification_authority = self.get_notification_authority()
+
         # save reference documents beforehand
-        if self.notification_authority:
-            self.notification_authority = _save_authority_entity_if_not_exists(self.notification_authority)
-        if self.authorization_authority:
-            self.authorization_authority = _save_authority_entity_if_not_exists(self.authorization_authority)
+        if notification_authority is not None:
+            self.authority.requires_notification_to.authority = _save_authority_entity_if_not_exists(notification_authority)
+        if authorization_authority is not None:
+            self.authority.requires_authorization_from.authority = _save_authority_entity_if_not_exists(authorization_authority)
 
-    def _has_notification_authority(self):
-        return self.authority and \
-                self.authority.requires_notification_to and \
-                self.authority.requires_notification_to.authority
-
-    def _has_authorization_authority(self):
-        return self.authority and \
-                self.authority.requires_authorization_from and \
-                self.authority.requires_authorization_from.authority
-
-    @property
-    def notification_authority(self):
-        if self._has_notification_authority():
+    def get_notification_authority(self):
+        try:
             return self.authority.requires_notification_to.authority
+        except AttributeError:
+            return None
 
-    @notification_authority.setter
-    def notification_authority(self, authority_entity: AuthorityEntity):
-        if self._has_notification_authority():
-            self.authority.requires_notification_to.authority = authority_entity
-
-    @property
-    def authorization_authority(self):
-        if self._has_authorization_authority():
+    def get_authorization_authority(self):
+        try:
             return self.authority.requires_authorization_from.authority
-
-    @authorization_authority.setter
-    def authorization_authority(self, authority_entity: AuthorityEntity):
-        if self._has_authorization_authority():
-            self.authority.requires_authorization_from.authority = authority_entity
+        except AttributeError:
+            return None
 
 
 class User(Document):

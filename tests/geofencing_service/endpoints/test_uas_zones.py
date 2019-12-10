@@ -35,6 +35,7 @@ from unittest import mock
 import pytest
 
 from geofencing_service import BASE_PATH
+from geofencing_service.db.models import UASZone
 from geofencing_service.db.uas_zones import get_uas_zones_by_identifier, create_uas_zone as db_create_uas_zone
 from geofencing_service.endpoints.schemas.filters_schemas import UASZonesFilterSchema
 from geofencing_service.filters import UASZonesFilter
@@ -53,8 +54,8 @@ URL_UAS_ZONES = f'{BASE_PATH}/uas_zones/'
 @pytest.fixture
 def db_uas_zone_basilique():
     uas_zone = make_uas_zone(BASILIQUE_POLYGON)
-    uas_zone.authorization_authority.save()
-    uas_zone.notification_authority.save()
+    uas_zone.get_authorization_authority().save()
+    uas_zone.get_notification_authority().save()
     uas_zone.save()
 
     return uas_zone
@@ -462,9 +463,9 @@ def test_get_uas_zones__filter_by_airspace_volume__polygon__response_is_serializ
         expected_uas_zones[0]['identifier'] = db_uas_zone_basilique.identifier
         expected_uas_zones[0]['name'] = db_uas_zone_basilique.name
         expected_uas_zones[0]['authority']['requiresAuthorizationFrom']['authority']['name'] = \
-            db_uas_zone_basilique.authorization_authority.name
+            db_uas_zone_basilique.get_authorization_authority().name
         expected_uas_zones[0]['authority']['requiresNotificationTo']['authority']['name'] = \
-            db_uas_zone_basilique.notification_authority.name
+            db_uas_zone_basilique.get_notification_authority().name
 
     response_data, status_code = _post_uas_zones_filter(test_client, test_user, filter_data)
     assert 200 == status_code
@@ -482,60 +483,15 @@ def test_create_uas_zone___invalid_user__returns_nok__401(test_client):
     assert "Invalid credentials" == response_data['genericReply']["RequestExceptionDescription"]
 
 
-@pytest.mark.parametrize('expected_uas_zone_output', [
-     {'airspaceVolume': {'lowerLimit': 0,
-                         'lowerVerticalReference': 'AGL',
-                         'polygon': [{'LAT': '50.862525', 'LON': '4.32812'},
-                                     {'LAT': '50.865502', 'LON': '4.329257'},
-                                     {'LAT': '50.865468', 'LON': '4.323686'},
-                                     {'LAT': '50.862525', 'LON': '4.32812'}],
-                         'upperLimit': 0,
-                         'upperVerticalReference': 'AGL'},
-      'applicableTimePeriod': {'dailySchedule': [{'day': 'MON',
-                                                  'endTime': '18:00:00+00:00',
-                                                  'startTime': '09:00:00+00:00'}],
-                               'endDateTime': '2019-11-29T10:30:16.548000+00:00',
-                               'permanent': 'YES',
-                               'startDateTime': '2019-11-29T10:30:16.548000+00:00'},
-      'authority': {'requiresAuthorizationFrom': {'authority': {'contactName': 'string',
-                                                                'email': 'user@example.com',
-                                                                'name': 'string',
-                                                                'phone': 'string',
-                                                                'service': 'string',
-                                                                'siteURL': 'https://www.authority.com'}},
-                    'requiresNotificationTo': {'authority': {'contactName': 'string',
-                                                             'email': 'user@example.com',
-                                                             'name': 'string',
-                                                             'phone': 'string',
-                                                             'service': 'string',
-                                                             'siteURL': 'https://www.authority.com'},
-                                               'intervalBefore': 'string'}},
-      'country': 'BEL',
-      'dataCaptureProhibition': 'YES',
-      'dataSource': {'author': 'string',
-                     'creationDateTime': '2019-11-29T10:30:16.549000+00:00',
-                     'updateDateTime': '2019-11-29T10:30:16.549000+00:00'},
-      'extendedProperties': {},
-      'identifier': '4rf04r1',
-      'message': 'string',
-      'name': 'string',
-      'reason': ['AIR_TRAFFIC'],
-      'region': 0,
-      'restriction': 'PROHIBITED',
-      'restrictionConditions': ['string'],
-      'type': 'COMMON',
-      'uSpaceClass': 'EUROCONTROL'}
-])
-def test_create_uas_zone__valid_input__object_is_saved__returns_ok__201(test_client, test_user, uas_zone_input,
-                                                                        expected_uas_zone_output):
+def test_create_uas_zone__valid_input__object_is_saved__returns_ok__201(test_client, test_user, uas_zone_input):
 
     uas_zone = make_uas_zone(BASILIQUE_POLYGON)
 
     # saving the expected uas_zone at this point contradicts a bit the nature of this test but here we are actually
     # testing the event outcome
-    db_create_uas_zone(uas_zone)
+    uas_zone.save()
 
-    with mock.patch('geofencing_service.events.events.create_uas_zone_event', return_value=uas_zone):
+    with mock.patch('geofencing_service.events.events.create_uas_zone_event', return_value=uas_zone) as mock_event:
         response = test_client.post(URL_UAS_ZONES, data=json.dumps(uas_zone_input), content_type='application/json',
                                     headers=make_basic_auth_header(test_user.username, DEFAULT_LOGIN_PASS))
 
@@ -543,7 +499,8 @@ def test_create_uas_zone__valid_input__object_is_saved__returns_ok__201(test_cli
 
         assert 201 == response.status_code
         assert "OK" == response_data['genericReply']['RequestStatus']
-        assert expected_uas_zone_output == response_data['UASZone']
+        assert uas_zone in UASZone.objects.all()
+        assert uas_zone_input['identifier'] == mock_event.call_args[1]['uas_zone']['identifier']
 
 
 def test_create_uas_zone__invalid_airspace_volume__not_enough_points__returns_nok__400(test_client, test_user,

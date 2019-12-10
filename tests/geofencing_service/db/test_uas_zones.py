@@ -43,8 +43,8 @@ __author__ = "EUROCONTROL (SWIM)"
 @pytest.fixture
 def db_uas_zone():
     uas_zone = make_uas_zone(BASILIQUE_POLYGON)
-    uas_zone.authorization_authority.save()
-    uas_zone.notification_authority.save()
+    uas_zone.get_authorization_authority().save()
+    uas_zone.get_notification_authority().save()
     uas_zone.save()
 
     return uas_zone
@@ -141,8 +141,8 @@ def test_create_uas_zone():
     create_uas_zone(uas_zone)
 
     assert uas_zone in UASZone.objects.all()
-    assert uas_zone.notification_authority in AuthorityEntity.objects.all()
-    assert uas_zone.authorization_authority in AuthorityEntity.objects.all()
+    assert uas_zone.get_notification_authority() in AuthorityEntity.objects.all()
+    assert uas_zone.get_authorization_authority() in AuthorityEntity.objects.all()
 
 
 def test_delete_uas_zone(db_uas_zone):

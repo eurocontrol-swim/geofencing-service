@@ -42,8 +42,6 @@ from geofencing_service.common import GeoJSONPolygonCoordinates
 from geofencing_service.db.models import UASZone, CodeZoneType, CodeRestrictionType, CodeYesNoType, CodeUSpaceClassType, \
     AirspaceVolume, AuthorityEntity, DailySchedule, CodeWeekDay, ApplicableTimePeriod, DataSource, User, \
     NotificationRequirement, AuthorizationRequirement, Authority
-from geofencing_service.db.uas_zones import create_uas_zone
-from geofencing_service.db.users import create_user
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -98,6 +96,7 @@ def make_authority_entity() -> AuthorityEntity:
     result.contact_name = "AuthorityEntity manager"
     result.service = "AuthorityEntity service"
     result.email = "auth@autority.be"
+    result.phone = "123123123"
 
     return result
 
@@ -151,8 +150,7 @@ def make_uas_zone(name, polygon):
     result.message = "message"
     result.country = "BEL"
     result.airspace_volume = AirspaceVolume(polygon=polygon)
-    result.authorization_requirement = make_authority()
-    result.notification_authority = make_authority()
+    result.authority = make_authority()
     result.applicable_time_period = make_applicable_period()
     result.data_source = DataSource(
         creation_date_time=NOW,
@@ -183,13 +181,13 @@ if __name__ == '__main__':
     for name, polygon in POLYGONS.items():
         uas_zone = make_uas_zone(name, polygon)
         try:
-            create_uas_zone(uas_zone)
+            uas_zone.save()
             _logger.info(f"Saved UASZone {name} in DB")
         except Exception as e:
             _logger.error(f"Error while saving object {uas_zone} in DB: {str(e)}")
 
     # save Geofencing User
     geofencing_user = make_user()
-    create_user(geofencing_user)
+    geofencing_user.save()
     _logger.info(f"Saved user {geofencing_user} in DB")
 

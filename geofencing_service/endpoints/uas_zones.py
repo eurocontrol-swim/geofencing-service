@@ -40,7 +40,7 @@ from geofencing_service.endpoints.schemas.db_schemas import UASZoneSchema
 from geofencing_service.endpoints.schemas.filters_schemas import UASZonesFilterSchema
 from geofencing_service.endpoints.schemas.reply_schemas import UASZonesFilterReplySchema, UASZoneCreateReplySchema, \
     ReplySchema
-from geofencing_service.events.events import create_uas_zone_event, delete_uas_zone_event
+from geofencing_service.events import events # import create_uas_zone_event, delete_uas_zone_event
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -77,7 +77,7 @@ def create_uas_zone() -> Tuple[UASZoneCreateReply, int]:
     except ValidationError as e:
         raise BadRequestError(str(e))
 
-    db_uas_zone = create_uas_zone_event(uas_zone=uas_zone)
+    db_uas_zone = events.create_uas_zone_event(uas_zone=uas_zone)
 
     return UASZoneCreateReply(uas_zone=db_uas_zone), 201
 
@@ -97,6 +97,6 @@ def delete_uas_zone(uas_zone_identifier: str) -> Tuple[Reply, int]:
     if uas_zone is None:
         raise NotFoundError(f"UASZone with identifier '{uas_zone_identifier}' does not exist")
 
-    delete_uas_zone_event(uas_zone=uas_zone)
+    events.delete_uas_zone_event(uas_zone=uas_zone)
 
     return Reply(generic_reply=GenericReply(request_status=RequestStatus.OK.value)), 204
