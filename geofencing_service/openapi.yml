@@ -51,6 +51,29 @@ tags:
     description: Publish/Subscribe interface
 
 paths:
+  /ping-credentials:
+    get:
+      tags:
+        - ping
+      summary: checks the credentials of the user who sends this request
+      operationId: geofencing_service.endpoints.ping.ping_credentials
+      responses:
+        '200':
+          description: user is valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericReply'
+        '401':
+          description: Invalid user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  genericReply:
+                    $ref: '#/components/schemas/GenericReply'
+
   /uas_zones/filter/:
     post:
       tags:
