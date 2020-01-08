@@ -30,8 +30,6 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 import logging
 from unittest.mock import Mock, call
 
-from swim_pubsub.core.errors import PubSubClientError
-
 from geofencing_service.db.uas_zones import create_uas_zone as db_create_uas_zone
 from geofencing_service.events.uas_zone_handlers import _uas_zone_matches_subscription, get_relevant_topic_names, \
     UASZoneContext, publish_relevant_topics
@@ -93,31 +91,14 @@ def test_publish_relevent_topics__all_topics_are_published(test_client):
     app = test_client.application
 
     mock_publish_topic = Mock()
-    app.publisher.publish_topic = mock_publish_topic
+    app.swim_publisher.publish_topic = mock_publish_topic
 
     context = UASZoneContext(uas_zone=make_uas_zone(BASILIQUE_POLYGON))
     context.topic_names = ['topic_name1', 'topic_name2', 'topic_name3']
 
     publish_relevant_topics(context)
 
-    expected_mock_calls = [call(topic_name) for topic_name in context.topic_names]
+    expected_mock_calls = [call(topic_name=topic_name) for topic_name in context.topic_names]
 
     assert expected_mock_calls == mock_publish_topic.mock_calls
 
-
-def test_publish_relevent_topics__pubsubclienterror__logs_error(test_client, caplog):
-    caplog.set_level(logging.DEBUG)
-
-    app = test_client.application
-
-    mock_publish_topic = Mock(side_effect=PubSubClientError('error'))
-    app.publisher.publish_topic = mock_publish_topic
-
-    context = UASZoneContext(uas_zone=make_uas_zone(BASILIQUE_POLYGON))
-    context.topic_names = ['topic_name1', 'topic_name2', 'topic_name3']
-
-    publish_relevant_topics(context)
-
-    log_message = caplog.records[0]
-
-    assert "error" == log_message.message

@@ -50,6 +50,32 @@ def get_unique_id():
 NOW = datetime.now(timezone.utc)
 NOW_STRING = NOW.isoformat()
 
+BASILIQUE_POLYGON: GeoJSONPolygonCoordinates = [
+    [[50.863648, 4.329385],
+     [50.865348, 4.328055],
+     [50.868470, 4.317369],
+     [50.867671, 4.314826],
+     [50.865873, 4.315920],
+     [50.862792, 4.326508],
+     [50.863648, 4.329385]]
+]
+
+
+INTERSECTING_BASILIQUE_POLYGON: GeoJSONPolygonCoordinates = [
+    [[50.862525, 4.328120],
+     [50.865502, 4.329257],
+     [50.865468, 4.323686],
+     [50.862525, 4.328120]]
+]
+
+
+NON_INTERSECTING_BASILIQUE_POLYGON: GeoJSONPolygonCoordinates = [
+    [[50.870058, 4.325421],
+     [50.867615, 4.326890],
+     [50.867602, 4.321407],
+     [50.870058, 4.325421]]
+]
+
 
 def make_airspace_volume(polygon: GeoJSONPolygonCoordinates,
                          upper_limit_in_m: Optional[int] = None,
@@ -177,38 +203,12 @@ def make_geofencing_sm_subscription() -> GeofencingSMSubscription:
     )
 
 
-def make_uas_zones_subscription() -> UASZonesSubscription:
+def make_uas_zones_subscription(polygon: GeoJSONPolygonCoordinates = BASILIQUE_POLYGON) -> UASZonesSubscription:
     subscription = UASZonesSubscription()
     subscription.id = get_unique_id()
     subscription.sm_subscription = make_geofencing_sm_subscription()
     subscription.active = True
-    subscription.uas_zones_filter = {'airspace_volume': {}}
+    uas_zone_filter = make_uas_zones_filter_from_db_uas_zone(make_uas_zone(polygon))
+    subscription.uas_zones_filter = {'airspace_volume': uas_zone_filter.to_dict()}
 
     return subscription
-
-
-BASILIQUE_POLYGON: GeoJSONPolygonCoordinates = [
-    [[50.863648, 4.329385],
-     [50.865348, 4.328055],
-     [50.868470, 4.317369],
-     [50.867671, 4.314826],
-     [50.865873, 4.315920],
-     [50.862792, 4.326508],
-     [50.863648, 4.329385]]
-]
-
-
-INTERSECTING_BASILIQUE_POLYGON: GeoJSONPolygonCoordinates = [
-    [[50.862525, 4.328120],
-     [50.865502, 4.329257],
-     [50.865468, 4.323686],
-     [50.862525, 4.328120]]
-]
-
-
-NON_INTERSECTING_BASILIQUE_POLYGON: GeoJSONPolygonCoordinates = [
-    [[50.870058, 4.325421],
-     [50.867615, 4.326890],
-     [50.867602, 4.321407],
-     [50.870058, 4.325421]]
-]

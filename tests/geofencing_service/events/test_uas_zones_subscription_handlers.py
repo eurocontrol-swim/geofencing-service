@@ -42,10 +42,10 @@ __author__ = "EUROCONTROL (SWIM)"
 def test_publish_topic(test_client):
     app = test_client.application
 
-    mock_register_topic = Mock()
+    mock_add_topic = Mock()
     mock_publish_topic = Mock()
-    app.publisher.register_topic = mock_register_topic
-    app.publisher.publish_topic = mock_publish_topic
+    app.swim_publisher.add_topic = mock_add_topic
+    app.swim_publisher.publish_topic = mock_publish_topic
 
     uas_zone = make_uas_zone(BASILIQUE_POLYGON)
     uas_zones_filter = make_uas_zones_filter_from_db_uas_zone(uas_zone)
@@ -53,10 +53,10 @@ def test_publish_topic(test_client):
     context.topic_name = 'topic_name1'
 
     publish_topic(context)
-    mock_register_topic_arg = mock_register_topic.call_args[0][0]
-    assert context.topic_name == mock_register_topic_arg.name
+    mock_add_topic_arg = mock_add_topic.call_args[1]
+    assert context.topic_name == mock_add_topic_arg['topic_name']
 
-    mock_publish_topic.assert_called_once_with(context.topic_name, context=context.uas_zones_filter)
+    mock_publish_topic.assert_called_once_with(topic_name=context.topic_name, context=context.uas_zones_filter)
 
 
 @mock.patch('geofencing_service.events.uas_zones_subscription_handlers.sm_client')

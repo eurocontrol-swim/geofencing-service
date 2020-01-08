@@ -176,7 +176,7 @@ def test_get_uas_zones__invalid_user__returns_nok__401(test_client):
 
 
 @pytest.mark.parametrize('polygon, expected_exception_description', [
-    ([{"LAT": "0", "LON": "0"}], "[{'LAT': '0', 'LON': '0'}] is too short"),
+    ([{"LAT": "0", "LON": "0"}], "[{'LAT': '0', 'LON': '0'}] is too short - 'airspaceVolume.polygon'"),
     ([{"LAT": "1.0", "LON": "2.0"}, {"LAT": "3.0", "LON": "4.0"}, {"LAT": "5.0", "LON": "6.0"}],
      "{'airspaceVolume': {'polygon': ['Loop is not closed']}}"),
 ])
@@ -515,7 +515,7 @@ def test_create_uas_zone__invalid_airspace_volume__not_enough_points__returns_no
 
     assert 400 == response.status_code
     assert "NOK" == response_data['genericReply']['RequestStatus']
-    assert "[{'LAT': '50.862525', 'LON': '4.32812'}] is too short" == \
+    assert "[{'LAT': '50.862525', 'LON': '4.32812'}] is too short - 'airspaceVolume.polygon'" == \
            response_data['genericReply']['RequestExceptionDescription']
 
 
@@ -536,7 +536,7 @@ def test_create_uas_zone__invalid_airspace_volume__not_closing_loop__returns_nok
 
 
 @pytest.mark.parametrize('invalid_identifier, expected_message', [
-    ('short', "'short' is too short"), ('looooooong', "'looooooong' is too long")
+    ('short', "'short' is too short - 'identifier'"), ('looooooong', "'looooooong' is too long - 'identifier'")
 ])
 def test_create_uas_zone__invalid_identifier_length__returns_nok__400(test_client, test_user, uas_zone_input,
                                                                       invalid_identifier, expected_message):

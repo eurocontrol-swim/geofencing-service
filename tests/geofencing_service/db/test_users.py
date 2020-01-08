@@ -54,7 +54,7 @@ def test_get_user_by_username__invalid_username__none_is_returned():
 
 
 def test_create_user__user_is_saved_in_db():
-    user = User("username", "password")
+    user = User(username="username", password="password")
 
     create_user(user)
 
@@ -66,8 +66,8 @@ def test_create_user__user_is_saved_in_db():
 
 
 def test_create_user__username_should_be_unique():
-    user1 = User("username", "password")
-    user2 = User("username", "password")
+    user1 = User(username="username", password="password")
+    user2 = User(username="username", password="password")
 
     user1.save()
     with pytest.raises(NotUniqueError):

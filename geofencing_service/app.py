@@ -29,18 +29,15 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 """
 import logging
 from pathlib import Path
-from typing import Tuple
 
 import connexion
 from flask import Flask
 from mongoengine import connect
 from pkg_resources import resource_filename
+from pubsub_facades.swim_pubsub import SWIMPublisher
 from swagger_ui_bundle import swagger_ui_3_path
 from swim_backend.config import load_app_config, configure_logging
 from swim_backend.flask import configure_flask
-from swim_pubsub.core.clients import PubSubClient
-from swim_pubsub.core.errors import PubSubClientError
-from swim_pubsub.publisher import PubApp
 
 from geofencing_service.endpoints.reply import handle_flask_request_error
 
@@ -79,38 +76,18 @@ def create_flask_app(config_file: str) -> Flask:
     # easier usage across the project
     with app.app_context():
         if not app.testing:
-            app.pub_app, app.publisher = configure_pub_app(config_file)
+            app.swim_publisher = SWIMPublisher.create_from_config(config_file)
         else:
-            app.pub_app, app.publisher = None, None
+            app.swim_publisher = None
 
     return app
-
-
-def configure_pub_app(config_file: str) -> Tuple[PubApp, PubSubClient]:
-    """
-    Creates and configures the PubApp and it resisteres the Geofencing Service broker publisher.
-
-    :param config_file:
-    :return:
-    """
-    pub_app = PubApp.create_from_config(config_file)
-
-    try:
-        publisher = pub_app.register_publisher(username=pub_app.config['GEOFENCING_SERVICE_SM_USER'],
-                                               password=pub_app.config['GEOFENCING_SERVICE_SM_PASS'])
-        _logger.info(f"Publisher '{pub_app.config['GEOFENCING_SERVICE_SM_USER']}' registered in PubApp")
-    except PubSubClientError as e:
-        _logger.error(f"Publisher failed to be registered in PubApp: {str(e)}")
-        publisher = None
-
-    return pub_app, publisher
 
 
 def run_appication(host="0.0.0.0", port=8000, debug=True):
     flask_app = create_flask_app(config_file=resource_filename(__name__, 'config.yml'))
 
-    # the PubApp is started in threaded mode in order to be able to use its publisher across the project
-    flask_app.pub_app.run(threaded=True)
+    # the SWIMPublisher is started in threaded mode in order to be able to use it across the project
+    flask_app.swim_publisher.run(threaded=True)
 
     flask_app.run(host=host, port=port, debug=debug)
 

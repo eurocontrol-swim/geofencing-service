@@ -34,8 +34,7 @@ from flask import request
 from marshmallow import ValidationError
 from swim_backend.errors import BadRequestError, NotFoundError
 
-from geofencing_service.db.subscriptions import update_uas_zones_subscription as db_update_uas_zones_subscription, \
-    get_uas_zones_subscription_by_id, delete_uas_zones_subscription as db_delete_uas_zones_subscription
+from geofencing_service.db.subscriptions import get_uas_zones_subscription_by_id
 from geofencing_service.endpoints.reply import handle_response, SubscribeToUASZonesUpdatesReply, Reply, GenericReply, \
     RequestStatus
 from geofencing_service.endpoints.schemas.db_schemas import SubscriptionSchema

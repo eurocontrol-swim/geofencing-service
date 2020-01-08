@@ -49,7 +49,7 @@ def app():
     _app = create_flask_app(config_file)
     if _app.testing:
         _app.pub_app = Mock()
-        _app.publisher = Mock()
+        _app.swim_publisher = Mock()
     ctx = _app.app_context()
     ctx.push()
 

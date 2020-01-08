@@ -55,7 +55,7 @@ def test_create_subscription_to_uas_zones_updates__invalid_user__returns_nok_401
 
 
 @pytest.mark.parametrize('polygon, expected_exception_description', [
-    ([{"LAT": "0", "LON": "0"}], "[{'LAT': '0', 'LON': '0'}] is too short"),
+    ([{"LAT": "0", "LON": "0"}], "[{'LAT': '0', 'LON': '0'}] is too short - 'airspaceVolume.polygon'"),
     ([{"LAT": "1.0", "LON": "2.0"}, {"LAT": "3.0", "LON": "4.0"}, {"LAT": "5.0", "LON": "6.0"}],
      "{'airspaceVolume': {'polygon': ['Loop is not closed']}}"),
 ])

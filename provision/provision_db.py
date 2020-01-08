@@ -45,6 +45,8 @@ from geofencing_service.db.models import UASZone, CodeZoneType, CodeRestrictionT
 
 __author__ = "EUROCONTROL (SWIM)"
 
+from geofencing_service.db.users import create_user
+
 _logger = logging.getLogger(__name__)
 
 NOW = datetime.now(timezone.utc)
@@ -188,6 +190,6 @@ if __name__ == '__main__':
 
     # save Geofencing User
     geofencing_user = make_user()
-    geofencing_user.save()
+    create_user(geofencing_user)
     _logger.info(f"Saved user {geofencing_user} in DB")
 

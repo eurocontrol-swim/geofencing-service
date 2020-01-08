@@ -30,7 +30,6 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 import logging
 
 from flask import current_app
-from swim_pubsub.core.errors import PubSubClientError
 
 from geofencing_service.db.models import UASZone, UASZonesSubscription
 from geofencing_service.db.uas_zones import create_uas_zone as db_create_uas_zone, get_uas_zones as db_get_uas_zones
@@ -89,10 +88,7 @@ def publish_relevant_topics(context: UASZoneContext) -> None:
     :param context:
     """
     for topics_name in context.topic_names:
-        try:
-            current_app.publisher.publish_topic(topics_name)
-        except PubSubClientError as e:
-            _logger.error(str(e))
+        current_app.swim_publisher.publish_topic(topic_name=topics_name)
 
 
 def uas_zones_db_delete(context: UASZoneContext):

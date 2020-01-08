@@ -30,13 +30,12 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 import hashlib
 import json
 import uuid
-from typing import Optional, Any, List, Dict
+from typing import Optional, Any, List
 
 from flask import current_app
 from subscription_manager_client.models import Subscription as SMSubscription, Topic as SMTopic
 from subscription_manager_client.subscription_manager import SubscriptionManagerClient
 from swim_backend.local import AppContextProxy
-from swim_pubsub.core.topics import Topic
 
 from geofencing_service.db.models import UASZonesSubscription, UASZone, GeofencingSMSubscription
 from geofencing_service.db.uas_zones import get_uas_zones as db_get_uas_zones
@@ -51,12 +50,12 @@ __author__ = "EUROCONTROL (SWIM)"
 
 def _get_sm_client_from_config() -> SubscriptionManagerClient:
     return SubscriptionManagerClient.create(
-        host=current_app.config['SUBSCRIPTION-MANAGER']['host'],
-        https=current_app.config['SUBSCRIPTION-MANAGER']['https'],
-        timeout=current_app.config['SUBSCRIPTION-MANAGER']['timeout'],
-        verify=current_app.config['SUBSCRIPTION-MANAGER']['verify'],
-        username=current_app.config['GEOFENCING_SERVICE_SM_USER'],
-        password=current_app.config['GEOFENCING_SERVICE_SM_PASS']
+        host=current_app.config['SUBSCRIPTION-MANAGER-API']['host'],
+        https=current_app.config['SUBSCRIPTION-MANAGER-API']['https'],
+        timeout=current_app.config['SUBSCRIPTION-MANAGER-API']['timeout'],
+        verify=current_app.config['SUBSCRIPTION-MANAGER-API']['verify'],
+        username=current_app.config['SUBSCRIPTION-MANAGER-API']['username'],
+        password=current_app.config['SUBSCRIPTION-MANAGER-API']['password']
     )
 
 
@@ -102,9 +101,9 @@ def get_topic_name(context: UASZonesSubscriptionCreateContext) -> None:
     context.topic_name = hashlib.sha1(json.dumps(uas_zones_filter_dict).encode()).hexdigest()
 
 
-def data_handler(context: Optional[Any] = None) -> List[UASZone]:
+def message_producer(context: Optional[Any] = None) -> List[UASZone]:
     """
-    The data handler that will be called every time the topic is triggered for publishing.
+    The message producer (UASZones retrieval) that will be called every time the topic is triggered for publishing.
 
     :param context: Mandatory parameter required by `swim-pubsub`. Here it contains the UASZone filtering criteria of
                     the subscription
@@ -119,11 +118,10 @@ def publish_topic(context: UASZonesSubscriptionCreateContext) -> None:
 
     :param context:
     """
-    topic = Topic(topic_name=context.topic_name, data_handler=data_handler)
 
-    current_app.publisher.register_topic(topic)
+    current_app.swim_publisher.add_topic(topic_name=context.topic_name, message_producer=message_producer)
 
-    current_app.publisher.publish_topic(context.topic_name, context=context.uas_zones_filter)
+    current_app.swim_publisher.publish_topic(topic_name=context.topic_name, context=context.uas_zones_filter)
 
 
 def get_or_create_sm_topic(context: UASZonesSubscriptionCreateContext) -> None:
