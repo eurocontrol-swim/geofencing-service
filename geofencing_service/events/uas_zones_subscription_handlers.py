@@ -29,6 +29,7 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 """
 import hashlib
 import json
+import logging
 import uuid
 from typing import Optional, Any, List
 
@@ -47,6 +48,8 @@ from geofencing_service.endpoints.schemas.filters_schemas import UASZonesFilterS
 from geofencing_service.filters import UASZonesFilter
 
 __author__ = "EUROCONTROL (SWIM)"
+
+_logger = logging.getLogger(__name__)
 
 
 def _get_sm_client_from_config() -> SubscriptionManagerClient:
@@ -175,11 +178,8 @@ def uas_zones_subscription_db_save(context: UASZonesSubscriptionCreateContext) -
 
 
 def update_sm_subscription(context: UASZonesSubscriptionUpdateContext) -> None:
-    sm_subscription = sm_client.get_subscription_by_id(context.uas_zones_subscription.sm_subscription.id)
-
-    sm_subscription.active = context.uas_zones_subscription.sm_subscription.active
-
-    sm_client.put_subscription(sm_subscription.id, sm_subscription)
+    sm_client.put_subscription(context.uas_zones_subscription.sm_subscription.id,
+                               {'active': context.uas_zones_subscription.sm_subscription.active})
 
 
 def uas_zones_subscription_db_update(context: UASZonesSubscriptionUpdateContext) -> None:
