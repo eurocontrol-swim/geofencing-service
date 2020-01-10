@@ -167,7 +167,8 @@ def uas_zones_subscription_db_save(context: UASZonesSubscriptionCreateContext) -
     subscription.sm_subscription = GeofencingSMSubscription(
         id=context.sm_subscription.id,
         queue=context.sm_subscription.queue,
-        topic_name=context.topic_name
+        topic_name=context.topic_name,
+        active=context.sm_subscription.active
     )
     subscription.uas_zones_filter = context.uas_zones_filter.to_dict()
     subscription.active = True
