@@ -96,6 +96,15 @@ class SubscribeToUASZonesUpdatesReply(Reply):
         self.publication_location = publication_location
 
 
+class UASZoneSubscriptionReply(Reply):
+
+    def __init__(self, subscription_id: str, publication_location: str, active: bool):
+        super().__init__()
+        self.subscription_id = subscription_id
+        self.publication_location = publication_location
+        self.active = active
+
+
 def handle_response(schema: Type[Schema]):
     """
     Handles the response by dumping the returned object using the provided schema class and by handling any possible

@@ -283,3 +283,4 @@ def test_get_subscription_to_uas_zones_updates__returns_subscription_data_200(te
     response_data = json.loads(response.data)
     assert response_data['subscriptionID'] == uas_zones_subscription.id
     assert response_data['publicationLocation'] == uas_zones_subscription.sm_subscription.queue
+    assert response_data['active'] == uas_zones_subscription.sm_subscription.active

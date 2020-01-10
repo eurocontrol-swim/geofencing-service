@@ -244,7 +244,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SubscribeToUASZonesUpdatesReply'
+                $ref: '#/components/schemas/UASZoneSubscriptionReply'
         '404':
           description: UASZonesSubscription not found
           content:
@@ -651,6 +651,19 @@ components:
       properties:
         UASZone:
           $ref: '#/components/schemas/UASZone'
+        genericReply:
+          $ref: '#/components/schemas/GenericReply'
+
+    UASZoneSubscriptionReply:
+      type: object
+      properties:
+        subscriptionID:
+          type: string
+          format: uuid
+        publicationLocation:
+          type: string
+        active:
+          type: boolean
         genericReply:
           $ref: '#/components/schemas/GenericReply'
 

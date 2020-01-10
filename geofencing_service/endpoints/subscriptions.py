@@ -36,9 +36,10 @@ from swim_backend.errors import BadRequestError, NotFoundError
 
 from geofencing_service.db.subscriptions import get_uas_zones_subscription_by_id
 from geofencing_service.endpoints.reply import handle_response, SubscribeToUASZonesUpdatesReply, Reply, GenericReply, \
-    RequestStatus
+    RequestStatus, UASZoneSubscriptionReply
 from geofencing_service.endpoints.schemas.db_schemas import SubscriptionSchema
-from geofencing_service.endpoints.schemas.reply_schemas import SubscribeToUASZonesUpdatesReplySchema, ReplySchema
+from geofencing_service.endpoints.schemas.reply_schemas import SubscribeToUASZonesUpdatesReplySchema, ReplySchema, \
+    UASZoneSubscriptionReplySchema
 from geofencing_service.endpoints.schemas.filters_schemas import UASZonesFilterSchema
 from geofencing_service.events import events
 
@@ -69,7 +70,7 @@ def create_subscription_to_uas_zones_updates() -> Tuple[SubscribeToUASZonesUpdat
     return reply, 201
 
 
-@handle_response(SubscribeToUASZonesUpdatesReplySchema)
+@handle_response(UASZoneSubscriptionReplySchema)
 def get_subscription_to_uas_zones_updates(subscription_id: str) -> Tuple[Reply, int]:
     """
     GET /subscriptions/{subscription_id}
@@ -84,8 +85,9 @@ def get_subscription_to_uas_zones_updates(subscription_id: str) -> Tuple[Reply, 
     if uas_zones_subscription is None:
         raise NotFoundError(f"Subscription with id {subscription_id} does not exist")
 
-    reply = SubscribeToUASZonesUpdatesReply(subscription_id=uas_zones_subscription.id,
-                                            publication_location=uas_zones_subscription.sm_subscription.queue)
+    reply = UASZoneSubscriptionReply(subscription_id=uas_zones_subscription.id,
+                                     publication_location=uas_zones_subscription.sm_subscription.queue,
+                                     active=uas_zones_subscription.sm_subscription.active)
 
     return reply, 200
 

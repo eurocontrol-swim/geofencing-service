@@ -28,7 +28,7 @@ http://opensource.org/licenses/BSD-3-Clause
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
 from marshmallow import Schema
-from marshmallow.fields import Nested, String, DateTime
+from marshmallow.fields import Nested, String, DateTime, Boolean
 
 from geofencing_service.endpoints.schemas.db_schemas import UASZoneSchema
 
@@ -56,3 +56,9 @@ class UASZoneCreateReplySchema(ReplySchema):
 class SubscribeToUASZonesUpdatesReplySchema(ReplySchema):
     subscription_id = String(data_key="subscriptionID")
     publication_location = String(data_key="publicationLocation")
+
+
+class UASZoneSubscriptionReplySchema(ReplySchema):
+    subscription_id = String(data_key="subscriptionID")
+    publication_location = String(data_key="publicationLocation")
+    active = Boolean()
