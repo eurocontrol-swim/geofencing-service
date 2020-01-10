@@ -177,7 +177,7 @@ def uas_zones_subscription_db_save(context: UASZonesSubscriptionCreateContext) -
 def update_sm_subscription(context: UASZonesSubscriptionUpdateContext) -> None:
     sm_subscription = sm_client.get_subscription_by_id(context.uas_zones_subscription.sm_subscription.id)
 
-    sm_subscription.active = context.uas_zones_subscription.active
+    sm_subscription.active = context.uas_zones_subscription.sm_subscription.active
 
     sm_client.put_subscription(sm_subscription.id, sm_subscription)
 

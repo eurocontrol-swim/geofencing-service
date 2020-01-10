@@ -189,7 +189,7 @@ def test_update_subscription_to_uas_zones_updates__is_updated__returns_ok_200(mo
     mock_sm_client.put_subscription = Mock()
 
     data = {
-        "active": not uas_zones_subscription.active
+        "active": not uas_zones_subscription.sm_subscription.active
     }
 
     response = test_client.put(URL + uas_zones_subscription.id, data=json.dumps(data), content_type='application/json',
@@ -201,7 +201,7 @@ def test_update_subscription_to_uas_zones_updates__is_updated__returns_ok_200(mo
 
     updated_subscription = UASZonesSubscription.objects.get(id=uas_zones_subscription.id)
 
-    assert updated_subscription.active == (not uas_zones_subscription.active)
+    assert updated_subscription.sm_subscription.active == (not uas_zones_subscription.sm_subscription.active)
     mock_sm_client.get_subscription_by_id.assert_called_once_with(uas_zones_subscription.sm_subscription.id)
     mock_sm_client.put_subscription.assert_called_once_with(sm_subscription.id, sm_subscription)
 

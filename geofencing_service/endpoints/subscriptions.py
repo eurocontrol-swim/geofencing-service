@@ -110,7 +110,7 @@ def update_subscription_to_uas_zones_updates(subscription_id: str) -> Tuple[Repl
     except ValidationError as e:
         raise BadRequestError(str(e))
 
-    uas_zones_subscription.active = updated_subscription_dict['active']
+    uas_zones_subscription.sm_subscription.active = updated_subscription_dict['active']
 
     events.update_uas_zones_subscription_event(uas_zones_subscription=uas_zones_subscription)
 
