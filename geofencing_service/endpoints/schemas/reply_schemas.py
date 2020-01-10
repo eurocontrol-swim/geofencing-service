@@ -60,12 +60,16 @@ class SubscribeToUASZonesUpdatesReplySchema(ReplySchema):
     publication_location = String(data_key="publicationLocation")
 
 
-class UASZoneSubscriptionReplySchema(ReplySchema):
+class UASZoneSubscriptionReplyObjectSchema(ReplySchema):
     subscription_id = String(data_key="subscriptionID")
     publication_location = String(data_key="publicationLocation")
     active = Boolean()
     uas_zones_filter = Nested(UASZonesFilterSchema, data_key='UASZonesFilter')
 
 
+class UASZoneSubscriptionReplySchema(ReplySchema):
+    uas_zone_subscription = Nested(UASZoneSubscriptionReplyObjectSchema, data_key='UASZoneSubscription')
+
+
 class UASZoneSubscriptionsReplySchema(ReplySchema):
-    uas_zone_subscriptions = Nested(UASZoneSubscriptionReplySchema, many=True, data_key='UASZoneSubscriptions')
+    uas_zone_subscriptions = Nested(UASZoneSubscriptionReplyObjectSchema, many=True, data_key='UASZoneSubscriptions')

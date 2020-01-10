@@ -280,10 +280,10 @@ def test_get_subscription_to_uas_zones_updates__returns_subscription_data_200(te
 
     assert 200 == response.status_code
     response_data = json.loads(response.data)
-    assert response_data['subscriptionID'] == uas_zones_subscription.id
-    assert response_data['publicationLocation'] == uas_zones_subscription.sm_subscription.queue
-    assert response_data['active'] == uas_zones_subscription.sm_subscription.active
-    assert 'UASZonesFilter' in response_data
+    assert response_data['UASZoneSubscription']['subscriptionID'] == uas_zones_subscription.id
+    assert response_data['UASZoneSubscription']['publicationLocation'] == uas_zones_subscription.sm_subscription.queue
+    assert response_data['UASZoneSubscription']['active'] == uas_zones_subscription.sm_subscription.active
+    assert 'UASZonesFilter' in response_data['UASZoneSubscription']
 
 
 def test_get_subscriptions_to_uas_zones_updates__invalid_user__returns_nok_401(test_client):

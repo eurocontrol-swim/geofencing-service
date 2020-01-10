@@ -677,7 +677,8 @@ components:
         genericReply:
           $ref: '#/components/schemas/GenericReply'
 
-    UASZoneSubscriptionReply:
+
+    UASZoneSubscription:
       type: object
       properties:
         subscriptionID:
@@ -689,6 +690,12 @@ components:
           type: boolean
         UASZonesFilter:
           $ref: '#/components/schemas/UASZonesRequest'
+
+    UASZoneSubscriptionReply:
+      type: object
+      properties:
+        UASZoneSubscription:
+          $ref: '#/components/schemas/UASZoneSubscription'
         genericReply:
           $ref: '#/components/schemas/GenericReply'
 
@@ -698,7 +705,7 @@ components:
         UASZoneSubscriptions:
           type: array
           items:
-            $ref: '#/components/schemas/UASZoneSubscriptionReply'
+            $ref: '#/components/schemas/UASZoneSubscription'
         genericReply:
           $ref: '#/components/schemas/GenericReply'
 

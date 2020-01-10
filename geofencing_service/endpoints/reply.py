@@ -98,7 +98,7 @@ class SubscribeToUASZonesUpdatesReply(Reply):
         self.publication_location = publication_location
 
 
-class UASZoneSubscriptionReply(Reply):
+class UASZoneSubscriptionReplyObject:
 
     def __init__(self, subscription_id: str, publication_location: str, active: bool, uas_zones_filter: UASZonesFilter):
         super().__init__()
@@ -108,9 +108,15 @@ class UASZoneSubscriptionReply(Reply):
         self.uas_zones_filter = uas_zones_filter
 
 
+class UASZoneSubscriptionReply(Reply):
+    def __init__(self, uas_zone_subscription: UASZoneSubscriptionReplyObject):
+        super().__init__()
+        self.uas_zone_subscription = uas_zone_subscription
+
+
 class UASZoneSubscriptionsReply(Reply):
 
-    def __init__(self, uas_zone_subscriptions: List[UASZoneSubscriptionReply]):
+    def __init__(self, uas_zone_subscriptions: List[UASZoneSubscriptionReplyObject]):
         super().__init__()
         self.uas_zone_subscriptions = uas_zone_subscriptions
 
