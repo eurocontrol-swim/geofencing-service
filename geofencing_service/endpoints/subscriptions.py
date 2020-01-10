@@ -34,12 +34,12 @@ from flask import request
 from marshmallow import ValidationError
 from swim_backend.errors import BadRequestError, NotFoundError
 
-from geofencing_service.db.subscriptions import get_uas_zones_subscription_by_id
+from geofencing_service.db.subscriptions import get_uas_zones_subscription_by_id, get_uas_zones_subscriptions
 from geofencing_service.endpoints.reply import handle_response, SubscribeToUASZonesUpdatesReply, Reply, GenericReply, \
-    RequestStatus, UASZoneSubscriptionReply
+    RequestStatus, UASZoneSubscriptionReply, UASZoneSubscriptionsReply
 from geofencing_service.endpoints.schemas.db_schemas import SubscriptionSchema
 from geofencing_service.endpoints.schemas.reply_schemas import SubscribeToUASZonesUpdatesReplySchema, ReplySchema, \
-    UASZoneSubscriptionReplySchema
+    UASZoneSubscriptionReplySchema, UASZoneSubscriptionsReplySchema
 from geofencing_service.endpoints.schemas.filters_schemas import UASZonesFilterSchema
 from geofencing_service.events import events
 
@@ -70,6 +70,35 @@ def create_subscription_to_uas_zones_updates() -> Tuple[SubscribeToUASZonesUpdat
     return reply, 201
 
 
+def _get_uas_zone_subscription_reply_from_uas_zones_subscription(uas_zones_subscription):
+    return UASZoneSubscriptionReply(subscription_id=uas_zones_subscription.id,
+                                    publication_location=uas_zones_subscription.sm_subscription.queue,
+                                    active=uas_zones_subscription.sm_subscription.active,
+                                    uas_zones_filter=uas_zones_subscription.uas_zones_filter)
+
+
+@handle_response(UASZoneSubscriptionsReplySchema)
+def get_subscriptions_to_uas_zones_updates() -> Tuple[Reply, int]:
+    """
+    GET /subscriptions/{subscription_id}
+
+    Expected HTTP codes: 204, 400, 401, 404, 500
+
+    :param subscription_id:
+    :return:
+    """
+    uas_zone_subscriptions = get_uas_zones_subscriptions()
+
+    reply = UASZoneSubscriptionsReply(
+        uas_zone_subscriptions=[
+            _get_uas_zone_subscription_reply_from_uas_zones_subscription(subscription)
+            for subscription in uas_zone_subscriptions
+        ]
+    )
+
+    return reply, 200
+
+
 @handle_response(UASZoneSubscriptionReplySchema)
 def get_subscription_to_uas_zones_updates(subscription_id: str) -> Tuple[Reply, int]:
     """
@@ -85,9 +114,7 @@ def get_subscription_to_uas_zones_updates(subscription_id: str) -> Tuple[Reply, 
     if uas_zones_subscription is None:
         raise NotFoundError(f"Subscription with id {subscription_id} does not exist")
 
-    reply = UASZoneSubscriptionReply(subscription_id=uas_zones_subscription.id,
-                                     publication_location=uas_zones_subscription.sm_subscription.queue,
-                                     active=uas_zones_subscription.sm_subscription.active)
+    reply = _get_uas_zone_subscription_reply_from_uas_zones_subscription(uas_zones_subscription)
 
     return reply, 200
 

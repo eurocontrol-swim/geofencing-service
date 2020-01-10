@@ -202,8 +202,7 @@ def test_update_subscription_to_uas_zones_updates__is_updated__returns_ok_200(mo
     updated_subscription = UASZonesSubscription.objects.get(id=uas_zones_subscription.id)
 
     assert updated_subscription.sm_subscription.active == (not uas_zones_subscription.sm_subscription.active)
-    mock_sm_client.get_subscription_by_id.assert_called_once_with(uas_zones_subscription.sm_subscription.id)
-    mock_sm_client.put_subscription.assert_called_once_with(sm_subscription.id, sm_subscription)
+    mock_sm_client.put_subscription.assert_called_once_with(sm_subscription.id, data)
 
 
 def test_delete_subscription_to_uas_zones_updates__invalid_user__returns_nok_401(test_client):
@@ -284,3 +283,41 @@ def test_get_subscription_to_uas_zones_updates__returns_subscription_data_200(te
     assert response_data['subscriptionID'] == uas_zones_subscription.id
     assert response_data['publicationLocation'] == uas_zones_subscription.sm_subscription.queue
     assert response_data['active'] == uas_zones_subscription.sm_subscription.active
+    assert 'UASZonesFilter' in response_data
+
+
+def test_get_subscriptions_to_uas_zones_updates__invalid_user__returns_nok_401(test_client):
+    uas_zones_subscription = make_uas_zones_subscription()
+    uas_zones_subscription.save()
+
+    response = test_client.get(URL, headers=make_basic_auth_header('fake_username', 'fake_password'))
+
+    assert 401 == response.status_code
+    response_data = json.loads(response.data)
+    assert "NOK" == response_data['genericReply']['RequestStatus']
+    assert "Invalid credentials" == response_data['genericReply']["RequestExceptionDescription"]
+
+
+def test_get_subscriptions_to_uas_zones_updates__no_subscription_exists__returns_empty_list_200(test_client, test_user):
+    response = test_client.get(URL, headers=make_basic_auth_header(test_user.username, DEFAULT_LOGIN_PASS))
+
+    assert 200 == response.status_code
+    response_data = json.loads(response.data)
+    assert [] == response_data['UASZoneSubscriptions']
+
+
+def test_get_subscriptions_to_uas_zones_updates__returns_subscriptions_data_200(test_client, test_user):
+    uas_zones_subscription1 = make_uas_zones_subscription()
+    uas_zones_subscription2 = make_uas_zones_subscription()
+    uas_zones_subscription1.save()
+    uas_zones_subscription2.save()
+
+    response = test_client.get(URL, headers=make_basic_auth_header(test_user.username, DEFAULT_LOGIN_PASS))
+
+    assert 200 == response.status_code
+    response_data = json.loads(response.data)
+    assert 2 == len(response_data['UASZoneSubscriptions'])
+    assert response_data['UASZoneSubscriptions'][0]['subscriptionID'] == uas_zones_subscription1.id
+    assert response_data['UASZoneSubscriptions'][0]['publicationLocation'] == uas_zones_subscription1.sm_subscription.queue
+    assert response_data['UASZoneSubscriptions'][0]['active'] == uas_zones_subscription1.sm_subscription.active
+    assert 'UASZonesFilter' in response_data['UASZoneSubscriptions'][0]

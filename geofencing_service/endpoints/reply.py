@@ -41,6 +41,8 @@ from geofencing_service.endpoints.schemas.reply_schemas import ReplySchema
 
 __author__ = "EUROCONTROL (SWIM)"
 
+from geofencing_service.filters import UASZonesFilter
+
 
 class RequestStatus(Enum):
     OK = "OK"
@@ -98,11 +100,19 @@ class SubscribeToUASZonesUpdatesReply(Reply):
 
 class UASZoneSubscriptionReply(Reply):
 
-    def __init__(self, subscription_id: str, publication_location: str, active: bool):
+    def __init__(self, subscription_id: str, publication_location: str, active: bool, uas_zones_filter: UASZonesFilter):
         super().__init__()
         self.subscription_id = subscription_id
         self.publication_location = publication_location
         self.active = active
+        self.uas_zones_filter = uas_zones_filter
+
+
+class UASZoneSubscriptionsReply(Reply):
+
+    def __init__(self, uas_zone_subscriptions: List[UASZoneSubscriptionReply]):
+        super().__init__()
+        self.uas_zone_subscriptions = uas_zone_subscriptions
 
 
 def handle_response(schema: Type[Schema]):

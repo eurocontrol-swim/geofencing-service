@@ -34,6 +34,8 @@ from geofencing_service.endpoints.schemas.db_schemas import UASZoneSchema
 
 __author__ = "EUROCONTROL (SWIM)"
 
+from geofencing_service.endpoints.schemas.filters_schemas import UASZonesFilterSchema
+
 
 class GenericReplySchema(Schema):
     request_status = String(data_key="RequestStatus")
@@ -62,3 +64,8 @@ class UASZoneSubscriptionReplySchema(ReplySchema):
     subscription_id = String(data_key="subscriptionID")
     publication_location = String(data_key="publicationLocation")
     active = Boolean()
+    uas_zones_filter = Nested(UASZonesFilterSchema, data_key='UASZonesFilter')
+
+
+class UASZoneSubscriptionsReplySchema(ReplySchema):
+    uas_zone_subscriptions = Nested(UASZoneSubscriptionReplySchema, many=True, data_key='UASZoneSubscriptions')

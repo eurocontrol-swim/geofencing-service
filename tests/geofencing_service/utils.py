@@ -209,6 +209,6 @@ def make_uas_zones_subscription(polygon: GeoJSONPolygonCoordinates = BASILIQUE_P
     subscription.id = get_unique_id()
     subscription.sm_subscription = make_geofencing_sm_subscription()
     uas_zone_filter = make_uas_zones_filter_from_db_uas_zone(make_uas_zone(polygon))
-    subscription.uas_zones_filter = {'airspace_volume': uas_zone_filter.to_dict()}
+    subscription.uas_zones_filter = uas_zone_filter.to_dict()
 
     return subscription
