@@ -27,10 +27,9 @@ http://opensource.org/licenses/BSD-3-Clause1
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from functools import partial
 
-from geofencing_service.app import run_appication
+from geofencing_service.app import prepare_appication
 
 __author__ = "EUROCONTROL (SWIM)"
 
-app = partial(run_appication, debug=False)
+app = prepare_appication()

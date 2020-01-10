@@ -31,3 +31,9 @@ LOGGING:
 
 MONGO:
   db: geodb
+  host: localhost
+  port: 27017
+
+DB_USERS:
+  - user: geofencing-viewer
+    pass: geofencing-viewer

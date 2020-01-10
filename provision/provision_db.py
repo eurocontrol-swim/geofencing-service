@@ -27,18 +27,14 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-import os
 import uuid
-import logging
 import logging.config
 from datetime import datetime, timezone
-from typing import Dict
 
 from mongoengine import connect
 from pkg_resources import resource_filename
 from swim_backend.config import load_app_config
 
-from geofencing_service.common import GeoJSONPolygonCoordinates
 from geofencing_service.db.models import UASZone, CodeZoneType, CodeRestrictionType, CodeYesNoType, CodeUSpaceClassType, \
     AirspaceVolume, AuthorityEntity, DailySchedule, CodeWeekDay, ApplicableTimePeriod, DataSource, User, \
     NotificationRequirement, AuthorizationRequirement, Authority
@@ -51,7 +47,7 @@ _logger = logging.getLogger(__name__)
 
 NOW = datetime.now(timezone.utc)
 
-POLYGONS: Dict[str, GeoJSONPolygonCoordinates] = {
+POLYGONS = {
     "basilique_polygon":  [
         [[50.863648, 4.329385],
          [50.865348, 4.328055],
@@ -161,12 +157,11 @@ def make_uas_zone(name, polygon):
     return result
 
 
-def make_user():
-    user = User()
-    user.username = os.environ['GEOFENCING_SERVICE_USER']
-    user.password = os.environ['GEOFENCING_SERVICE_PASS']
-
-    return user
+def _get_users(users):
+    return [
+        User(username=user_data['user'], password=user_data['pass'])
+        for user_data in users
+    ]
 
 
 if __name__ == '__main__':
@@ -177,7 +172,7 @@ if __name__ == '__main__':
 
     logging.config.dictConfig(config['LOGGING'])
 
-    connect(db=config['MONGO']['db'])
+    connect(db=config['MONGO']['db'], host=config['MONGO']['host'], port=config['MONGO']['port'])
 
     # save UASZones
     for name, polygon in POLYGONS.items():
@@ -188,8 +183,9 @@ if __name__ == '__main__':
         except Exception as e:
             _logger.error(f"Error while saving object {uas_zone} in DB: {str(e)}")
 
-    # save Geofencing User
-    geofencing_user = make_user()
-    create_user(geofencing_user)
-    _logger.info(f"Saved user {geofencing_user} in DB")
+    # save Geofencing Users
+    users = _get_users(config['DB_USERS'])
+    for user in users:
+        create_user(user)
+        _logger.info(f"Saved user {user.username} in DB")
 

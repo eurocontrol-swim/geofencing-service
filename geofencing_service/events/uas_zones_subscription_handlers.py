@@ -33,6 +33,7 @@ import uuid
 from typing import Optional, Any, List
 
 from flask import current_app
+from proton import Message
 from subscription_manager_client.models import Subscription as SMSubscription, Topic as SMTopic
 from subscription_manager_client.subscription_manager import SubscriptionManagerClient
 from swim_backend.local import AppContextProxy
@@ -101,7 +102,7 @@ def get_topic_name(context: UASZonesSubscriptionCreateContext) -> None:
     context.topic_name = hashlib.sha1(json.dumps(uas_zones_filter_dict).encode()).hexdigest()
 
 
-def message_producer(context: Optional[Any] = None) -> List[UASZone]:
+def message_producer(context: Optional[Any] = None) -> Message:
     """
     The message producer (UASZones retrieval) that will be called every time the topic is triggered for publishing.
 
@@ -109,7 +110,10 @@ def message_producer(context: Optional[Any] = None) -> List[UASZone]:
                     the subscription
     :return:
     """
-    return db_get_uas_zones(uas_zones_filter=context)
+    uas_zones = db_get_uas_zones(uas_zones_filter=context)
+    message = Message(body={'uas_zones': [uas_zone.to_json() for uas_zone in uas_zones]})
+
+    return message
 
 
 def publish_topic(context: UASZonesSubscriptionCreateContext) -> None:
@@ -156,7 +160,7 @@ def uas_zones_subscription_db_save(context: UASZonesSubscriptionCreateContext) -
     :param context:
     """
     subscription = UASZonesSubscription()
-    subscription.id = uuid.uuid4().hex,
+    subscription.id = uuid.uuid4().hex
     subscription.sm_subscription = GeofencingSMSubscription(
         id=context.sm_subscription.id,
         queue=context.sm_subscription.queue,

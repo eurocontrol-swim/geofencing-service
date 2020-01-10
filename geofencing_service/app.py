@@ -70,7 +70,7 @@ def create_flask_app(config_file: str) -> Flask:
 
     configure_logging(app)
 
-    connect(db=app.config['MONGO']['db'])
+    connect(db=app.config['MONGO']['db'], host=app.config['MONGO']['host'], port=app.config['MONGO']['port'])
 
     # the PubApp as well as the broker publisher of the Geofencing Service will be added as flask app properties for
     # easier usage across the project
@@ -83,14 +83,15 @@ def create_flask_app(config_file: str) -> Flask:
     return app
 
 
-def run_appication(host="0.0.0.0", port=8000, debug=True):
+def prepare_appication():
     flask_app = create_flask_app(config_file=resource_filename(__name__, 'config.yml'))
 
     # the SWIMPublisher is started in threaded mode in order to be able to use it across the project
     flask_app.swim_publisher.run(threaded=True)
 
-    flask_app.run(host=host, port=port, debug=debug)
+    return flask_app
 
 
 if __name__ == '__main__':
-    run_appication()
+    flask_app = prepare_appication()
+    flask_app.run(host="0.0.0.0", port=8000, debug=True)

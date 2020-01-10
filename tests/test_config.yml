@@ -33,6 +33,8 @@ TESTING: True
 
 MONGO:
   db: test
+  host: localhost
+  port: 27017
 
 SUBSCRIPTION-MANAGER:
   host: '0.0.0.0:8080'

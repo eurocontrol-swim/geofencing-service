@@ -35,7 +35,8 @@ DEBUG: False
 
 MONGO:
   db: geodb
-
+  host: localhost
+  port: 27017
 
 BROKER:
   host: '0.0.0.0:5671'

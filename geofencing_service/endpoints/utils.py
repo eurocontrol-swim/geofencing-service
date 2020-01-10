@@ -29,6 +29,8 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 """
 from datetime import datetime, timezone
 
+import dateutil.parser
+
 __author__ = "EUROCONTROL (SWIM)"
 
 
@@ -63,7 +65,7 @@ def make_datetime_string_aware(dt: str) -> str:
     :param dt:
     :return:
     """
-    return make_datetime_aware(datetime.fromisoformat(dt)).isoformat()
+    return make_datetime_aware(dateutil.parser.parse(dt)).isoformat()
 
 
 def make_datetime_aware(dt: datetime) -> datetime:

@@ -3,6 +3,7 @@ dependencies:
 - python
 - pytest
 - pytest-cov
+- python-dateutil
 - Flask
 - Werkzeug
 - pip:

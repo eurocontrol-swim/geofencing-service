@@ -10,7 +10,8 @@ WORKDIR /app
 COPY requirements_pip.txt requirements_pip.txt
 RUN pip3 install -r requirements_pip.txt
 
-COPY ./geofencing/ ./geofencing
+COPY ./geofencing_service/ ./geofencing_service
+COPY ./provision ./provision/
 
 COPY . /source/
 RUN set -x \
@@ -23,4 +24,4 @@ RUN chown -R geofencing:geofencing /app
 
 USER geofencing
 
-CMD ["python", "/app/geofencing/app.py"]
+CMD ["python", "/app/geofencing_service/app.py"]
