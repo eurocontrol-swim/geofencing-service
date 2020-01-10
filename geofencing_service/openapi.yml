@@ -226,6 +226,44 @@ paths:
                     $ref: '#/components/schemas/GenericReply'
 
   /subscriptions/{subscription_id}:
+    get:
+      tags:
+        - PubSub
+      summary: retrieves a subscription on UASZones updates by its id
+      operationId: geofencing_service.endpoints.subscriptions.get_subscription_to_uas_zones_updates
+      parameters:
+        - in: path
+          name: subscription_id
+          required: true
+          description: the id of the subscription to be updated
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfull unsubscribe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscribeToUASZonesUpdatesReply'
+        '404':
+          description: UASZonesSubscription not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  genericReply:
+                    $ref: '#/components/schemas/GenericReply'
+        '401':
+          description: Unauthenticated user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  genericReply:
+                    $ref: '#/components/schemas/GenericReply'
+
     delete:
       tags:
         - PubSub
@@ -234,6 +272,7 @@ paths:
       parameters:
         - in: path
           name: subscription_id
+          required: true
           description: the id of the subscription to be updated
           schema:
             type: string
@@ -271,6 +310,7 @@ paths:
       parameters:
         - in: path
           name: subscription_id
+          required: true
           description: the id of the subscription to be updated
           schema:
             type: string

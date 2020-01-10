@@ -246,3 +246,40 @@ def test_delete_subscription_to_uas_zones_updates__is_deleted__returns_ok_204(mo
         UASZonesSubscription.objects.get(id=uas_zones_subscription.id)
 
     mock_sm_client.delete_subscription_by_id.assert_called_once_with(uas_zones_subscription.sm_subscription.id)
+
+
+def test_get_subscription_to_uas_zones_updates__invalid_user__returns_nok_401(test_client):
+    uas_zones_subscription = make_uas_zones_subscription()
+    uas_zones_subscription.save()
+
+    response = test_client.get(URL + uas_zones_subscription.id,
+                               headers=make_basic_auth_header('fake_username', 'fake_password'))
+
+    assert 401 == response.status_code
+    response_data = json.loads(response.data)
+    assert "NOK" == response_data['genericReply']['RequestStatus']
+    assert "Invalid credentials" == response_data['genericReply']["RequestExceptionDescription"]
+
+
+def test_get_subscription_to_uas_zones_updates__invalid_subscription_id__returns_nok_404(test_client, test_user):
+    response = test_client.get(URL + 'invalid_subscription_id',
+                               headers=make_basic_auth_header(test_user.username, DEFAULT_LOGIN_PASS))
+
+    assert 404 == response.status_code
+    response_data = json.loads(response.data)
+    assert "NOK" == response_data['genericReply']['RequestStatus']
+    assert "Subscription with id invalid_subscription_id does not exist" == \
+           response_data['genericReply']["RequestExceptionDescription"]
+
+
+def test_get_subscription_to_uas_zones_updates__returns_subscription_data_200(test_client, test_user):
+    uas_zones_subscription = make_uas_zones_subscription()
+    uas_zones_subscription.save()
+
+    response = test_client.get(URL + uas_zones_subscription.id,
+                               headers=make_basic_auth_header(test_user.username, DEFAULT_LOGIN_PASS))
+
+    assert 200 == response.status_code
+    response_data = json.loads(response.data)
+    assert response_data['subscriptionID'] == uas_zones_subscription.id
+    assert response_data['publicationLocation'] == uas_zones_subscription.sm_subscription.queue

@@ -69,6 +69,27 @@ def create_subscription_to_uas_zones_updates() -> Tuple[SubscribeToUASZonesUpdat
     return reply, 201
 
 
+@handle_response(SubscribeToUASZonesUpdatesReplySchema)
+def get_subscription_to_uas_zones_updates(subscription_id: str) -> Tuple[Reply, int]:
+    """
+    GET /subscriptions/{subscription_id}
+
+    Expected HTTP codes: 204, 400, 401, 404, 500
+
+    :param subscription_id:
+    :return:
+    """
+    uas_zones_subscription = get_uas_zones_subscription_by_id(subscription_id)
+
+    if uas_zones_subscription is None:
+        raise NotFoundError(f"Subscription with id {subscription_id} does not exist")
+
+    reply = SubscribeToUASZonesUpdatesReply(subscription_id=uas_zones_subscription.id,
+                                            publication_location=uas_zones_subscription.sm_subscription.queue)
+
+    return reply, 200
+
+
 @handle_response(ReplySchema)
 def update_subscription_to_uas_zones_updates(subscription_id: str) -> Tuple[Reply, int]:
     """
