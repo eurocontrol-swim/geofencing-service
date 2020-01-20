@@ -31,8 +31,8 @@ import logging
 from unittest.mock import Mock, call
 
 from geofencing_service.db.uas_zones import create_uas_zone as db_create_uas_zone
-from geofencing_service.events.uas_zone_handlers import _uas_zone_matches_subscription_uas_zones_filter, get_relevant_topic_names, \
-    UASZoneContext, publish_relevant_topics
+from geofencing_service.events.uas_zone_handlers import _uas_zone_matches_subscription_uas_zones_filter, \
+    UASZoneContext, publish_relevant_topics, get_relevant_uas_zones_subscriptions
 from tests.geofencing_service.utils import make_uas_zone, BASILIQUE_POLYGON, make_uas_zones_filter_from_db_uas_zone, \
     make_uas_zones_subscription, INTERSECTING_BASILIQUE_POLYGON, NON_INTERSECTING_BASILIQUE_POLYGON
 
@@ -62,7 +62,7 @@ def test_uas_zone_matches_subscription():
     assert _uas_zone_matches_subscription_uas_zones_filter(uas_zone_basilique, non_intersecting_uas_zones_subscription) is False
 
 
-def test_get_relevant_topic_names():
+def test_get_relevant_uas_zones_subscriptions():
     uas_zone_basilique = make_uas_zone(BASILIQUE_POLYGON)
     db_create_uas_zone(uas_zone_basilique)
 
@@ -81,10 +81,10 @@ def test_get_relevant_topic_names():
     non_intersecting_uas_zones_subscription.save()
 
     context = UASZoneContext(uas_zone=uas_zone_basilique)
-    get_relevant_topic_names(context=context)
+    get_relevant_uas_zones_subscriptions(context=context)
 
-    assert intersecting_uas_zones_subscription.sm_subscription.topic_name in context.topic_names
-    assert non_intersecting_uas_zones_subscription.sm_subscription.topic_name not in context.topic_names
+    assert intersecting_uas_zones_subscription in context.uas_zones_subscriptions
+    assert non_intersecting_uas_zones_subscription not in context.uas_zones_subscriptions
 
 
 def test_publish_relevent_topics__all_topics_are_published(test_client):
@@ -98,7 +98,7 @@ def test_publish_relevent_topics__all_topics_are_published(test_client):
 
     publish_relevant_topics(context)
 
-    expected_mock_calls = [call(topic_name=topic_name) for topic_name in context.topic_names]
+    expected_mock_calls = [call(topic_name=sub.sm_subscription.topic_name) for sub in context.uas_zones_subscriptions]
 
     assert expected_mock_calls == mock_publish_topic.mock_calls
 
