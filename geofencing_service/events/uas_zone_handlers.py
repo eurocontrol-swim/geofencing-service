@@ -28,9 +28,11 @@ http://opensource.org/licenses/BSD-3-Clause
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
 import logging
+from typing import List
 
 from flask import current_app
 
+from geofencing_service.broker import UASZonesUpdatesMessageProducerContext, UASZonesUpdatesMessageType
 from geofencing_service.db.models import UASZone, UASZonesSubscription
 from geofencing_service.db.uas_zones import create_uas_zone as db_create_uas_zone, get_uas_zones as db_get_uas_zones
 from geofencing_service.db.subscriptions import get_uas_zones_subscriptions as db_get_uas_zones_subscriptions
@@ -47,19 +49,19 @@ class UASZoneContext:
 
         :param uas_zone: the UASZone to be created or deleted
         """
-        self.uas_zone = uas_zone
+        self.uas_zone: UASZone = uas_zone
 
-        """Holds the topic names of the subscriptions whose filter_zone intersect the provided UASZone """
-        self.topic_names = []
+        """Holds the subscriptions whose filter_zone intersect the provided UASZone """
+        self.uas_zones_subscriptions: List[UASZonesSubscription] = []
 
 
 def uas_zone_db_save(context: UASZoneContext) -> None:
     db_create_uas_zone(context.uas_zone)
 
 
-def _uas_zone_matches_subscription(uas_zone: UASZone, subscription: UASZonesSubscription):
+def _uas_zone_matches_subscription_uas_zones_filter(uas_zone: UASZone, subscription: UASZonesSubscription):
     """
-    Checks if the provided UASZone coincides in the filter_zone of the provices subscription
+    Checks if the provided UASZone coincides in the filter_zone of the provided subscription
     :param uas_zone:
     :param subscription:
     :return:
@@ -71,15 +73,28 @@ def _uas_zone_matches_subscription(uas_zone: UASZone, subscription: UASZonesSubs
     return uas_zone in uas_zones
 
 
-def get_relevant_topic_names(context: UASZoneContext) -> None:
+def get_relevant_uas_zones_subscriptions(context: UASZoneContext) -> None:
     """
     Rettrieves the topic_names of the subscriptions whose filter_zone intersects the UASZone in context
     :param context:
     """
     uas_zones_subscriptions = db_get_uas_zones_subscriptions()
 
-    context.topic_names = [subscription.sm_subscription.topic_name for subscription in uas_zones_subscriptions
-                           if _uas_zone_matches_subscription(context.uas_zone, subscription)]
+    context.uas_zones_subscriptions = [
+        subscription for subscription in uas_zones_subscriptions
+        if subscription.sm_subscription.active and
+        _uas_zone_matches_subscription_uas_zones_filter(context.uas_zone, subscription)
+    ]
+
+
+def publish_uas_zone_creation(event_context: UASZoneContext):
+    message_producer_context = UASZonesUpdatesMessageProducerContext(
+        message_type=UASZonesUpdatesMessageType.UAS_ZONE_CREATION,
+        data=event_context.uas_zone
+    )
+    for subscription in event_context.uas_zones_subscriptions:
+        current_app.swim_publisher.publish_topic(topic_name=subscription.sm_subscription.topic_name,
+                                                 context=message_producer_context)
 
 
 def publish_relevant_topics(context: UASZoneContext) -> None:
@@ -87,8 +102,12 @@ def publish_relevant_topics(context: UASZoneContext) -> None:
     Publishes the relevant topics in the broker by triggering its data_handler
     :param context:
     """
-    for topics_name in context.topic_names:
-        current_app.swim_publisher.publish_topic(topic_name=topics_name)
+    for subscription in context.uas_zones_subscriptions:
+        _logger.info(f'Publishing for subscription {subscription.id} with filter {subscription.uas_zones_filter}')
+        current_app.swim_publisher.publish_topic(
+            topic_name=subscription.sm_subscription.topic_name,
+            context=UASZonesFilter.from_dict(dict(subscription.uas_zones_filter))
+        )
 
 
 def uas_zones_db_delete(context: UASZoneContext):
@@ -97,3 +116,14 @@ def uas_zones_db_delete(context: UASZoneContext):
     :param context:
     """
     context.uas_zone.delete()
+
+
+def publish_uas_zone_deletion(event_context: UASZoneContext):
+    message_producer_context = UASZonesUpdatesMessageProducerContext(
+        message_type=UASZonesUpdatesMessageType.UAS_ZONE_DELETION,
+        data=event_context.uas_zone.identifier
+    )
+    for subscription in event_context.uas_zones_subscriptions:
+        current_app.swim_publisher.publish_topic(topic_name=subscription.sm_subscription.topic_name,
+                                                 context=message_producer_context)
+

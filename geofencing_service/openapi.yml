@@ -305,25 +305,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericReply'
+                $ref: '#/components/schemas/Reply'
         '404':
           description: UASZonesSubscription not found
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  genericReply:
-                    $ref: '#/components/schemas/GenericReply'
+                $ref: '#/components/schemas/Reply'
         '401':
           description: Unauthenticated user
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  genericReply:
-                    $ref: '#/components/schemas/GenericReply'
+                $ref: '#/components/schemas/Reply'
 
     put:
       tags:
@@ -351,25 +345,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericReply'
+                $ref: '#/components/schemas/Reply'
         '404':
           description: UASZonesSubscription not found
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  genericReply:
-                    $ref: '#/components/schemas/GenericReply'
+                $ref: '#/components/schemas/Reply'
         '401':
           description: Unauthenticated user
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  genericReply:
-                    $ref: '#/components/schemas/GenericReply'
+                $ref: '#/components/schemas/Reply'
 
 components:
   securitySchemes:
@@ -717,6 +705,12 @@ components:
           format: uuid
         publicationLocation:
           type: string
+        genericReply:
+          $ref: '#/components/schemas/GenericReply'
+
+    Reply:
+      type: object
+      properties:
         genericReply:
           $ref: '#/components/schemas/GenericReply'
 

@@ -31,7 +31,7 @@ import hashlib
 import json
 import logging
 import uuid
-from typing import Optional, Any, List
+from typing import Optional, List, Any
 
 from flask import current_app
 from proton import Message
@@ -39,11 +39,14 @@ from subscription_manager_client.models import Subscription as SMSubscription, T
 from subscription_manager_client.subscription_manager import SubscriptionManagerClient
 from swim_backend.local import AppContextProxy
 
-from geofencing_service.db.models import UASZonesSubscription, UASZone, GeofencingSMSubscription
-from geofencing_service.db.uas_zones import get_uas_zones as db_get_uas_zones
+from geofencing_service.broker import uas_zones_updates_message_producer, UASZonesUpdatesMessageProducerContext, \
+    UASZonesUpdatesMessageType
+from geofencing_service.db.models import UASZonesSubscription, GeofencingSMSubscription
 from geofencing_service.db.subscriptions import create_uas_zones_subscription as db_create_uas_zones_subscription,\
     update_uas_zones_subscription as db_update_uas_zones_subscription, \
     delete_uas_zones_subscription as db_delete_uas_zones_subscription
+from geofencing_service.db.uas_zones import get_uas_zones as db_get_uas_zones
+from geofencing_service.endpoints.schemas.db_schemas import UASZoneSchema
 from geofencing_service.endpoints.schemas.filters_schemas import UASZonesFilterSchema
 from geofencing_service.filters import UASZonesFilter
 
@@ -105,7 +108,7 @@ def get_topic_name(context: UASZonesSubscriptionCreateContext) -> None:
     context.topic_name = hashlib.sha1(json.dumps(uas_zones_filter_dict).encode()).hexdigest()
 
 
-def message_producer(context: Optional[Any] = None) -> Message:
+def uas_zones_message_producer(context: Optional[Any] = None) -> Message:
     """
     The message producer (UASZones retrieval) that will be called every time the topic is triggered for publishing.
 
@@ -114,9 +117,23 @@ def message_producer(context: Optional[Any] = None) -> Message:
     :return:
     """
     uas_zones = db_get_uas_zones(uas_zones_filter=context)
-    message = Message(body={'uas_zones': [uas_zone.to_json() for uas_zone in uas_zones]})
-
+    message = Message(body={'uas_zones': [UASZoneSchema().dump(uas_zone) for uas_zone in uas_zones]},
+                      content_type="application/json")
+    _logger.info(f"Produced message: {message.body}")
     return message
+
+
+def add_broker_topic(context: UASZonesSubscriptionCreateContext):
+    current_app.swim_publisher.add_topic(topic_name=context.topic_name,
+                                         message_producer=uas_zones_updates_message_producer)
+
+
+def publish_initial_uas_zones(event_context: UASZonesSubscriptionCreateContext):
+    message_producer_context = UASZonesUpdatesMessageProducerContext(
+        message_type=UASZonesUpdatesMessageType.INITIAL,
+        data=event_context.uas_zones_filter
+    )
+    current_app.swim_publisher.publish_topic(topic_name=event_context.topic_name, context=message_producer_context)
 
 
 def publish_topic(context: UASZonesSubscriptionCreateContext) -> None:
@@ -125,8 +142,7 @@ def publish_topic(context: UASZonesSubscriptionCreateContext) -> None:
 
     :param context:
     """
-
-    current_app.swim_publisher.add_topic(topic_name=context.topic_name, message_producer=message_producer)
+    current_app.swim_publisher.add_topic(topic_name=context.topic_name, message_producer=uas_zones_message_producer)
 
     current_app.swim_publisher.publish_topic(topic_name=context.topic_name, context=context.uas_zones_filter)
 
@@ -171,7 +187,6 @@ def uas_zones_subscription_db_save(context: UASZonesSubscriptionCreateContext) -
         active=context.sm_subscription.active
     )
     subscription.uas_zones_filter = context.uas_zones_filter.to_dict()
-    subscription.active = True
 
     db_create_uas_zones_subscription(subscription)
 

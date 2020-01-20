@@ -360,10 +360,10 @@ def _post_uas_zones_filter(test_client, test_user, filter_data) -> Tuple[Dict[st
         {
             'requestID': '1',
             'airspaceVolume': {
-                'polygon': [{'LON': '4.32812', 'LAT': '50.862525'},
-                            {'LON': '4.329257', 'LAT': '50.865502'},
-                            {'LON': '4.323686', 'LAT': '50.865468'},
-                            {'LON': '4.32812', 'LAT': '50.862525'}],
+                'polygon': [{'LAT': '4.32812', 'LON': '50.862525'},
+                            {'LAT': '4.329257', 'LON': '50.865502'},
+                            {'LAT': '4.323686', 'LON': '50.865468'},
+                            {'LAT': '4.32812', 'LON': '50.862525'}],
                 'lowerVerticalReference': 'WGS84',
                 'lowerLimit': 0,
                 'upperLimit': 100000,
@@ -379,13 +379,13 @@ def _post_uas_zones_filter(test_client, test_user, filter_data) -> Tuple[Dict[st
                 'lowerVerticalReference': "WGS84",
                 'upperVerticalReference': "WGS84",
                 'polygon': [
-                    {'LAT': '50.863648', 'LON': '4.329385'},
-                    {'LAT': '50.865348', 'LON': '4.328055'},
-                    {'LAT': '50.86847', 'LON': '4.317369'},
-                    {'LAT': '50.867671', 'LON': '4.314826'},
-                    {'LAT': '50.865873', 'LON': '4.31592'},
-                    {'LAT': '50.862792', 'LON': '4.326508'},
-                    {'LAT': '50.863648', 'LON': '4.329385'},
+                    {'LON': '50.863648', 'LAT': '4.329385'},
+                    {'LON': '50.865348', 'LAT': '4.328055'},
+                    {'LON': '50.86847', 'LAT': '4.317369'},
+                    {'LON': '50.867671', 'LAT': '4.314826'},
+                    {'LON': '50.865873', 'LAT': '4.31592'},
+                    {'LON': '50.862792', 'LAT': '4.326508'},
+                    {'LON': '50.863648', 'LAT': '4.329385'},
                 ],
                 'upperLimit': 100000,
             },
@@ -439,10 +439,10 @@ def _post_uas_zones_filter(test_client, test_user, filter_data) -> Tuple[Dict[st
         {
             'requestID': '1',
             'airspaceVolume': {
-                'polygon': [{'LON': '4.325421', 'LAT': '50.870058'},
-                            {'LON': '4.32689', 'LAT': '50.867615'},
-                            {'LON': '4.321407', 'LAT': '50.867602'},
-                            {'LON': '4.325421', 'LAT': '50.870058'}],
+                'polygon': [{'LAT': '4.325421', 'LON': '50.870058'},
+                            {'LAT': '4.32689', 'LON': '50.867615'},
+                            {'LAT': '4.321407', 'LON': '50.867602'},
+                            {'LAT': '4.325421', 'LON': '50.870058'}],
                 'lowerVerticalReference': 'WGS84',
                 'lowerLimit': 0,
                 'upperLimit': 100000,
@@ -481,6 +481,84 @@ def test_create_uas_zone___invalid_user__returns_nok__401(test_client):
     response_data = json.loads(response.data)
     assert "NOK" == response_data['genericReply']['RequestStatus']
     assert "Invalid credentials" == response_data['genericReply']["RequestExceptionDescription"]
+
+
+def test_create_uas_zone(test_client, test_user):
+    uas_zone_input = """{
+  "airspaceVolume": {
+    "lowerLimit": 0,
+    "lowerVerticalReference": "WGS84",
+    "polygon": [
+{"LAT": "50.846889", "LON": "4.333428"},
+{"LAT": "50.848857", "LON": "4.342644"},
+{"LAT": "50.851817", "LON": "4.338588"},
+{"LAT": "50.846889", "LON": "4.333428"}
+    ],
+    "upperLimit": 100,
+    "upperVerticalReference": "WGS84"
+  },
+  "applicableTimePeriod": {
+    "dailySchedule": [
+      {
+        "day": "MON",
+        "endTime": "18:00:00+00:00",
+        "startTime": "09:00:00+00:00"
+      }
+    ],
+    "endDateTime": "2020-02-14T10:16:33.532Z",
+    "permanent": "YES",
+    "startDateTime": "2020-01-14T10:16:33.532Z"
+  },
+  "authority": {
+    "requiresAuthorizationFrom": {
+      "authority": {
+        "contactName": "string",
+        "email": "user@example.com",
+        "name": "string",
+        "phone": "string",
+        "service": "string",
+        "siteURL": "https://www.authority.com"
+      }
+    },
+    "requiresNotificationTo": {
+      "authority": {
+        "contactName": "string",
+        "email": "user@example.com",
+        "name": "string",
+        "phone": "string",
+        "service": "string",
+        "siteURL": "https://www.authority.com"
+      },
+      "intervalBefore": "string"
+    }
+  },
+  "country": "BEL",
+  "dataCaptureProhibition": "YES",
+  "dataSource": {
+    "author": "string",
+    "creationDateTime": "2020-01-14T10:16:33.532Z",
+    "updateDateTime": "2020-01-14T10:16:33.532Z"
+  },
+  "extendedProperties": {},
+  "identifier": "4rf04r0",
+  "message": "string",
+  "name": "string",
+  "reason": [
+    "AIR_TRAFFIC"
+  ],
+  "region": 1,
+  "restriction": "PROHIBITED",
+  "restrictionConditions": [
+    "string"
+  ],
+  "type": "COMMON",
+  "uSpaceClass": "EUROCONTROL"
+}"""
+    response = test_client.post(URL_UAS_ZONES, data=uas_zone_input, content_type='application/json',
+                                headers=make_basic_auth_header(test_user.username, DEFAULT_LOGIN_PASS))
+
+    response_data = json.loads(response.data)
+    assert response.status_code == 201
 
 
 def test_create_uas_zone__valid_input__object_is_saved__returns_ok__201(test_client, test_user, uas_zone_input):

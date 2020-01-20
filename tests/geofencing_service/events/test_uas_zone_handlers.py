@@ -31,7 +31,7 @@ import logging
 from unittest.mock import Mock, call
 
 from geofencing_service.db.uas_zones import create_uas_zone as db_create_uas_zone
-from geofencing_service.events.uas_zone_handlers import _uas_zone_matches_subscription, get_relevant_topic_names, \
+from geofencing_service.events.uas_zone_handlers import _uas_zone_matches_subscription_uas_zones_filter, get_relevant_topic_names, \
     UASZoneContext, publish_relevant_topics
 from tests.geofencing_service.utils import make_uas_zone, BASILIQUE_POLYGON, make_uas_zones_filter_from_db_uas_zone, \
     make_uas_zones_subscription, INTERSECTING_BASILIQUE_POLYGON, NON_INTERSECTING_BASILIQUE_POLYGON
@@ -51,7 +51,7 @@ def test_uas_zone_matches_subscription():
     intersecting_uas_zones_subscription.uas_zones_filter = intersecting_uas_zone_filter.to_dict()
     intersecting_uas_zones_subscription.save()
 
-    assert _uas_zone_matches_subscription(uas_zone_basilique, intersecting_uas_zones_subscription) is True
+    assert _uas_zone_matches_subscription_uas_zones_filter(uas_zone_basilique, intersecting_uas_zones_subscription) is True
 
     non_intersecting_uas_zone_filter = make_uas_zones_filter_from_db_uas_zone(uas_zone_non_intersecting_basilique)
 
@@ -59,7 +59,7 @@ def test_uas_zone_matches_subscription():
     non_intersecting_uas_zones_subscription.uas_zones_filter = non_intersecting_uas_zone_filter.to_dict()
     non_intersecting_uas_zones_subscription.save()
 
-    assert _uas_zone_matches_subscription(uas_zone_basilique, non_intersecting_uas_zones_subscription) is False
+    assert _uas_zone_matches_subscription_uas_zones_filter(uas_zone_basilique, non_intersecting_uas_zones_subscription) is False
 
 
 def test_get_relevant_topic_names():

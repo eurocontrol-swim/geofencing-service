@@ -36,13 +36,13 @@ __author__ = "EUROCONTROL (SWIM)"
 
 
 class PointFilterSchema(Schema):
-    lat = String(data_key='LAT')
     lon = String(data_key='LON')
+    lat = String(data_key='LAT')
 
     @post_load
     def convert_to_float(self, data, **kwargs):
-        data['lat'] = float(data['lat'])
         data['lon'] = float(data['lon'])
+        data['lat'] = float(data['lat'])
 
         return data
 
@@ -60,7 +60,7 @@ class AirspaceVolumeFilterSchema(Schema):
     lower_limit_in_m = Integer(data_key="lowerLimit", missing=None)
     lower_vertical_reference = String(data_key="lowerVerticalReference", missing=None)
     upper_limit_in_m = Integer(data_key="upperLimit", missing=None)
-    upper_vertival_reference = String(data_key="upperVerticalReference", missing=None)
+    upper_vertical_reference = String(data_key="upperVerticalReference", missing=None)
 
 
 class UASZonesFilterSchema(Schema):

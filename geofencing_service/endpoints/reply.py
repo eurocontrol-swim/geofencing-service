@@ -28,6 +28,7 @@ http://opensource.org/licenses/BSD-3-Clause
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
 import json
+import traceback
 from datetime import datetime, timezone
 from enum import Enum
 from functools import wraps
@@ -134,13 +135,13 @@ def handle_response(schema: Type[Schema]):
             try:
                 result, status_code = func(*args, **kwargs)
             except Exception as e:
+                traceback.print_exc()
                 result = Reply(
                     generic_reply=GenericReply(
                         request_status=RequestStatus.NOK.value,
                         request_exception_description=str(e)
                     )
                 )
-
                 status_code = e.status if isinstance(e, APIError) else 500
             return schema().dump(result), status_code
         return wrapper

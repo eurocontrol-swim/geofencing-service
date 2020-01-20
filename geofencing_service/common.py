@@ -44,26 +44,26 @@ class CompareMixin:
 
 class Point(CompareMixin):
 
-    def __init__(self, lat: float, lon: float) -> None:
+    def __init__(self, lon: float, lat: float) -> None:
         """
 
         :param lat:
         :param lon:
         """
-        self.lat = lat
         self.lon = lon
+        self.lat = lat
 
     @classmethod
     def from_dict(cls, object_dict):
         return cls(
-            lat=float(object_dict['lat']),
             lon=float(object_dict['lon']),
+            lat=float(object_dict['lat'])
         )
 
     def to_dict(self) -> Dict[str, float]:
         return {
-            "lat": self.lat,
-            "lon": self.lon
+            "lon": self.lon,
+            "lat": self.lat
         }
 
 
@@ -74,10 +74,10 @@ def geojson_polygon_coordinates_from_point_list(point_list: List[Point]) -> GeoJ
         Example:
         this list of points:
         [
-             Point(lat=50.863648, lon=4.329385),
-             Point(lat=50.865348, lon=4.328055),
-             Point(lat=50.86847, lon=4.317369),
-             Point(lat=50.863648, lon=4.329385)
+             Point(lon=50.863648, lat=4.329385),
+             Point(lon=50.865348, lat=4.328055),
+             Point(lon=50.86847, lat=4.317369),
+             Point(lon=50.863648, lat=4.329385)
         ]
         will be converted to:
         [
@@ -89,7 +89,7 @@ def geojson_polygon_coordinates_from_point_list(point_list: List[Point]) -> GeoJ
     :param point_list:
     :return:
     """
-    return [[[pf.lat, pf.lon] for pf in point_list]]
+    return [[[pf.lon, pf.lat] for pf in point_list]]
 
 
 def point_list_from_geojson_polygon_coordinates(coordinates: GeoJSONPolygonCoordinates) -> List[Point]:
@@ -106,12 +106,12 @@ def point_list_from_geojson_polygon_coordinates(coordinates: GeoJSONPolygonCoord
         ]
         will be converted to:
         [
-             Point(lat=50.863648, lon=4.329385),
-             Point(lat=50.865348, lon=4.328055),
-             Point(lat=50.86847, lon=4.317369),
-             Point(lat=50.863648, lon=4.329385)
+             Point(lon=50.863648, lat=4.329385),
+             Point(lon=50.865348, lat=4.328055),
+             Point(lon=50.86847, lat=4.317369),
+             Point(lon=50.863648, lat=4.329385)
         ]
     :param coordinates:
     :return:
     """
-    return [Point(lat=lat, lon=lon) for lat, lon in coordinates[0]]
+    return [Point(lon=lon, lat=lat) for lon, lat in coordinates[0]]

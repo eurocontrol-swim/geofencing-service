@@ -64,10 +64,11 @@ class Event(list):
 """ The sequence of handlers to be applied in order upon creating a new subscription"""
 CREATE_UAS_ZONES_SUBSCRIPTION_HANDLERS = [
     uas_zones_subscription_handlers.get_topic_name,
-    uas_zones_subscription_handlers.publish_topic,
+    uas_zones_subscription_handlers.add_broker_topic,
     uas_zones_subscription_handlers.get_or_create_sm_topic,
     uas_zones_subscription_handlers.create_sm_subscription,
-    uas_zones_subscription_handlers.uas_zones_subscription_db_save
+    uas_zones_subscription_handlers.uas_zones_subscription_db_save,
+    uas_zones_subscription_handlers.publish_initial_uas_zones
 ]
 
 
@@ -88,16 +89,16 @@ DELETE_UAS_ZONES_SUBSCRIPTION_HANDLERS = [
 """ The sequence of handlers to be applied in order upon creating a new UASZone"""
 CREATE_UAS_ZONE_EVENT = [
     uas_zone_handlers.uas_zone_db_save,
-    uas_zone_handlers.get_relevant_topic_names,
-    uas_zone_handlers.publish_relevant_topics
+    uas_zone_handlers.get_relevant_uas_zones_subscriptions,
+    uas_zone_handlers.publish_uas_zone_creation
 ]
 
 
 """ The sequence of handlers to be applied in order upon deleting a new UASZone"""
 DELETE_UAS_ZONE_EVENT = [
-    uas_zone_handlers.get_relevant_topic_names,
+    uas_zone_handlers.get_relevant_uas_zones_subscriptions,
     uas_zone_handlers.uas_zones_db_delete,
-    uas_zone_handlers.publish_relevant_topics
+    uas_zone_handlers.publish_uas_zone_deletion
 ]
 
 

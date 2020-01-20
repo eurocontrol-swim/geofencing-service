@@ -52,6 +52,10 @@ class AirspaceVolumeSchema(Schema):
     upper_limit_in_m = Integer(data_key="upperLimit", missing=None)
     upper_vertical_reference = String(data_key="upperVerticalReference", missing=None)
 
+    # helper field to hold temporarily the point_list while dumping the object. It prevents from overriding the polygon
+    # field and thus making it impossible to dump the object more than one time without raising an error
+    polygon_point_list_dump = Nested(PointSchema, many=True, required=False, dump_only=True)
+
     @pre_dump
     def handle_geojson_polygon_dump(self, item, **kwargs):
         """
@@ -81,9 +85,16 @@ class AirspaceVolumeSchema(Schema):
         """
         coordinates = item['polygon']['coordinates'] if 'coordinates' in item['polygon'] else item['polygon']
 
-        item['polygon']: List[Point] = point_list_from_geojson_polygon_coordinates(coordinates)
+        item.polygon_point_list_dump: List[Point] = point_list_from_geojson_polygon_coordinates(coordinates)
 
         return item
+
+    @post_dump
+    def replace_polygon(self, data, **kwargs):
+        data['polygon'] = data['polygon_point_list_dump']
+        del data['polygon_point_list_dump']
+
+        return data
 
     @post_load
     def handle_geojson_polygon_load(self, item, **kwargs):
@@ -235,6 +246,18 @@ class UASZoneSchema(Schema):
         :return:
         """
         return UASZone(**data)
+
+    @post_dump
+    def handle_mongoengine_dict_field(self, data, **kwargs):
+        """
+        Apparently the dict field is not serialized properly to a dict object so it has to be done manually.
+        :param data:
+        :param kwargs:
+        :return:
+        """
+        data['extendedProperties'] = dict(data['extendedProperties'])
+
+        return data
 
 
 class SubscriptionSchema(Schema):

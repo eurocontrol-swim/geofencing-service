@@ -134,9 +134,9 @@ class AuthorityEntity(Document):
             raise ValidationError(f"One of email, site_url, phone must be defined.")
 
 
-def _save_authority_entity_if_not_exists(authority_entity: AuthorityEntity) -> AuthorityEntity:
+def _get_or_create_authority_entity(authority_entity: AuthorityEntity) -> AuthorityEntity:
     try:
-        AuthorityEntity.objects.get(name=authority_entity.name)
+        authority_entity = AuthorityEntity.objects.get(name=authority_entity.name)
     except DoesNotExist:
         authority_entity.save()
 
@@ -193,9 +193,9 @@ class UASZone(Document):
 
         # save reference documents beforehand
         if notification_authority is not None:
-            self.authority.requires_notification_to.authority = _save_authority_entity_if_not_exists(notification_authority)
+            self.authority.requires_notification_to.authority = _get_or_create_authority_entity(notification_authority)
         if authorization_authority is not None:
-            self.authority.requires_authorization_from.authority = _save_authority_entity_if_not_exists(authorization_authority)
+            self.authority.requires_authorization_from.authority = _get_or_create_authority_entity(authorization_authority)
 
     def get_notification_authority(self):
         try:
