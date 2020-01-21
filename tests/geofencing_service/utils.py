@@ -118,10 +118,10 @@ def make_applicable_period():
     )
 
 
-def make_user(username=None, password=None):
+def make_user(username=None, password='password'):
     user = User()
     user.username = username or get_unique_id()
-    user.password = password or ""
+    user.password = password
 
     return user
 
@@ -164,6 +164,7 @@ def make_uas_zone(polygon: GeoJSONPolygonCoordinates) -> UASZone:
         author="Author",
         creation_date_time=NOW,
     )
+    result.user = make_user()
 
     return result
 
@@ -204,11 +205,15 @@ def make_geofencing_sm_subscription() -> GeofencingSMSubscription:
     )
 
 
-def make_uas_zones_subscription(polygon: GeoJSONPolygonCoordinates = BASILIQUE_POLYGON) -> UASZonesSubscription:
+def make_uas_zones_subscription(polygon: GeoJSONPolygonCoordinates = BASILIQUE_POLYGON, user: Optional[User] = None) \
+        -> UASZonesSubscription:
+
+    uas_zone_filter = make_uas_zones_filter_from_db_uas_zone(make_uas_zone(polygon))
+
     subscription = UASZonesSubscription()
     subscription.id = get_unique_id()
     subscription.sm_subscription = make_geofencing_sm_subscription()
-    uas_zone_filter = make_uas_zones_filter_from_db_uas_zone(make_uas_zone(polygon))
     subscription.uas_zones_filter = uas_zone_filter.to_dict()
+    subscription.user = user or make_user()
 
     return subscription

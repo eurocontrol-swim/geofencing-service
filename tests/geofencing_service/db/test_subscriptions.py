@@ -38,8 +38,8 @@ from tests.geofencing_service.utils import make_uas_zones_subscription
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def test_get_uas_zones_subscriptions():
-    subscription = make_uas_zones_subscription()
+def test_get_uas_zones_subscriptions(test_user):
+    subscription = make_uas_zones_subscription(user=test_user)
     subscription.save()
 
     db_subscriptions = get_uas_zones_subscriptions()
@@ -47,9 +47,9 @@ def test_get_uas_zones_subscriptions():
     assert subscription in db_subscriptions
 
 
-def test_get_uas_zones_subscriptionby_id():
-    subscription1 = make_uas_zones_subscription()
-    subscription2 = make_uas_zones_subscription()
+def test_get_uas_zones_subscriptionby_id(test_user):
+    subscription1 = make_uas_zones_subscription(user=test_user)
+    subscription2 = make_uas_zones_subscription(user=test_user)
     subscription1.save()
 
     assert get_uas_zones_subscription_by_id(subscription2.id) is None

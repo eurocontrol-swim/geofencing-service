@@ -52,8 +52,9 @@ URL_UAS_ZONES = f'{BASE_PATH}/uas_zones/'
 
 
 @pytest.fixture
-def db_uas_zone_basilique():
+def db_uas_zone_basilique(test_user):
     uas_zone = make_uas_zone(BASILIQUE_POLYGON)
+    uas_zone.user = test_user
     uas_zone.get_authorization_authority().save()
     uas_zone.get_notification_authority().save()
     uas_zone.save()

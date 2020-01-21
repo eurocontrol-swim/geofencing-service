@@ -59,7 +59,7 @@ def filter_uas_zones() -> Tuple[UASZoneFilterReply, int]:
     except ValidationError as e:
         raise BadRequestError(str(e))
 
-    uas_zones = db_get_uas_zones(uas_zones_filter)
+    uas_zones = db_get_uas_zones(uas_zones_filter, user=request.user)
 
     return UASZoneFilterReply(uas_zones=uas_zones), 200
 
@@ -92,7 +92,7 @@ def delete_uas_zone(uas_zone_identifier: str) -> Tuple[Reply, int]:
     :param uas_zone_identifier:
     :return:
     """
-    uas_zone = get_uas_zones_by_identifier(uas_zone_identifier)
+    uas_zone = get_uas_zones_by_identifier(uas_zone_identifier, user=request.user)
 
     if uas_zone is None:
         raise NotFoundError(f"UASZone with identifier '{uas_zone_identifier}' does not exist")

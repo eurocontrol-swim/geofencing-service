@@ -87,7 +87,7 @@ def get_subscriptions_to_uas_zones_updates() -> Tuple[Reply, int]:
     :param subscription_id:
     :return:
     """
-    uas_zone_subscriptions = get_uas_zones_subscriptions()
+    uas_zone_subscriptions = get_uas_zones_subscriptions(user=request.user)
 
     reply = UASZoneSubscriptionsReply(
         uas_zone_subscriptions=[
@@ -109,7 +109,7 @@ def get_subscription_to_uas_zones_updates(subscription_id: str) -> Tuple[Reply, 
     :param subscription_id:
     :return:
     """
-    uas_zones_subscription = get_uas_zones_subscription_by_id(subscription_id)
+    uas_zones_subscription = get_uas_zones_subscription_by_id(subscription_id, user=request.user)
 
     if uas_zones_subscription is None:
         raise NotFoundError(f"Subscription with id {subscription_id} does not exist")
@@ -130,7 +130,7 @@ def update_subscription_to_uas_zones_updates(subscription_id: str) -> Tuple[Repl
     :param subscription_id:
     :return:
     """
-    uas_zones_subscription = get_uas_zones_subscription_by_id(subscription_id)
+    uas_zones_subscription = get_uas_zones_subscription_by_id(subscription_id, user=request.user)
 
     if uas_zones_subscription is None:
         raise NotFoundError(f"Subscription with id {subscription_id} does not exist")
@@ -157,7 +157,7 @@ def delete_subscription_to_uas_zones_updates(subscription_id: str) -> Tuple[Repl
     :param subscription_id:
     :return:
     """
-    uas_zones_subscription = get_uas_zones_subscription_by_id(subscription_id)
+    uas_zones_subscription = get_uas_zones_subscription_by_id(subscription_id, user=request.user)
 
     if uas_zones_subscription is None:
         raise NotFoundError(f"Subscription with id {subscription_id} does not exist")

@@ -32,30 +32,37 @@ from typing import List, Optional
 
 from mongoengine import Q, DoesNotExist
 
-from geofencing_service.db.models import UASZone
+from geofencing_service.db.models import UASZone, User
 from geofencing_service.filters import UASZonesFilter
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def get_uas_zones_by_identifier(uas_zone_identifier: str) -> Optional[UASZone]:
+def get_uas_zones_by_identifier(uas_zone_identifier: str, user: Optional[User] = None) -> Optional[UASZone]:
     """
     Retrieves a UASZone by its identifier
+    :param user:
     :param uas_zone_identifier:
     :return:
     """
+
+    query = Q(identifier=uas_zone_identifier)
+
+    if user is not None:
+        query &= Q(user=user)
     try:
-        result = UASZone.objects.get(identifier=uas_zone_identifier)
+        result = UASZone.objects.get(query)
     except DoesNotExist:
         result = None
 
     return result
 
 
-def get_uas_zones(uas_zones_filter: UASZonesFilter) -> List[UASZone]:
+def get_uas_zones(uas_zones_filter: UASZonesFilter, user: Optional[User] = None) -> List[UASZone]:
     """
     Retrieves UASZones based on the provided filters criteria.
 
+    :param user:
     :param uas_zones_filter:
     :return:
     """
@@ -66,11 +73,14 @@ def get_uas_zones(uas_zones_filter: UASZonesFilter) -> List[UASZone]:
         Q(airspace_volume__lower_limit_in_m__gte=uas_zones_filter.airspace_volume.lower_limit_in_m),
         Q(region__in=uas_zones_filter.regions),
         Q(applicable_time_period__start_date_time__gte=uas_zones_filter.start_date_time),
-        Q(applicable_time_period__end_date_time__lte=uas_zones_filter.end_date_time)
+        Q(applicable_time_period__end_date_time__lte=uas_zones_filter.end_date_time),
     ]
 
     if uas_zones_filter.updated_after_date_time:
         queries_list.append(Q(data_source__update_date_time__gte=uas_zones_filter.updated_after_date_time))
+
+    if user is not None:
+        queries_list.append(Q(user=user))
 
     query: Q = reduce(lambda q1, q2: q1 & q2, queries_list, Q())
 

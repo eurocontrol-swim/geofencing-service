@@ -28,12 +28,12 @@ http://opensource.org/licenses/BSD-3-Clause
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
 import logging
-from typing import List
+from typing import List, Optional
 
 from flask import current_app
 
 from geofencing_service.broker import UASZonesUpdatesMessageProducerContext, UASZonesUpdatesMessageType
-from geofencing_service.db.models import UASZone, UASZonesSubscription
+from geofencing_service.db.models import UASZone, UASZonesSubscription, User
 from geofencing_service.db.uas_zones import create_uas_zone as db_create_uas_zone, get_uas_zones as db_get_uas_zones
 from geofencing_service.db.subscriptions import get_uas_zones_subscriptions as db_get_uas_zones_subscriptions
 from geofencing_service.filters import UASZonesFilter
@@ -54,8 +54,12 @@ class UASZoneContext:
         """Holds the subscriptions whose filter_zone intersect the provided UASZone """
         self.uas_zones_subscriptions: List[UASZonesSubscription] = []
 
+        """The owner of the UASZone"""
+        self.user: Optional[User] = None
+
 
 def uas_zone_db_save(context: UASZoneContext) -> None:
+    context.uas_zone.user = context.user
     db_create_uas_zone(context.uas_zone)
 
 

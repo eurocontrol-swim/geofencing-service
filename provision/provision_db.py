@@ -41,6 +41,8 @@ from geofencing_service.db.models import UASZone, CodeZoneType, CodeRestrictionT
 
 __author__ = "EUROCONTROL (SWIM)"
 
+from geofencing_service.db.uas_zones import create_uas_zone
+
 from geofencing_service.db.users import create_user
 
 _logger = logging.getLogger(__name__)
@@ -136,7 +138,7 @@ def make_applicable_period():
     )
 
 
-def make_uas_zone(name, polygon):
+def make_uas_zone(name, polygon, user):
     result = UASZone()
     result.identifier = get_unique_id()[:7]
     result.name = name
@@ -153,6 +155,7 @@ def make_uas_zone(name, polygon):
     result.data_source = DataSource(
         creation_date_time=NOW,
     )
+    result.user = user
 
     return result
 
@@ -174,18 +177,17 @@ if __name__ == '__main__':
 
     connect(db=config['MONGO']['db'], host=config['MONGO']['host'], port=config['MONGO']['port'])
 
-    # save UASZones
-    for name, polygon in POLYGONS.items():
-        uas_zone = make_uas_zone(name, polygon)
-        try:
-            uas_zone.save()
-            _logger.info(f"Saved UASZone {name} in DB")
-        except Exception as e:
-            _logger.error(f"Error while saving object {uas_zone} in DB: {str(e)}")
-
     # save Geofencing Users
     users = _get_users(config['DB_USERS'])
     for user in users:
         create_user(user)
         _logger.info(f"Saved user {user.username} in DB")
 
+    # save UASZones
+    for name, polygon in POLYGONS.items():
+        uas_zone = make_uas_zone(name, polygon, users[0])
+        try:
+            create_uas_zone(uas_zone)
+            _logger.info(f"Saved UASZone {name} in DB")
+        except Exception as e:
+            _logger.error(f"Error while saving object {uas_zone} in DB: {str(e)}")

@@ -165,7 +165,7 @@ def test_update_subscription_to_uas_zones_updates__invalid_subscription_id__retu
     {"active": 1}, {"active": 1.0}, {"active": "invalid"}, {"active": ()}, {"active": []}, {"invalid_key": True}
 ])
 def test_update_subscription_to_uas_zones_updates__invalid_data__returns_nok_400(test_client, test_user, invalid_data):
-    uas_zones_subscription = make_uas_zones_subscription()
+    uas_zones_subscription = make_uas_zones_subscription(user=test_user)
     uas_zones_subscription.save()
 
     response = test_client.put(URL + uas_zones_subscription.id, data=json.dumps(invalid_data),
@@ -180,7 +180,7 @@ def test_update_subscription_to_uas_zones_updates__invalid_data__returns_nok_400
 @mock.patch('geofencing_service.events.uas_zones_subscription_handlers.sm_client')
 def test_update_subscription_to_uas_zones_updates__is_updated__returns_ok_200(mock_sm_client, test_client, test_user):
 
-    uas_zones_subscription = make_uas_zones_subscription()
+    uas_zones_subscription = make_uas_zones_subscription(user=test_user)
     uas_zones_subscription.save()
 
     sm_subscription = Mock()
@@ -233,7 +233,7 @@ def test_delete_subscription_to_uas_zones_updates__invalid_subscription_id__retu
 def test_delete_subscription_to_uas_zones_updates__is_deleted__returns_ok_204(mock_sm_client, test_client, test_user):
     mock_sm_client.delete_subscription_by_id = Mock()
 
-    uas_zones_subscription = make_uas_zones_subscription()
+    uas_zones_subscription = make_uas_zones_subscription(user=test_user)
     uas_zones_subscription.save()
 
     response = test_client.delete(URL + uas_zones_subscription.id,
@@ -272,7 +272,7 @@ def test_get_subscription_to_uas_zones_updates__invalid_subscription_id__returns
 
 
 def test_get_subscription_to_uas_zones_updates__returns_subscription_data_200(test_client, test_user):
-    uas_zones_subscription = make_uas_zones_subscription()
+    uas_zones_subscription = make_uas_zones_subscription(user=test_user)
     uas_zones_subscription.save()
 
     response = test_client.get(URL + uas_zones_subscription.id,
@@ -307,8 +307,8 @@ def test_get_subscriptions_to_uas_zones_updates__no_subscription_exists__returns
 
 
 def test_get_subscriptions_to_uas_zones_updates__returns_subscriptions_data_200(test_client, test_user):
-    uas_zones_subscription1 = make_uas_zones_subscription()
-    uas_zones_subscription2 = make_uas_zones_subscription()
+    uas_zones_subscription1 = make_uas_zones_subscription(user=test_user)
+    uas_zones_subscription2 = make_uas_zones_subscription(user=test_user)
     uas_zones_subscription1.save()
     uas_zones_subscription2.save()
 

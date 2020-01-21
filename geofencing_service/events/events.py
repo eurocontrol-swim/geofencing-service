@@ -29,6 +29,8 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 """
 from typing import TypeVar, Dict
 
+from flask import request
+
 from geofencing_service.db.models import UASZonesSubscription, UASZone
 from geofencing_service.events import uas_zone_handlers
 from geofencing_service.events import uas_zones_subscription_handlers
@@ -111,6 +113,7 @@ def create_uas_zones_subscription_event(uas_zones_filter: UASZonesFilter) -> UAS
     :return:
     """
     context = uas_zones_subscription_handlers.UASZonesSubscriptionCreateContext(uas_zones_filter=uas_zones_filter)
+    context.user = request.user
 
     event = Event(CREATE_UAS_ZONES_SUBSCRIPTION_HANDLERS)
 
@@ -157,6 +160,7 @@ def create_uas_zone_event(uas_zone: UASZone) -> UASZone:
     :return:
     """
     context = uas_zone_handlers.UASZoneContext(uas_zone=uas_zone)
+    context.user = request.user
 
     event = Event(CREATE_UAS_ZONE_EVENT)
 

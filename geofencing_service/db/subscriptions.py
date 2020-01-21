@@ -29,29 +29,38 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 """
 from typing import Optional, List
 
-from mongoengine import DoesNotExist
+from mongoengine import DoesNotExist, Q
 
-from geofencing_service.db.models import UASZonesSubscription
+from geofencing_service.db.models import UASZonesSubscription, User
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def get_uas_zones_subscriptions() -> List[UASZonesSubscription]:
+def get_uas_zones_subscriptions(user: Optional[User] = None) -> List[UASZonesSubscription]:
     """
     Retrieve all the subscriptions from DB
+    :param user: object
     :return:
     """
-    return UASZonesSubscription.objects.all()
+    query = Q(user=user) if user is not None else Q()
+
+    return UASZonesSubscription.objects(query).all()
 
 
-def get_uas_zones_subscription_by_id(subscription_id: str) -> Optional[UASZonesSubscription]:
+def get_uas_zones_subscription_by_id(subscription_id: str, user: Optional[User] = None) -> Optional[UASZonesSubscription]:
     """
     Retrieves a subscription based on its id
     :param subscription_id:
+    :param user:
     :return:
     """
+    query = Q(id=subscription_id)
+
+    if user is not None:
+        query &= Q(user=user)
+
     try:
-        result = UASZonesSubscription.objects.get(id=subscription_id)
+        result = UASZonesSubscription.objects.get(query)
     except DoesNotExist:
         result = None
 

@@ -41,7 +41,7 @@ from swim_backend.local import AppContextProxy
 
 from geofencing_service.broker import uas_zones_updates_message_producer, UASZonesUpdatesMessageProducerContext, \
     UASZonesUpdatesMessageType
-from geofencing_service.db.models import UASZonesSubscription, GeofencingSMSubscription
+from geofencing_service.db.models import UASZonesSubscription, GeofencingSMSubscription, User
 from geofencing_service.db.subscriptions import create_uas_zones_subscription as db_create_uas_zones_subscription,\
     update_uas_zones_subscription as db_update_uas_zones_subscription, \
     delete_uas_zones_subscription as db_delete_uas_zones_subscription
@@ -88,6 +88,9 @@ class UASZonesSubscriptionCreateContext:
 
         """Holds the UASZone subscription that is eventually created"""
         self.uas_zones_subscription: Optional[UASZonesSubscription] = None
+
+        """The owner of the UASZoneSubscription"""
+        self.user: Optional[User] = None
 
 
 class UASZonesSubscriptionUpdateContext:
@@ -187,6 +190,7 @@ def uas_zones_subscription_db_save(context: UASZonesSubscriptionCreateContext) -
         active=context.sm_subscription.active
     )
     subscription.uas_zones_filter = context.uas_zones_filter.to_dict()
+    subscription.user = context.user
 
     db_create_uas_zones_subscription(subscription)
 

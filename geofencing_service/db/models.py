@@ -163,6 +163,27 @@ class DataSource(EmbeddedDocument):
     update_date_time = ComplexDateTimeField(db_field='endDateTime')
 
 
+
+class User(Document):
+    username = StringField(required=True)
+    password = StringField(required=True)
+
+    meta = {
+        'indexes': [
+            {'fields': ('username',), 'unique': True}
+        ]
+    }
+
+
+def _get_or_create_user(user: User) -> User:
+    try:
+        user = User.objects.get(username=user.username)
+    except DoesNotExist:
+        user.save()
+
+    return user
+
+
 class UASZone(Document):
     identifier = StringField(required=True, primary_key=True, max_length=7)
     name = StringField(required=True, max_length=200)
@@ -184,6 +205,8 @@ class UASZone(Document):
     data_source = EmbeddedDocumentField(DataSource, db_field='dataSource')
     extended_properties = DictField(db_field='extendedProperties')
 
+    user = ReferenceField(User, required=True)
+
     def clean(self):
         if self.data_source.update_date_time is None:
             self.data_source.update_date_time = self.data_source.creation_date_time
@@ -194,8 +217,12 @@ class UASZone(Document):
         # save reference documents beforehand
         if notification_authority is not None:
             self.authority.requires_notification_to.authority = _get_or_create_authority_entity(notification_authority)
+
         if authorization_authority is not None:
             self.authority.requires_authorization_from.authority = _get_or_create_authority_entity(authorization_authority)
+
+        if self.user is not None:
+            self.user = _get_or_create_user(self.user)
 
     def get_notification_authority(self):
         try:
@@ -210,17 +237,6 @@ class UASZone(Document):
             return None
 
 
-class User(Document):
-    username = StringField(required=True)
-    password = StringField(required=True)
-
-    meta = {
-        'indexes': [
-            {'fields': ('username',), 'unique': True}
-        ]
-    }
-
-
 class GeofencingSMSubscription(EmbeddedDocument):
     id = IntField(required=True)
     queue = StringField(required=True)
@@ -232,3 +248,8 @@ class UASZonesSubscription(Document):
     id = StringField(required=True, primary_key=True)
     sm_subscription = EmbeddedDocumentField(GeofencingSMSubscription, required=True)
     uas_zones_filter = DictField(required=True)
+    user = ReferenceField(User, required=True)
+
+    def clean(self):
+        if self.user is not None:
+            self.user = _get_or_create_user(self.user)
