@@ -62,7 +62,7 @@ def test_uas_zone_matches_subscription():
     assert _uas_zone_matches_subscription_uas_zones_filter(uas_zone_basilique, non_intersecting_uas_zones_subscription) is False
 
 
-def test_get_relevant_uas_zones_subscriptions():
+def test_get_relevant_uas_zones_subscriptions(test_user):
     uas_zone_basilique = make_uas_zone(BASILIQUE_POLYGON)
     db_create_uas_zone(uas_zone_basilique)
 
@@ -80,20 +80,20 @@ def test_get_relevant_uas_zones_subscriptions():
     non_intersecting_uas_zones_subscription.uas_zones_filter = non_intersecting_uas_zone_filter.to_dict()
     non_intersecting_uas_zones_subscription.save()
 
-    context = UASZoneContext(uas_zone=uas_zone_basilique)
+    context = UASZoneContext(uas_zone=uas_zone_basilique, user=test_user)
     get_relevant_uas_zones_subscriptions(context=context)
 
     assert intersecting_uas_zones_subscription in context.uas_zones_subscriptions
     assert non_intersecting_uas_zones_subscription not in context.uas_zones_subscriptions
 
 
-def test_publish_relevent_topics__all_topics_are_published(test_client):
+def test_publish_relevent_topics__all_topics_are_published(test_client, test_user):
     app = test_client.application
 
     mock_publish_topic = Mock()
     app.swim_publisher.publish_topic = mock_publish_topic
 
-    context = UASZoneContext(uas_zone=make_uas_zone(BASILIQUE_POLYGON))
+    context = UASZoneContext(uas_zone=make_uas_zone(BASILIQUE_POLYGON), user=test_user)
     context.topic_names = ['topic_name1', 'topic_name2', 'topic_name3']
 
     publish_relevant_topics(context)

@@ -45,6 +45,9 @@ from geofencing_service.events import events
 
 __author__ = "EUROCONTROL (SWIM)"
 
+from geofencing_service.events.uas_zones_subscription_handlers import UASZonesSubscriptionUpdateContext, \
+    UASZonesSubscriptionCreateContext
+
 _logger = logging.getLogger(__name__)
 
 
@@ -62,7 +65,9 @@ def create_subscription_to_uas_zones_updates() -> Tuple[SubscribeToUASZonesUpdat
     except ValidationError as e:
         raise BadRequestError(str(e))
 
-    uas_zones_subscription = events.create_uas_zones_subscription_event(uas_zones_filter=uas_zones_filter)
+    context = UASZonesSubscriptionCreateContext(uas_zones_filter=uas_zones_filter, user=request.user)
+
+    uas_zones_subscription = events.create_uas_zones_subscription_event(context)
 
     reply = SubscribeToUASZonesUpdatesReply(subscription_id=uas_zones_subscription.id,
                                             publication_location=uas_zones_subscription.sm_subscription.queue)
@@ -142,7 +147,9 @@ def update_subscription_to_uas_zones_updates(subscription_id: str) -> Tuple[Repl
 
     uas_zones_subscription.sm_subscription.active = updated_subscription_dict['active']
 
-    events.update_uas_zones_subscription_event(uas_zones_subscription=uas_zones_subscription)
+    context = UASZonesSubscriptionUpdateContext(uas_zones_subscription=uas_zones_subscription, user=request.user)
+
+    events.update_uas_zones_subscription_event(context)
 
     return Reply(generic_reply=GenericReply(request_status=RequestStatus.OK.value)), 200
 
@@ -162,6 +169,8 @@ def delete_subscription_to_uas_zones_updates(subscription_id: str) -> Tuple[Repl
     if uas_zones_subscription is None:
         raise NotFoundError(f"Subscription with id {subscription_id} does not exist")
 
-    events.delete_uas_zones_subscription_event(uas_zones_subscription=uas_zones_subscription)
+    context = UASZonesSubscriptionUpdateContext(uas_zones_subscription=uas_zones_subscription, user=request.user)
+
+    events.delete_uas_zones_subscription_event(context=context)
 
     return Reply(generic_reply=GenericReply(request_status=RequestStatus.OK.value)), 204

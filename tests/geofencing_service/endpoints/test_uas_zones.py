@@ -579,7 +579,7 @@ def test_create_uas_zone__valid_input__object_is_saved__returns_ok__201(test_cli
         assert 201 == response.status_code
         assert "OK" == response_data['genericReply']['RequestStatus']
         assert uas_zone in UASZone.objects.all()
-        assert uas_zone_input['identifier'] == mock_event.call_args[1]['uas_zone']['identifier']
+        assert uas_zone_input['identifier'] == mock_event.call_args[1]['context'].uas_zone.identifier
 
 
 def test_create_uas_zone__invalid_airspace_volume__not_enough_points__returns_nok__400(test_client, test_user,

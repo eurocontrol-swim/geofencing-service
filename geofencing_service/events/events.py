@@ -27,16 +27,15 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from typing import TypeVar, Dict
-
-from flask import request
+from typing import TypeVar
 
 from geofencing_service.db.models import UASZonesSubscription, UASZone
 from geofencing_service.events import uas_zone_handlers
 from geofencing_service.events import uas_zones_subscription_handlers
+from geofencing_service.events.uas_zone_handlers import UASZoneContext
 from geofencing_service.events.uas_zones_subscription_handlers import update_sm_subscription, \
-    uas_zones_subscription_db_update, delete_sm_subscription, uas_zones_subscription_db_delete
-from geofencing_service.filters import UASZonesFilter
+    uas_zones_subscription_db_update, delete_sm_subscription, uas_zones_subscription_db_delete, \
+    UASZonesSubscriptionCreateContext, UASZonesSubscriptionUpdateContext
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -104,17 +103,14 @@ DELETE_UAS_ZONE_EVENT = [
 ]
 
 
-def create_uas_zones_subscription_event(uas_zones_filter: UASZonesFilter) -> UASZonesSubscription:
+def create_uas_zones_subscription_event(context: UASZonesSubscriptionCreateContext) -> UASZonesSubscription:
     """
     Handles the event of creating a new subscription by creating the relevant context and applying the respective
     handlers in order.
 
-    :param uas_zones_filter:
+    :param context:
     :return:
     """
-    context = uas_zones_subscription_handlers.UASZonesSubscriptionCreateContext(uas_zones_filter=uas_zones_filter)
-    context.user = request.user
-
     event = Event(CREATE_UAS_ZONES_SUBSCRIPTION_HANDLERS)
 
     event.handle(context=context)
@@ -122,46 +118,38 @@ def create_uas_zones_subscription_event(uas_zones_filter: UASZonesFilter) -> UAS
     return context.uas_zones_subscription
 
 
-def update_uas_zones_subscription_event(uas_zones_subscription: UASZonesSubscription) -> None:
+def update_uas_zones_subscription_event(context: UASZonesSubscriptionUpdateContext) -> None:
     """
     Handles the event of updating a subscription (pause/resume) by creating the relevant context and applying the
-    respective handlers in order.
+    respective handlers in order
 
-    :param uas_zones_subscription:
-    :param update_data:
+    :param context:
     """
-    context = uas_zones_subscription_handlers.UASZonesSubscriptionUpdateContext(uas_zones_subscription)
-
     event = Event(UPDATE_UAS_ZONES_SUBSCRIPTION_HANDLERS)
 
     event.handle(context=context)
 
 
-def delete_uas_zones_subscription_event(uas_zones_subscription: UASZonesSubscription) -> None:
+def delete_uas_zones_subscription_event(context: UASZonesSubscriptionUpdateContext) -> None:
     """
     Handles the event of deleting a subscription (pause/resume) by creating the relevant context and applying the
     respective handlers in order.
 
-    :param uas_zones_subscription:
+    :param context:
     """
-    context = uas_zones_subscription_handlers.UASZonesSubscriptionUpdateContext(uas_zones_subscription)
-
     event = Event(DELETE_UAS_ZONES_SUBSCRIPTION_HANDLERS)
 
     event.handle(context=context)
 
 
-def create_uas_zone_event(uas_zone: UASZone) -> UASZone:
+def create_uas_zone_event(context: UASZoneContext) -> UASZone:
     """
     Handles the event of creating a new UASZone by creating the relevant context and applying the respective
     handlers in order
 
-    :param uas_zone:
+    :param context:
     :return:
     """
-    context = uas_zone_handlers.UASZoneContext(uas_zone=uas_zone)
-    context.user = request.user
-
     event = Event(CREATE_UAS_ZONE_EVENT)
 
     event.handle(context=context)
@@ -169,15 +157,13 @@ def create_uas_zone_event(uas_zone: UASZone) -> UASZone:
     return context.uas_zone
 
 
-def delete_uas_zone_event(uas_zone: UASZone) -> None:
+def delete_uas_zone_event(context: UASZoneContext) -> None:
     """
     Handles the event of deleting a UASZone by creating the relevant context and applying the respective
     handlers in order
 
-    :param uas_zone:
+    :param context:
     """
-    context = uas_zone_handlers.UASZoneContext(uas_zone=uas_zone)
-
     event = Event(DELETE_UAS_ZONE_EVENT)
 
     event.handle(context=context)

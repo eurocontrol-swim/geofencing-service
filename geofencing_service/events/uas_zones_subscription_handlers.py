@@ -70,12 +70,14 @@ sm_client = AppContextProxy(_get_sm_client_from_config)
 
 
 class UASZonesSubscriptionCreateContext:
-    def __init__(self, uas_zones_filter: UASZonesFilter) -> None:
+    def __init__(self, uas_zones_filter: UASZonesFilter, user: User) -> None:
         """
         :param uas_zones_filter: The filtering criteria of the subscription
+        :param user: The current user
         """
 
         self.uas_zones_filter: UASZonesFilter = uas_zones_filter
+        self.user: User = user
 
         """Holds the new topic name where the new subscription will be subscribed to"""
         self.topic_name: Optional[str] = None
@@ -89,16 +91,15 @@ class UASZonesSubscriptionCreateContext:
         """Holds the UASZone subscription that is eventually created"""
         self.uas_zones_subscription: Optional[UASZonesSubscription] = None
 
-        """The owner of the UASZoneSubscription"""
-        self.user: Optional[User] = None
-
 
 class UASZonesSubscriptionUpdateContext:
-    def __init__(self, uas_zones_subscription: UASZonesSubscription) -> None:
+    def __init__(self, uas_zones_subscription: UASZonesSubscription, user: User) -> None:
         """
         :param uas_zones_subscription:
+        :param user: the current user
         """
         self.uas_zones_subscription = uas_zones_subscription
+        self.user = user
 
 
 def get_topic_name(context: UASZonesSubscriptionCreateContext) -> None:

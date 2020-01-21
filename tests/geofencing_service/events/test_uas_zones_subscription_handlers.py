@@ -39,7 +39,7 @@ from tests.geofencing_service.utils import make_uas_zones_filter_from_db_uas_zon
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def test_publish_topic(test_client):
+def test_publish_topic(test_client, test_user):
     app = test_client.application
 
     mock_add_topic = Mock()
@@ -49,7 +49,7 @@ def test_publish_topic(test_client):
 
     uas_zone = make_uas_zone(BASILIQUE_POLYGON)
     uas_zones_filter = make_uas_zones_filter_from_db_uas_zone(uas_zone)
-    context = UASZonesSubscriptionCreateContext(uas_zones_filter=uas_zones_filter)
+    context = UASZonesSubscriptionCreateContext(uas_zones_filter=uas_zones_filter, user=test_user)
     context.topic_name = 'topic_name1'
 
     publish_topic(context)
@@ -60,13 +60,13 @@ def test_publish_topic(test_client):
 
 
 @mock.patch('geofencing_service.events.uas_zones_subscription_handlers.sm_client')
-def test_get_or_create_sm_topic__topic_is_found_and_returned(mock_sm_client, test_client):
+def test_get_or_create_sm_topic__topic_is_found_and_returned(mock_sm_client, test_client, test_user):
     topic_name = 'topic'
     topic = Topic(name=topic_name)
 
     mock_sm_client.get_topics = Mock(return_value=[topic])
 
-    context = UASZonesSubscriptionCreateContext(Mock())
+    context = UASZonesSubscriptionCreateContext(Mock(), user=test_user)
     context.topic_name = topic_name
 
     get_or_create_sm_topic(context)
@@ -75,12 +75,12 @@ def test_get_or_create_sm_topic__topic_is_found_and_returned(mock_sm_client, tes
 
 
 @mock.patch('geofencing_service.events.uas_zones_subscription_handlers.sm_client')
-def test_get_or_create_sm_topic__topic_is_not_found_and_is_created(mock_sm_client, test_client):
+def test_get_or_create_sm_topic__topic_is_not_found_and_is_created(mock_sm_client, test_client, test_user):
     not_existent_topic_name = 'topic'
     mock_sm_client.get_topics = Mock(return_value=[])
     mock_sm_client.post_topic = Mock()
 
-    context = UASZonesSubscriptionCreateContext(Mock())
+    context = UASZonesSubscriptionCreateContext(Mock(), user=test_user)
     context.topic_name = not_existent_topic_name
 
     get_or_create_sm_topic(context)

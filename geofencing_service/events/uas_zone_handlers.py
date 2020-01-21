@@ -44,18 +44,17 @@ _logger = logging.getLogger(__name__)
 
 
 class UASZoneContext:
-    def __init__(self, uas_zone: UASZone) -> None:
+    def __init__(self, uas_zone: UASZone, user: User) -> None:
         """
 
         :param uas_zone: the UASZone to be created or deleted
+        :param user: the current user
         """
         self.uas_zone: UASZone = uas_zone
+        self.user: User = user
 
         """Holds the subscriptions whose filter_zone intersect the provided UASZone """
         self.uas_zones_subscriptions: List[UASZonesSubscription] = []
-
-        """The owner of the UASZone"""
-        self.user: Optional[User] = None
 
 
 def uas_zone_db_save(context: UASZoneContext) -> None:

@@ -146,7 +146,7 @@ def make_authority() -> Authority:
     )
 
 
-def make_uas_zone(polygon: GeoJSONPolygonCoordinates) -> UASZone:
+def make_uas_zone(polygon: GeoJSONPolygonCoordinates, user: Optional[User] = None) -> UASZone:
     result = UASZone()
     result.identifier = get_unique_id()[:7]
     result.name = get_unique_id()
@@ -164,7 +164,7 @@ def make_uas_zone(polygon: GeoJSONPolygonCoordinates) -> UASZone:
         author="Author",
         creation_date_time=NOW,
     )
-    result.user = make_user()
+    result.user = user or make_user()
 
     return result
 

@@ -44,6 +44,8 @@ from geofencing_service.events import events  # import create_uas_zone_event, de
 
 __author__ = "EUROCONTROL (SWIM)"
 
+from geofencing_service.events.uas_zone_handlers import UASZoneContext
+
 
 @handle_response(UASZonesFilterReplySchema)
 def filter_uas_zones() -> Tuple[UASZoneFilterReply, int]:
@@ -77,7 +79,9 @@ def create_uas_zone() -> Tuple[UASZoneCreateReply, int]:
     except ValidationError as e:
         raise BadRequestError(str(e))
 
-    db_uas_zone = events.create_uas_zone_event(uas_zone=uas_zone)
+    context = UASZoneContext(uas_zone=uas_zone, user=request.user)
+
+    db_uas_zone = events.create_uas_zone_event(context=context)
 
     return UASZoneCreateReply(uas_zone=db_uas_zone), 201
 
@@ -97,6 +101,8 @@ def delete_uas_zone(uas_zone_identifier: str) -> Tuple[Reply, int]:
     if uas_zone is None:
         raise NotFoundError(f"UASZone with identifier '{uas_zone_identifier}' does not exist")
 
-    events.delete_uas_zone_event(uas_zone=uas_zone)
+    context = UASZoneContext(uas_zone=uas_zone, user=request.user)
+
+    events.delete_uas_zone_event(context=context)
 
     return Reply(generic_reply=GenericReply(request_status=RequestStatus.OK.value)), 204
