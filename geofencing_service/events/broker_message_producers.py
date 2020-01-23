@@ -32,28 +32,27 @@ __author__ = "EUROCONTROL (SWIM)"
 
 import enum
 import logging
-from typing import Optional, Any
 
 import proton
+from flask import current_app
+from swim_proton.messaging_handlers import MessageProducerError
 
 from geofencing_service.db.models import UASZone
-from geofencing_service.db.uas_zones import get_uas_zones as db_get_uas_zones
 from geofencing_service.endpoints.schemas.db_schemas import UASZoneSchema
-from geofencing_service.filters import UASZonesFilter
+from geofencing_service.events.uas_zone_handlers import UASZoneContext
 
 _logger = logging.getLogger(__name__)
 
 
 class UASZonesUpdatesMessageType(enum.Enum):
-    INITIAL = 'INITIAL'
     UAS_ZONE_CREATION = 'UAS_ZONE_CREATION'
     UAS_ZONE_DELETION = 'UAS_ZONE_DELETION'
 
 
 class UASZonesUpdatesMessageProducerContext:
-    def __init__(self, message_type: UASZonesUpdatesMessageType, data: Any):
+    def __init__(self, message_type: UASZonesUpdatesMessageType, uas_zone: UASZone):
         self.message_type = message_type
-        self.data = data
+        self.uas_zone: UASZone = uas_zone
 
 
 def uas_zones_updates_message_producer(context: UASZonesUpdatesMessageProducerContext) -> proton.Message:
@@ -64,31 +63,35 @@ def uas_zones_updates_message_producer(context: UASZonesUpdatesMessageProducerCo
                     the subscription
     :return:
     """
-    if context.message_type == UASZonesUpdatesMessageType.INITIAL:
-        if not isinstance(context.data, UASZonesFilter):
-            raise ValueError(f"Data for message_type INITIAL should be UASZonesFilter")
-
-        uas_zones = db_get_uas_zones(uas_zones_filter=context.data)
+    if context.message_type == UASZonesUpdatesMessageType.UAS_ZONE_CREATION:
         message_body = {
-            'uas_zones': [UASZoneSchema().dump(uas_zone) for uas_zone in uas_zones]
-        }
-    elif context.message_type == UASZonesUpdatesMessageType.UAS_ZONE_CREATION:
-        if not isinstance(context.data, UASZone):
-            raise ValueError(f"Data for message_type UAS_ZONE_CREATION should be UASZone")
-
-        message_body = {
-            'uas_zone': UASZoneSchema().dump(context.data)
+            'uas_zone': UASZoneSchema().dump(context.uas_zone)
         }
     elif context.message_type == UASZonesUpdatesMessageType.UAS_ZONE_DELETION:
-        if not isinstance(context.data, str):
-            raise ValueError(f"Data for message_type UAS_ZONE_DELETION should be str")
-
         message_body = {
-            'uas_zone_identifier': context.data
+            'uas_zone_identifier': context.uas_zone.identifier
         }
     else:
-        raise ValueError('Invalid message_type')
+        raise MessageProducerError('Invalid message_type')
 
     message_body['message_type'] = context.message_type.value
 
     return proton.Message(body=message_body, content_type="application/json")
+
+
+def publish_uas_zone_creation(event_context: UASZoneContext):
+    _publish_uas_zone_update(event_context, UASZonesUpdatesMessageType.UAS_ZONE_CREATION)
+
+
+def publish_uas_zone_deletion(event_context: UASZoneContext):
+    _publish_uas_zone_update(event_context, UASZonesUpdatesMessageType.UAS_ZONE_DELETION)
+
+
+def _publish_uas_zone_update(event_context: UASZoneContext, message_type: UASZonesUpdatesMessageType):
+    message_producer_context = UASZonesUpdatesMessageProducerContext(
+        message_type=message_type,
+        uas_zone=event_context.uas_zone
+    )
+    for subscription in event_context.uas_zones_subscriptions:
+        current_app.swim_publisher.publish_topic(topic_name=subscription.sm_subscription.topic_name,
+                                                 context=message_producer_context)

@@ -38,6 +38,7 @@ from geofencing_service import BASE_PATH
 from geofencing_service.db.models import UASZone
 from geofencing_service.db.uas_zones import get_uas_zones_by_identifier, create_uas_zone as db_create_uas_zone
 from geofencing_service.endpoints.schemas.filters_schemas import UASZonesFilterSchema
+from geofencing_service.events.uas_zone_handlers import UASZoneContext
 from geofencing_service.filters import UASZonesFilter
 from tests.conftest import DEFAULT_LOGIN_PASS
 from tests.geofencing_service.utils import make_basic_auth_header, make_uas_zone, BASILIQUE_POLYGON, \
@@ -569,8 +570,8 @@ def test_create_uas_zone__valid_input__object_is_saved__returns_ok__201(test_cli
     # saving the expected uas_zone at this point contradicts a bit the nature of this test but here we are actually
     # testing the event outcome
     uas_zone.save()
-
-    with mock.patch('geofencing_service.events.events.create_uas_zone_event', return_value=uas_zone) as mock_event:
+    context = UASZoneContext(uas_zone=uas_zone, user=test_user)
+    with mock.patch('geofencing_service.events.events.create_uas_zone_event.handle', return_value=context) as mock_event:
         response = test_client.post(URL_UAS_ZONES, data=json.dumps(uas_zone_input), content_type='application/json',
                                     headers=make_basic_auth_header(test_user.username, DEFAULT_LOGIN_PASS))
 
@@ -578,7 +579,7 @@ def test_create_uas_zone__valid_input__object_is_saved__returns_ok__201(test_cli
 
         assert 201 == response.status_code
         assert "OK" == response_data['genericReply']['RequestStatus']
-        assert uas_zone in UASZone.objects.all()
+        assert context.uas_zone in UASZone.objects.all()
         assert uas_zone_input['identifier'] == mock_event.call_args[1]['context'].uas_zone.identifier
 
 

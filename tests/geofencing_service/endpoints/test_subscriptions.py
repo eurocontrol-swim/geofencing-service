@@ -36,8 +36,12 @@ from mongoengine import DoesNotExist
 
 from geofencing_service import BASE_PATH
 from geofencing_service.db.models import UASZonesSubscription
+from geofencing_service.endpoints.schemas.filters_schemas import UASZonesFilterSchema
+from geofencing_service.events.uas_zones_subscription_handlers import UASZonesSubscriptionCreateContext
+from geofencing_service.filters import UASZonesFilter
 from tests.conftest import DEFAULT_LOGIN_PASS
-from tests.geofencing_service.utils import make_basic_auth_header, make_uas_zones_subscription
+from tests.geofencing_service.utils import make_basic_auth_header, make_uas_zones_subscription, \
+    make_uas_zones_filter_from_db_uas_zone
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -123,18 +127,19 @@ def test_create_subscription_to_uas_zones_updates__valid_input__returns_ok_and_c
         "updatedAfterDateTime": "2019-11-05T13:10:39.315Z"
     }
 
-    uas_zones_subscription = make_uas_zones_subscription()
+    context = UASZonesSubscriptionCreateContext(uas_zones_filter=UASZonesFilterSchema().load(data), user=test_user)
+    context.uas_zones_subscription = make_uas_zones_subscription()
 
-    with mock.patch('geofencing_service.events.events.create_uas_zones_subscription_event',
-                    return_value=uas_zones_subscription):
+    with mock.patch('geofencing_service.events.events.create_uas_zones_subscription_event.handle',
+                    return_value=context):
         response = test_client.post(URL, data=json.dumps(data), content_type='application/json',
                                     headers=make_basic_auth_header(test_user.username, DEFAULT_LOGIN_PASS))
 
         assert 201 == response.status_code
         response_data = json.loads(response.data)
         assert "OK" == response_data['genericReply']['RequestStatus']
-        assert uas_zones_subscription.id == response_data['subscriptionID']
-        assert uas_zones_subscription.sm_subscription.queue == response_data['publicationLocation']
+        assert context.uas_zones_subscription.id == response_data['subscriptionID']
+        assert context.uas_zones_subscription.sm_subscription.queue == response_data['publicationLocation']
 
 
 def test_update_subscription_to_uas_zones_updates__invalid_user__returns_nok_401(test_client):

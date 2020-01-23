@@ -32,31 +32,10 @@ from unittest.mock import Mock
 
 from subscription_manager_client.models import Topic
 
-from geofencing_service.events.uas_zones_subscription_handlers import UASZonesSubscriptionCreateContext, publish_topic, \
+from geofencing_service.events.uas_zones_subscription_handlers import UASZonesSubscriptionCreateContext, \
     get_or_create_sm_topic
-from tests.geofencing_service.utils import make_uas_zones_filter_from_db_uas_zone, BASILIQUE_POLYGON, make_uas_zone
 
 __author__ = "EUROCONTROL (SWIM)"
-
-
-def test_publish_topic(test_client, test_user):
-    app = test_client.application
-
-    mock_add_topic = Mock()
-    mock_publish_topic = Mock()
-    app.swim_publisher.add_topic = mock_add_topic
-    app.swim_publisher.publish_topic = mock_publish_topic
-
-    uas_zone = make_uas_zone(BASILIQUE_POLYGON)
-    uas_zones_filter = make_uas_zones_filter_from_db_uas_zone(uas_zone)
-    context = UASZonesSubscriptionCreateContext(uas_zones_filter=uas_zones_filter, user=test_user)
-    context.topic_name = 'topic_name1'
-
-    publish_topic(context)
-    mock_add_topic_arg = mock_add_topic.call_args[1]
-    assert context.topic_name == mock_add_topic_arg['topic_name']
-
-    mock_publish_topic.assert_called_once_with(topic_name=context.topic_name, context=context.uas_zones_filter)
 
 
 @mock.patch('geofencing_service.events.uas_zones_subscription_handlers.sm_client')

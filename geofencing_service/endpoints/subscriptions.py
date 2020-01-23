@@ -65,12 +65,15 @@ def create_subscription_to_uas_zones_updates() -> Tuple[SubscribeToUASZonesUpdat
     except ValidationError as e:
         raise BadRequestError(str(e))
 
-    context = UASZonesSubscriptionCreateContext(uas_zones_filter=uas_zones_filter, user=request.user)
+    context = events.create_uas_zones_subscription_event.handle(
+        context=UASZonesSubscriptionCreateContext(
+            uas_zones_filter=uas_zones_filter,
+            user=request.user
+        )
+    )
 
-    uas_zones_subscription = events.create_uas_zones_subscription_event(context)
-
-    reply = SubscribeToUASZonesUpdatesReply(subscription_id=uas_zones_subscription.id,
-                                            publication_location=uas_zones_subscription.sm_subscription.queue)
+    reply = SubscribeToUASZonesUpdatesReply(subscription_id=context.uas_zones_subscription.id,
+                                            publication_location=context.uas_zones_subscription.sm_subscription.queue)
 
     return reply, 201
 
@@ -147,9 +150,12 @@ def update_subscription_to_uas_zones_updates(subscription_id: str) -> Tuple[Repl
 
     uas_zones_subscription.sm_subscription.active = updated_subscription_dict['active']
 
-    context = UASZonesSubscriptionUpdateContext(uas_zones_subscription=uas_zones_subscription, user=request.user)
-
-    events.update_uas_zones_subscription_event(context)
+    events.update_uas_zones_subscription_event.handle(
+        context=UASZonesSubscriptionUpdateContext(
+            uas_zones_subscription=uas_zones_subscription,
+            user=request.user
+        )
+    )
 
     return Reply(generic_reply=GenericReply(request_status=RequestStatus.OK.value)), 200
 
@@ -169,8 +175,11 @@ def delete_subscription_to_uas_zones_updates(subscription_id: str) -> Tuple[Repl
     if uas_zones_subscription is None:
         raise NotFoundError(f"Subscription with id {subscription_id} does not exist")
 
-    context = UASZonesSubscriptionUpdateContext(uas_zones_subscription=uas_zones_subscription, user=request.user)
-
-    events.delete_uas_zones_subscription_event(context=context)
+    events.delete_uas_zones_subscription_event.handle(
+        context=UASZonesSubscriptionUpdateContext(
+            uas_zones_subscription=uas_zones_subscription,
+            user=request.user
+        )
+    )
 
     return Reply(generic_reply=GenericReply(request_status=RequestStatus.OK.value)), 204

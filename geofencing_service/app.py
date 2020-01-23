@@ -40,7 +40,7 @@ from swagger_ui_bundle import swagger_ui_3_path
 from swim_backend.config import load_app_config, configure_logging
 from swim_backend.flask import configure_flask
 
-from geofencing_service.broker import uas_zones_updates_message_producer
+from geofencing_service.events.broker_message_producers import uas_zones_updates_message_producer
 from geofencing_service.db.models import UASZonesSubscription
 from geofencing_service.db.subscriptions import get_uas_zones_subscriptions
 from geofencing_service.endpoints.reply import handle_flask_request_error

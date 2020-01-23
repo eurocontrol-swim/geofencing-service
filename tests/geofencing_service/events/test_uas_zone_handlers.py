@@ -27,12 +27,11 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-import logging
 from unittest.mock import Mock, call
 
 from geofencing_service.db.uas_zones import create_uas_zone as db_create_uas_zone
 from geofencing_service.events.uas_zone_handlers import _uas_zone_matches_subscription_uas_zones_filter, \
-    UASZoneContext, publish_relevant_topics, get_relevant_uas_zones_subscriptions
+    UASZoneContext, get_relevant_uas_zones_subscriptions
 from tests.geofencing_service.utils import make_uas_zone, BASILIQUE_POLYGON, make_uas_zones_filter_from_db_uas_zone, \
     make_uas_zones_subscription, INTERSECTING_BASILIQUE_POLYGON, NON_INTERSECTING_BASILIQUE_POLYGON
 
@@ -85,20 +84,3 @@ def test_get_relevant_uas_zones_subscriptions(test_user):
 
     assert intersecting_uas_zones_subscription in context.uas_zones_subscriptions
     assert non_intersecting_uas_zones_subscription not in context.uas_zones_subscriptions
-
-
-def test_publish_relevent_topics__all_topics_are_published(test_client, test_user):
-    app = test_client.application
-
-    mock_publish_topic = Mock()
-    app.swim_publisher.publish_topic = mock_publish_topic
-
-    context = UASZoneContext(uas_zone=make_uas_zone(BASILIQUE_POLYGON), user=test_user)
-    context.topic_names = ['topic_name1', 'topic_name2', 'topic_name3']
-
-    publish_relevant_topics(context)
-
-    expected_mock_calls = [call(topic_name=sub.sm_subscription.topic_name) for sub in context.uas_zones_subscriptions]
-
-    assert expected_mock_calls == mock_publish_topic.mock_calls
-

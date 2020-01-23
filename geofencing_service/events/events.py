@@ -29,13 +29,11 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 """
 from typing import TypeVar
 
-from geofencing_service.db.models import UASZonesSubscription, UASZone
+import geofencing_service.events.broker_message_producers
 from geofencing_service.events import uas_zone_handlers
 from geofencing_service.events import uas_zones_subscription_handlers
-from geofencing_service.events.uas_zone_handlers import UASZoneContext
 from geofencing_service.events.uas_zones_subscription_handlers import update_sm_subscription, \
-    uas_zones_subscription_db_update, delete_sm_subscription, uas_zones_subscription_db_delete, \
-    UASZonesSubscriptionCreateContext, UASZonesSubscriptionUpdateContext
+    uas_zones_subscription_db_update, delete_sm_subscription, uas_zones_subscription_db_delete
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -62,108 +60,36 @@ class Event(list):
         return f"{self._type} Event({list.__repr__(self)})"
 
 
-""" The sequence of handlers to be applied in order upon creating a new subscription"""
-CREATE_UAS_ZONES_SUBSCRIPTION_HANDLERS = [
+create_uas_zones_subscription_event = Event([
     uas_zones_subscription_handlers.get_topic_name,
     uas_zones_subscription_handlers.add_broker_topic,
     uas_zones_subscription_handlers.get_or_create_sm_topic,
     uas_zones_subscription_handlers.create_sm_subscription,
-    uas_zones_subscription_handlers.uas_zones_subscription_db_save,
-    uas_zones_subscription_handlers.publish_initial_uas_zones
-]
+    uas_zones_subscription_handlers.uas_zones_subscription_db_save
+])
 
 
-""" The sequence of handlers to update (pause/resume) a subscrption"""
-UPDATE_UAS_ZONES_SUBSCRIPTION_HANDLERS = [
+update_uas_zones_subscription_event = Event([
     update_sm_subscription,
-    uas_zones_subscription_db_update
-]
+    uas_zones_subscription_db_update,
+])
 
 
-""" The sequence of handlers to delete (unsubscribe) a subscrption"""
-DELETE_UAS_ZONES_SUBSCRIPTION_HANDLERS = [
+delete_uas_zones_subscription_event = Event([
     delete_sm_subscription,
     uas_zones_subscription_db_delete
-]
+])
 
 
-""" The sequence of handlers to be applied in order upon creating a new UASZone"""
-CREATE_UAS_ZONE_EVENT = [
+create_uas_zone_event = Event([
     uas_zone_handlers.uas_zone_db_save,
     uas_zone_handlers.get_relevant_uas_zones_subscriptions,
-    uas_zone_handlers.publish_uas_zone_creation
-]
+    geofencing_service.events.broker_message_producers.publish_uas_zone_creation
+])
 
 
-""" The sequence of handlers to be applied in order upon deleting a new UASZone"""
-DELETE_UAS_ZONE_EVENT = [
+delete_uas_zone_event = Event([
     uas_zone_handlers.get_relevant_uas_zones_subscriptions,
     uas_zone_handlers.uas_zones_db_delete,
-    uas_zone_handlers.publish_uas_zone_deletion
-]
-
-
-def create_uas_zones_subscription_event(context: UASZonesSubscriptionCreateContext) -> UASZonesSubscription:
-    """
-    Handles the event of creating a new subscription by creating the relevant context and applying the respective
-    handlers in order.
-
-    :param context:
-    :return:
-    """
-    event = Event(CREATE_UAS_ZONES_SUBSCRIPTION_HANDLERS)
-
-    event.handle(context=context)
-
-    return context.uas_zones_subscription
-
-
-def update_uas_zones_subscription_event(context: UASZonesSubscriptionUpdateContext) -> None:
-    """
-    Handles the event of updating a subscription (pause/resume) by creating the relevant context and applying the
-    respective handlers in order
-
-    :param context:
-    """
-    event = Event(UPDATE_UAS_ZONES_SUBSCRIPTION_HANDLERS)
-
-    event.handle(context=context)
-
-
-def delete_uas_zones_subscription_event(context: UASZonesSubscriptionUpdateContext) -> None:
-    """
-    Handles the event of deleting a subscription (pause/resume) by creating the relevant context and applying the
-    respective handlers in order.
-
-    :param context:
-    """
-    event = Event(DELETE_UAS_ZONES_SUBSCRIPTION_HANDLERS)
-
-    event.handle(context=context)
-
-
-def create_uas_zone_event(context: UASZoneContext) -> UASZone:
-    """
-    Handles the event of creating a new UASZone by creating the relevant context and applying the respective
-    handlers in order
-
-    :param context:
-    :return:
-    """
-    event = Event(CREATE_UAS_ZONE_EVENT)
-
-    event.handle(context=context)
-
-    return context.uas_zone
-
-
-def delete_uas_zone_event(context: UASZoneContext) -> None:
-    """
-    Handles the event of deleting a UASZone by creating the relevant context and applying the respective
-    handlers in order
-
-    :param context:
-    """
-    event = Event(DELETE_UAS_ZONE_EVENT)
-
-    event.handle(context=context)
+    geofencing_service.events.broker_message_producers.publish_uas_zone_deletion
+])

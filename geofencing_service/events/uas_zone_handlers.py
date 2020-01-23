@@ -28,11 +28,8 @@ http://opensource.org/licenses/BSD-3-Clause
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
 import logging
-from typing import List, Optional
+from typing import List
 
-from flask import current_app
-
-from geofencing_service.broker import UASZonesUpdatesMessageProducerContext, UASZonesUpdatesMessageType
 from geofencing_service.db.models import UASZone, UASZonesSubscription, User
 from geofencing_service.db.uas_zones import create_uas_zone as db_create_uas_zone, get_uas_zones as db_get_uas_zones
 from geofencing_service.db.subscriptions import get_uas_zones_subscriptions as db_get_uas_zones_subscriptions
@@ -90,43 +87,9 @@ def get_relevant_uas_zones_subscriptions(context: UASZoneContext) -> None:
     ]
 
 
-def publish_uas_zone_creation(event_context: UASZoneContext):
-    message_producer_context = UASZonesUpdatesMessageProducerContext(
-        message_type=UASZonesUpdatesMessageType.UAS_ZONE_CREATION,
-        data=event_context.uas_zone
-    )
-    for subscription in event_context.uas_zones_subscriptions:
-        current_app.swim_publisher.publish_topic(topic_name=subscription.sm_subscription.topic_name,
-                                                 context=message_producer_context)
-
-
-def publish_relevant_topics(context: UASZoneContext) -> None:
-    """
-    Publishes the relevant topics in the broker by triggering its data_handler
-    :param context:
-    """
-    for subscription in context.uas_zones_subscriptions:
-        _logger.info(f'Publishing for subscription {subscription.id} with filter {subscription.uas_zones_filter}')
-        current_app.swim_publisher.publish_topic(
-            topic_name=subscription.sm_subscription.topic_name,
-            context=UASZonesFilter.from_dict(dict(subscription.uas_zones_filter))
-        )
-
-
 def uas_zones_db_delete(context: UASZoneContext):
     """
     Deletes the UASZone in context
     :param context:
     """
     context.uas_zone.delete()
-
-
-def publish_uas_zone_deletion(event_context: UASZoneContext):
-    message_producer_context = UASZonesUpdatesMessageProducerContext(
-        message_type=UASZonesUpdatesMessageType.UAS_ZONE_DELETION,
-        data=event_context.uas_zone.identifier
-    )
-    for subscription in event_context.uas_zones_subscriptions:
-        current_app.swim_publisher.publish_topic(topic_name=subscription.sm_subscription.topic_name,
-                                                 context=message_producer_context)
-

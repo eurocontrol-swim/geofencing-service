@@ -146,7 +146,7 @@ def make_authority() -> Authority:
     )
 
 
-def make_uas_zone(polygon: GeoJSONPolygonCoordinates, user: Optional[User] = None) -> UASZone:
+def make_uas_zone(polygon: GeoJSONPolygonCoordinates = BASILIQUE_POLYGON, user: Optional[User] = None) -> UASZone:
     result = UASZone()
     result.identifier = get_unique_id()[:7]
     result.name = get_unique_id()
