@@ -175,7 +175,7 @@ if __name__ == '__main__':
 
     logging.config.dictConfig(config['LOGGING'])
 
-    connect(db=config['MONGO']['db'], host=config['MONGO']['host'], port=config['MONGO']['port'])
+    connect(**config['MONGO'])
 
     # save Geofencing Users
     users = _get_users(config['DB_USERS'])

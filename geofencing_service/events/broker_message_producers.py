@@ -35,7 +35,6 @@ import logging
 
 import proton
 from flask import current_app
-from swim_proton.messaging_handlers import MessageProducerError
 
 from geofencing_service.db.models import UASZone
 from geofencing_service.endpoints.schemas.db_schemas import UASZoneSchema
@@ -72,7 +71,7 @@ def uas_zones_updates_message_producer(context: UASZonesUpdatesMessageProducerCo
             'uas_zone_identifier': context.uas_zone.identifier
         }
     else:
-        raise MessageProducerError('Invalid message_type')
+        raise Exception('Invalid message_type')
 
     message_body['message_type'] = context.message_type.value
 

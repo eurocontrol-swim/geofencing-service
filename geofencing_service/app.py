@@ -74,7 +74,7 @@ def create_flask_app(config_file: str) -> Flask:
 
     configure_logging(app)
 
-    connect(db=app.config['MONGO']['db'], host=app.config['MONGO']['host'], port=app.config['MONGO']['port'])
+    connect(**app.config['MONGO'])
 
     # the swim_publisher will be added as flask app properties for easier usage across the project
     with app.app_context():
