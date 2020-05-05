@@ -28,14 +28,15 @@ http://opensource.org/licenses/BSD-3-Clause
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
 from marshmallow import Schema, pre_dump, post_dump, pre_load, post_load
-from marshmallow.fields import String, Nested, Integer, Dict, AwareDateTime, List, Email, URL, Boolean
+from marshmallow.fields import String, Nested, Integer, Dict, AwareDateTime, List, Email, URL, \
+    Boolean
 
 from geofencing_service.common import point_list_from_geojson_polygon_coordinates, \
     geojson_polygon_coordinates_from_point_list, Point
 from geofencing_service.db.models import UASZone, AuthorityEntity
 from geofencing_service.endpoints.schemas.filters_schemas import validate_polygon
-from geofencing_service.endpoints.utils import time_str_from_datetime_str, make_datetime_string_aware, \
-    datetime_str_from_time_str
+from geofencing_service.endpoints.utils import time_str_from_datetime_str, \
+    make_datetime_string_aware, datetime_str_from_time_str
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -52,8 +53,9 @@ class AirspaceVolumeSchema(Schema):
     upper_limit_in_m = Integer(data_key="upperLimit", missing=None)
     upper_vertical_reference = String(data_key="upperVerticalReference", missing=None)
 
-    # helper field to hold temporarily the point_list while dumping the object. It prevents from overriding the polygon
-    # field and thus making it impossible to dump the object more than one time without raising an error
+    # helper field to hold temporarily the point_list while dumping the object. It prevents from
+    # overriding the polygon field and thus making it impossible to dump the object more than one
+    # time without raising an error
     polygon_point_list_dump = Nested(PointSchema, many=True, required=False, dump_only=True)
 
     @pre_dump
@@ -83,9 +85,12 @@ class AirspaceVolumeSchema(Schema):
         :param kwargs:
         :return:
         """
-        coordinates = item['polygon']['coordinates'] if 'coordinates' in item['polygon'] else item['polygon']
+        coordinates = item['polygon']['coordinates'] if 'coordinates' in item['polygon'] \
+            else item['polygon']
 
-        item.polygon_point_list_dump: List[Point] = point_list_from_geojson_polygon_coordinates(coordinates)
+        item.polygon_point_list_dump: List[Point] = point_list_from_geojson_polygon_coordinates(
+            coordinates
+        )
 
         return item
 
@@ -127,7 +132,7 @@ class AirspaceVolumeSchema(Schema):
         return item
 
 
-class DailyScheduleSchema(Schema):
+class DailyPeriodSchema(Schema):
     day = String()
     start_time = AwareDateTime(data_key='startTime', required=True)
     end_time = AwareDateTime(data_key='endTime', required=True)
@@ -157,11 +162,11 @@ class DailyScheduleSchema(Schema):
         return data
 
 
-class ApplicableTimePeriodSchema(Schema):
+class TimePeriodSchema(Schema):
     permanent = String()
     start_date_time = AwareDateTime(data_key='startDateTime', required=True)
     end_date_time = AwareDateTime(data_key='endDateTime', required=True)
-    daily_schedule = Nested(DailyScheduleSchema, many=True, data_key='dailySchedule')
+    schedule = Nested(DailyPeriodSchema, many=True, data_key='dailySchedule')
 
     @post_dump
     def handle_datetime_awareness(self, data, **kwargs):
@@ -183,7 +188,8 @@ class AuthorityEntitySchema(Schema):
     @post_load
     def make_mongo_object(self, data, **kwargs):
         """
-        A document schema will be eventually loaded in a mongoengine object for possible storing in DB
+        A document schema will be eventually loaded in a mongoengine object for possible storing in
+        DB
         :param data:
         :param kwargs:
         :return:
@@ -201,8 +207,10 @@ class AuthorizationRequirementSchema(Schema):
 
 
 class AuthoritySchema(Schema):
-    requires_notification_to = Nested(NotificationRequirementSchema, data_key="requiresNotificationTo")
-    requires_authorization_from = Nested(AuthorizationRequirementSchema, data_key="requiresAuthorizationFrom")
+    requires_notification_to = Nested(NotificationRequirementSchema,
+                                      data_key="requiresNotificationTo")
+    requires_authorization_from = Nested(AuthorizationRequirementSchema,
+                                         data_key="requiresAuthorizationFrom")
 
 
 class DataSourceSchema(Schema):
@@ -232,7 +240,7 @@ class UASZoneSchema(Schema):
     country = String()
 
     airspace_volume = Nested(AirspaceVolumeSchema, data_key='airspaceVolume', required=True)
-    applicable_time_period = Nested(ApplicableTimePeriodSchema, data_key='applicableTimePeriod')
+    applicable_time_period = Nested(TimePeriodSchema, data_key='applicableTimePeriod')
     authority = Nested(AuthoritySchema)
     data_source = Nested(DataSourceSchema, data_key='dataSource')
     extended_properties = Dict(data_key='extendedProperties')
@@ -240,7 +248,8 @@ class UASZoneSchema(Schema):
     @post_load
     def make_mongo_object(self, data, **kwargs):
         """
-        A document schema will be eventually loaded in a mongoengine object for possible storing in DB
+        A document schema will be eventually loaded in a mongoengine object for possible storing in
+        DB
         :param data:
         :param kwargs:
         :return:
@@ -250,7 +259,8 @@ class UASZoneSchema(Schema):
     @post_dump
     def handle_mongoengine_dict_field(self, data, **kwargs):
         """
-        Apparently the dict field is not serialized properly to a dict object so it has to be done manually.
+        Apparently the dict field is not serialized properly to a dict object so it has to be done
+        manually.
         :param data:
         :param kwargs:
         :return:

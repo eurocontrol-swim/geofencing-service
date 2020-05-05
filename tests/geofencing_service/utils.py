@@ -34,8 +34,8 @@ from datetime import datetime, timezone
 from typing import Optional, Dict
 
 from geofencing_service.common import point_list_from_geojson_polygon_coordinates, GeoJSONPolygonCoordinates
-from geofencing_service.db.models import AirspaceVolume, AuthorityEntity, ApplicableTimePeriod, CodeYesNoType, UASZone, \
-    CodeRestrictionType, CodeUSpaceClassType, CodeZoneType, DataSource, DailySchedule, CodeWeekDay, User, \
+from geofencing_service.db.models import AirspaceVolume, AuthorityEntity, TimePeriod, CodeYesNoType, UASZone, \
+    CodeRestrictionType, CodeUSpaceClassType, CodeZoneType, DataSource, DailyPeriod, CodeWeekDay, User, \
     CodeVerticalReferenceType, Authority, NotificationRequirement, AuthorizationRequirement, UASZonesSubscription, \
     GeofencingSMSubscription
 from geofencing_service.filters import UASZonesFilter, AirspaceVolumeFilter
@@ -101,8 +101,8 @@ def make_authority_entity() -> AuthorityEntity:
     return result
 
 
-def make_daily_schedule():
-    return DailySchedule(
+def make_daily_period():
+    return DailyPeriod(
         day=CodeWeekDay.MON.value,
         start_time=datetime(2000, 1, 1, 12, 00, tzinfo=timezone.utc),
         end_time=datetime(2000, 1, 1, 18, 00, tzinfo=timezone.utc),
@@ -110,11 +110,11 @@ def make_daily_schedule():
 
 
 def make_applicable_period():
-    return ApplicableTimePeriod(
+    return TimePeriod(
         permanent=CodeYesNoType.YES.value,
         start_date_time=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
         end_date_time=datetime(2021, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
-        daily_schedule=[make_daily_schedule()]
+        schedule=[make_daily_period()]
     )
 
 

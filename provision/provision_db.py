@@ -36,7 +36,7 @@ from pkg_resources import resource_filename
 from swim_backend.config import load_app_config
 
 from geofencing_service.db.models import UASZone, CodeZoneType, CodeRestrictionType, CodeYesNoType, CodeUSpaceClassType, \
-    AirspaceVolume, AuthorityEntity, DailySchedule, CodeWeekDay, ApplicableTimePeriod, DataSource, User, \
+    AirspaceVolume, AuthorityEntity, DailyPeriod, CodeWeekDay, TimePeriod, DataSource, User, \
     NotificationRequirement, AuthorizationRequirement, Authority
 
 __author__ = "EUROCONTROL (SWIM)"
@@ -121,8 +121,8 @@ def make_authority() -> Authority:
     )
 
 
-def make_daily_schedule():
-    return DailySchedule(
+def make_daily_period():
+    return DailyPeriod(
         day=CodeWeekDay.MON.value,
         start_time=datetime(2000, 1, 1, 12, 00, tzinfo=timezone.utc),
         end_time=datetime(2000, 1, 1, 18, 00, tzinfo=timezone.utc),
@@ -130,11 +130,11 @@ def make_daily_schedule():
 
 
 def make_applicable_period():
-    return ApplicableTimePeriod(
+    return TimePeriod(
         permanent=CodeYesNoType.YES.value,
         start_date_time=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
         end_date_time=datetime(2021, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
-        daily_schedule=[make_daily_schedule()]
+        schedule=[make_daily_period()]
     )
 
 

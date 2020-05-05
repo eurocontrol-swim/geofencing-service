@@ -40,19 +40,19 @@ from geofencing_service.db import AIRSPACE_VOLUME_UPPER_LIMIT_IN_M, AIRSPACE_VOL
 __author__ = "EUROCONTROL (SWIM)"
 
 
-class Choice(enum.Enum):
+class ChoiceType(enum.Enum):
 
     @classmethod
     def choices(cls) -> Tuple[Any]:
         return tuple(v.value for v in cls.__members__.values())
 
 
-class CodeYesNoType(Choice):
+class CodeYesNoType(ChoiceType):
     YES = "YES"
     NO = "NO"
 
 
-class CodeWeekDay(Choice):
+class CodeWeekDay(ChoiceType):
     MON = "MON"
     TUE = "TUE"
     WED = "WED"
@@ -60,26 +60,27 @@ class CodeWeekDay(Choice):
     FRI = "FRI"
     SAT = "SAT"
     SUN = "SUN"
+    ANY = "ANY"
 
 
-class CodeZoneType(Choice):
+class CodeZoneType(ChoiceType):
     COMMON = "COMMON"
     CUSTOMIZED = "CUSTOMIZED"
 
 
-class CodeRestrictionType(Choice):
+class CodeRestrictionType(ChoiceType):
     PROHIBITED = "PROHIBITED"
     REQ_AUTHORISATION = "REQ_AUTHORISATION"
     CONDITIONAL = "CONDITIONAL"
     NO_RESTRICTION = "NO_RESTRICTION"
 
 
-class CodeUSpaceClassType(Choice):
+class CodeUSpaceClassType(ChoiceType):
     EUROCONTROL = "EUROCONTROL"
     CORUS = "CORUS"
 
 
-class CodeZoneReasonType(Choice):
+class CodeZoneReasonType(ChoiceType):
     AIR_TRAFFIC = "AIR_TRAFFIC"
     SENSITIVE = "SENSITIVE"
     PRIVACY = "PRIVACY"
@@ -90,7 +91,7 @@ class CodeZoneReasonType(Choice):
     OTHER = "OTHER"
 
 
-class CodeVerticalReferenceType(Choice):
+class CodeVerticalReferenceType(ChoiceType):
     AGL = "AGL"
     AMSL = "AMSL"
     WGS84 = "WGS84"
@@ -108,17 +109,17 @@ class AirspaceVolume(EmbeddedDocument):
     polygon = PolygonField(required=True)
 
 
-class DailySchedule(EmbeddedDocument):
+class DailyPeriod(EmbeddedDocument):
     day = StringField(choices=CodeWeekDay.choices())
     start_time = ComplexDateTimeField(db_field='startTime', required=True)
     end_time = ComplexDateTimeField(db_field='endTime', required=True)
 
 
-class ApplicableTimePeriod(EmbeddedDocument):
-    permanent = StringField(choices=CodeYesNoType.choices())
+class TimePeriod(EmbeddedDocument):
+    permanent = StringField(choices=CodeYesNoType.choices(), required=True)
     start_date_time = ComplexDateTimeField(db_field='startDateTime', required=True)
     end_date_time = ComplexDateTimeField(db_field='endDateTime', required=True)
-    daily_schedule = EmbeddedDocumentListField(DailySchedule, db_field='dailySchedule')
+    schedule = EmbeddedDocumentListField(DailyPeriod)
 
 
 class AuthorityEntity(Document):
@@ -163,7 +164,6 @@ class DataSource(EmbeddedDocument):
     update_date_time = ComplexDateTimeField(db_field='endDateTime')
 
 
-
 class User(Document):
     username = StringField(required=True)
     password = StringField(required=True)
@@ -200,7 +200,7 @@ class UASZone(Document):
     country = StringField(min_length=3, max_length=3, required=True)
 
     airspace_volume = EmbeddedDocumentField(AirspaceVolume, db_field='airspaceVolume', required=True)
-    applicable_time_period = EmbeddedDocumentField(ApplicableTimePeriod, db_field='applicableTimePeriod')
+    applicable_time_period = EmbeddedDocumentField(TimePeriod, db_field='applicableTimePeriod')
     authority = EmbeddedDocumentField(Authority)
     data_source = EmbeddedDocumentField(DataSource, db_field='dataSource')
     extended_properties = DictField(db_field='extendedProperties')

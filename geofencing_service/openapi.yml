@@ -480,14 +480,14 @@ components:
                 authority:
                   $ref: '#/components/schemas/Authority'
         applicableTimePeriod:
-          $ref: '#/components/schemas/ApplicableTimePeriod'
+          $ref: '#/components/schemas/TimePeriod'
         airspaceVolume:
           $ref: '#/components/schemas/AirspaceVolume'
         extendedProperties:
           description: The extendedProperties section is a placeholder, allowing service providers to customize the implementation and provide additional information.
           type: object
 
-    ApplicableTimePeriod:
+    TimePeriod:
       type: object
       properties:
         permanent:
@@ -505,7 +505,7 @@ components:
           description: The date and time when the area ceases to exist.
           type: string
           format: 'date-time'
-        dailySchedule:
+        dailyPeriod:
           type: array
           maxItems: 7
           minItems: 1
@@ -522,7 +522,8 @@ components:
                   "THU",
                   "FRI",
                   "SAT",
-                  "SUN"
+                  "SUN",
+                  "ANY"
                 ]
               startTime:
                 description: The daily start time
