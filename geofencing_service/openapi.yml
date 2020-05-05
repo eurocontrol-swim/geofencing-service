@@ -464,21 +464,7 @@ components:
               type: string
               format: 'date-time'
         authority:
-          type: object
-          properties:
-            requiresNotificationTo:
-              type: object
-              properties:
-                authority:
-                  $ref: '#/components/schemas/Authority'
-                intervalBefore:
-                  description: The minimal time interval required between notification and starting to operate in the zone, in the format PnnDTnnHnnM (ISO 8601).
-                  type: string
-            requiresAuthorizationFrom:
-              type: object
-              properties:
-                authority:
-                  $ref: '#/components/schemas/Authority'
+          $ref: '#/components/schemas/Authority'
         applicableTimePeriod:
           $ref: '#/components/schemas/TimePeriod'
         airspaceVolume:
@@ -619,6 +605,15 @@ components:
         phone:
           type: string
           maxLength: 200
+        purpose:
+          type: string
+          enum: [
+            "AUTHORIZATION",
+            "NOTIFICATION",
+            "INFORMATION"
+          ]
+        intervalBefore:
+          type: string
 
     UASZonesRequest:
       description: The filtering criteria of UASZone retrieving

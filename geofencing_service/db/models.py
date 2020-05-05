@@ -97,6 +97,12 @@ class CodeVerticalReferenceType(ChoiceType):
     WGS84 = "WGS84"
 
 
+class AuthorityPurposeType(ChoiceType):
+    AUTHORIZATION = "AUTHORIZATION"
+    NOTIFICATION = "NOTIFICATION"
+    INFORMATION = "INFORMATION"
+
+
 class AirspaceVolume(EmbeddedDocument):
     lower_limit_in_m = IntField(db_field='lowerLimit', default=AIRSPACE_VOLUME_LOWER_LIMIT_IN_M)
     lower_vertical_reference = StringField(db_field='lowerVerticalReference',
@@ -122,40 +128,19 @@ class TimePeriod(EmbeddedDocument):
     schedule = EmbeddedDocumentListField(DailyPeriod)
 
 
-class AuthorityEntity(Document):
-    name = StringField(required=True, unique=True)
-    contact_name = StringField(db_field='contactName', required=True)
-    service = StringField(required=True)
+class Authority(EmbeddedDocument):
+    name = StringField(required=True, unique=True, max_length=200)
+    service = StringField(required=True, max_length=200)
     email = EmailField()
+    contact_name = StringField(db_field='contactName', required=True, max_length=200)
     site_url = URLField(db_field='siteURL')
-    phone = StringField(required=True)
+    phone = StringField(required=True, max_length=200)
+    purpose = StringField(required=True, choices=AuthorityPurposeType.choices())
+    interval_before = StringField(db_field='intervalBefore', required=True)
 
     def clean(self):
         if not (self.email or self.site_url or self.phone):
             raise ValidationError(f"One of email, site_url, phone must be defined.")
-
-
-def _get_or_create_authority_entity(authority_entity: AuthorityEntity) -> AuthorityEntity:
-    try:
-        authority_entity = AuthorityEntity.objects.get(name=authority_entity.name)
-    except DoesNotExist:
-        authority_entity.save()
-
-    return authority_entity
-
-
-class NotificationRequirement(EmbeddedDocument):
-    authority = ReferenceField(AuthorityEntity, required=True)
-    interval_before = StringField(db_field='intervalBefore', required=True)
-
-
-class AuthorizationRequirement(EmbeddedDocument):
-    authority = ReferenceField(AuthorityEntity, required=True)
-
-
-class Authority(EmbeddedDocument):
-    requires_notification_to = EmbeddedDocumentField(NotificationRequirement, db_field="requiresNotificationTo")
-    requires_authorization_from = EmbeddedDocumentField(AuthorizationRequirement, db_field="requiresAuthorizationFrom")
 
 
 class DataSource(EmbeddedDocument):
@@ -211,30 +196,8 @@ class UASZone(Document):
         if self.data_source.update_date_time is None:
             self.data_source.update_date_time = self.data_source.creation_date_time
 
-        authorization_authority = self.get_authorization_authority()
-        notification_authority = self.get_notification_authority()
-
-        # save reference documents beforehand
-        if notification_authority is not None:
-            self.authority.requires_notification_to.authority = _get_or_create_authority_entity(notification_authority)
-
-        if authorization_authority is not None:
-            self.authority.requires_authorization_from.authority = _get_or_create_authority_entity(authorization_authority)
-
         if self.user is not None:
             self.user = _get_or_create_user(self.user)
-
-    def get_notification_authority(self):
-        try:
-            return self.authority.requires_notification_to.authority
-        except AttributeError:
-            return None
-
-    def get_authorization_authority(self):
-        try:
-            return self.authority.requires_authorization_from.authority
-        except AttributeError:
-            return None
 
 
 class GeofencingSMSubscription(EmbeddedDocument):

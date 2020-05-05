@@ -27,14 +27,15 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from marshmallow import Schema, pre_dump, post_dump, pre_load, post_load
+from marshmallow import Schema, pre_dump, post_dump, pre_load, post_load, validate
 from marshmallow.fields import String, Nested, Integer, Dict, AwareDateTime, List, Email, URL, \
     Boolean
 
 from geofencing_service.common import point_list_from_geojson_polygon_coordinates, \
     geojson_polygon_coordinates_from_point_list, Point
-from geofencing_service.db.models import UASZone, AuthorityEntity
+from geofencing_service.db.models import UASZone
 from geofencing_service.endpoints.schemas.filters_schemas import validate_polygon
+from geofencing_service.endpoints.schemas.utils import is_valid_duration_format
 from geofencing_service.endpoints.utils import time_str_from_datetime_str, \
     make_datetime_string_aware, datetime_str_from_time_str
 
@@ -176,41 +177,24 @@ class TimePeriodSchema(Schema):
         return data
 
 
-class AuthorityEntitySchema(Schema):
-    authority_id = String(primary_key=True)
-    name = String(required=True)
-    contact_name = String(data_key='contactName')
-    service = String()
-    email = Email()
-    site_url = URL(data_key='siteURL')
-    phone = String()
+def validate_duration(value: str) -> bool:
+    """
 
-    @post_load
-    def make_mongo_object(self, data, **kwargs):
-        """
-        A document schema will be eventually loaded in a mongoengine object for possible storing in
-        DB
-        :param data:
-        :param kwargs:
-        :return:
-        """
-        return AuthorityEntity(**data)
-
-
-class NotificationRequirementSchema(Schema):
-    authority = Nested(AuthorityEntitySchema, required=True)
-    interval_before = String(data_key='intervalBefore', required=True)
-
-
-class AuthorizationRequirementSchema(Schema):
-    authority = Nested(AuthorityEntitySchema, required=True)
+    :param value:
+    :return:
+    """
+    return is_valid_duration_format(value)
 
 
 class AuthoritySchema(Schema):
-    requires_notification_to = Nested(NotificationRequirementSchema,
-                                      data_key="requiresNotificationTo")
-    requires_authorization_from = Nested(AuthorizationRequirementSchema,
-                                         data_key="requiresAuthorizationFrom")
+    name = String(required=True, validate=validate.Length(max=200))
+    service = String(validate=validate.Length(max=200))
+    email = Email()
+    contact_name = String(data_key='contactName', validate=validate.Length(max=200))
+    site_url = URL(data_key='siteURL')
+    phone = String(validate=validate.Length(max=200))
+    purpose = String(required=True)
+    interval_before = String(data_key='intervalBefore', validate=validate_duration)
 
 
 class DataSourceSchema(Schema):

@@ -56,8 +56,6 @@ URL_UAS_ZONES = f'{BASE_PATH}/uas_zones/'
 def db_uas_zone_basilique(test_user):
     uas_zone = make_uas_zone(BASILIQUE_POLYGON)
     uas_zone.user = test_user
-    uas_zone.get_authorization_authority().save()
-    uas_zone.get_notification_authority().save()
     uas_zone.save()
 
     return uas_zone
@@ -121,27 +119,14 @@ def uas_zone_input():
             "startDateTime": "2019-11-29T10:30:16.548Z"
         },
         "authority": {
-            "requiresAuthorizationFrom": {
-                "authority": {
-                    "contactName": "string",
-                    "email": "user@example.com",
-                    "name": "string",
-                    "phone": "string",
-                    "service": "string",
-                    "siteURL": "https://www.authority.com"
-                }
-            },
-            "requiresNotificationTo": {
-                "authority": {
-                    "contactName": "string",
-                    "email": "user@example.com",
-                    "name": "string",
-                    "phone": "string",
-                    "service": "string",
-                    "siteURL": "https://www.authority.com"
-                },
-                "intervalBefore": "string"
-            }
+            "contactName": "string",
+            "email": "user@example.com",
+            "name": "string",
+            "phone": "string",
+            "service": "string",
+            "siteURL": "https://www.authority.com",
+            "purpose": "AUTHORIZATION",
+            "intervalBefore": "P3Y"
         },
         "country": "BEL",
         "dataCaptureProhibition": "YES",
@@ -401,23 +386,17 @@ def _post_uas_zones_filter(test_client, test_user, filter_data) -> Tuple[Dict[st
                 'permanent': 'YES',
                 'startDateTime': '2020-01-01T00:00:00+00:00',
             },
-            'authority': {'requiresAuthorizationFrom': {'authority': {'contactName': 'AuthorityEntity '
-                                                                           'manager',
-                                                            'email': 'auth@autority.be',
-                                                            'name': '175d280099fb48eea5da490ac12f816a',
-                                                            'phone': '234234234',
-                                                            'service': 'AuthorityEntity '
-                                                                       'service',
-                                                            'siteURL': 'http://www.autority.be'}},
-                'requiresNotificationTo': {'authority': {'contactName': 'AuthorityEntity '
-                                                                        'manager',
-                                                         'email': 'auth@autority.be',
-                                                         'name': 'eb3a0c42283440ab8ae1386d092d6853',
-                                                         'phone': '234234234',
-                                                         'service': 'AuthorityEntity '
-                                                                    'service',
-                                                         'siteURL': 'http://www.autority.be'},
-                                           'intervalBefore': 'interval'}},
+            'authority': {
+                'contactName': 'Authority '
+                'manager',
+                'email': 'auth@autority.be',
+                'name': '175d280099fb48eea5da490ac12f816a',
+                'phone': '234234234',
+                'service': 'Authority service',
+                'siteURL': 'http://www.autority.be',
+                'purpose': 'AUTHORIZATION',
+                'intervalBefore': 'P3Y'
+            },
             'country': 'BEL',
             'dataCaptureProhibition': 'YES',
             'dataSource': {
@@ -464,10 +443,8 @@ def test_get_uas_zones__filter_by_airspace_volume__polygon__response_is_serializ
     if expected_uas_zones:
         expected_uas_zones[0]['identifier'] = db_uas_zone_basilique.identifier
         expected_uas_zones[0]['name'] = db_uas_zone_basilique.name
-        expected_uas_zones[0]['authority']['requiresAuthorizationFrom']['authority']['name'] = \
-            db_uas_zone_basilique.get_authorization_authority().name
-        expected_uas_zones[0]['authority']['requiresNotificationTo']['authority']['name'] = \
-            db_uas_zone_basilique.get_notification_authority().name
+        expected_uas_zones[0]['authority']['name'] = db_uas_zone_basilique.authority.name
+        expected_uas_zones[0]['authority']['name'] = db_uas_zone_basilique.authority.name
 
     response_data, status_code = _post_uas_zones_filter(test_client, test_user, filter_data)
     assert 200 == status_code
@@ -512,27 +489,14 @@ def test_create_uas_zone(test_client, test_user):
     "startDateTime": "2020-01-14T10:16:33.532Z"
   },
   "authority": {
-    "requiresAuthorizationFrom": {
-      "authority": {
-        "contactName": "string",
-        "email": "user@example.com",
-        "name": "string",
-        "phone": "string",
-        "service": "string",
-        "siteURL": "https://www.authority.com"
-      }
-    },
-    "requiresNotificationTo": {
-      "authority": {
-        "contactName": "string",
-        "email": "user@example.com",
-        "name": "string",
-        "phone": "string",
-        "service": "string",
-        "siteURL": "https://www.authority.com"
-      },
-      "intervalBefore": "string"
-    }
+      "contactName": "string",
+      "email": "user@example.com",
+      "name": "string",
+      "phone": "string",
+      "service": "string",
+      "siteURL": "https://www.authority.com",
+      "purpose": "AUTHORIZATION",
+      "intervalBefore": "P3Y"
   },
   "country": "BEL",
   "dataCaptureProhibition": "YES",

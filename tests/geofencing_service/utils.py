@@ -34,10 +34,11 @@ from datetime import datetime, timezone
 from typing import Optional, Dict
 
 from geofencing_service.common import point_list_from_geojson_polygon_coordinates, GeoJSONPolygonCoordinates
-from geofencing_service.db.models import AirspaceVolume, AuthorityEntity, TimePeriod, CodeYesNoType, UASZone, \
-    CodeRestrictionType, CodeUSpaceClassType, CodeZoneType, DataSource, DailyPeriod, CodeWeekDay, User, \
-    CodeVerticalReferenceType, Authority, NotificationRequirement, AuthorizationRequirement, UASZonesSubscription, \
-    GeofencingSMSubscription
+from geofencing_service.db.models import AirspaceVolume, TimePeriod, CodeYesNoType, UASZone, \
+    CodeRestrictionType, CodeUSpaceClassType, CodeZoneType, DataSource, DailyPeriod, CodeWeekDay, \
+    User, \
+    CodeVerticalReferenceType, Authority, UASZonesSubscription, GeofencingSMSubscription, \
+    AuthorityPurposeType
 from geofencing_service.filters import UASZonesFilter, AirspaceVolumeFilter
 
 __author__ = "EUROCONTROL (SWIM)"
@@ -89,14 +90,16 @@ def make_airspace_volume(polygon: GeoJSONPolygonCoordinates,
     )
 
 
-def make_authority_entity() -> AuthorityEntity:
-    result = AuthorityEntity()
+def make_authority() -> Authority:
+    result = Authority()
     result.name = get_unique_id()
-    result.contact_name = "AuthorityEntity manager"
-    result.service = "AuthorityEntity service"
+    result.contact_name = "Authority manager"
+    result.service = "Authority service"
     result.email = "auth@autority.be"
     result.site_url = "http://www.autority.be"
     result.phone = "234234234"
+    result.purpose = AuthorityPurposeType.AUTHORIZATION.value
+    result.interval_before = "P3Y"
 
     return result
 
@@ -124,26 +127,6 @@ def make_user(username=None, password='password'):
     user.password = password
 
     return user
-
-
-def make_notification_requirement() -> NotificationRequirement:
-    return NotificationRequirement(
-        authority=make_authority_entity(),
-        interval_before='interval'
-    )
-
-
-def make_authorization_requirement() -> AuthorizationRequirement:
-    return AuthorizationRequirement(
-        authority=make_authority_entity()
-    )
-
-
-def make_authority() -> Authority:
-    return Authority(
-        requires_notification_to=make_notification_requirement(),
-        requires_authorization_from=make_authorization_requirement()
-    )
 
 
 def make_uas_zone(polygon: GeoJSONPolygonCoordinates = BASILIQUE_POLYGON, user: Optional[User] = None) -> UASZone:

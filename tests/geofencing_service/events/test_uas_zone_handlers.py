@@ -27,13 +27,12 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from unittest.mock import Mock, call
-
 from geofencing_service.db.uas_zones import create_uas_zone as db_create_uas_zone
 from geofencing_service.events.uas_zone_handlers import _uas_zone_matches_subscription_uas_zones_filter, \
     UASZoneContext, get_relevant_uas_zones_subscriptions
-from tests.geofencing_service.utils import make_uas_zone, BASILIQUE_POLYGON, make_uas_zones_filter_from_db_uas_zone, \
-    make_uas_zones_subscription, INTERSECTING_BASILIQUE_POLYGON, NON_INTERSECTING_BASILIQUE_POLYGON
+from tests.geofencing_service.utils import make_uas_zone, BASILIQUE_POLYGON, \
+    make_uas_zones_filter_from_db_uas_zone, make_uas_zones_subscription, \
+    INTERSECTING_BASILIQUE_POLYGON, NON_INTERSECTING_BASILIQUE_POLYGON
 
 __author__ = "EUROCONTROL (SWIM)"
 

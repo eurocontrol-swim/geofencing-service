@@ -35,9 +35,10 @@ from mongoengine import connect
 from pkg_resources import resource_filename
 from swim_backend.config import load_app_config
 
-from geofencing_service.db.models import UASZone, CodeZoneType, CodeRestrictionType, CodeYesNoType, CodeUSpaceClassType, \
-    AirspaceVolume, AuthorityEntity, DailyPeriod, CodeWeekDay, TimePeriod, DataSource, User, \
-    NotificationRequirement, AuthorizationRequirement, Authority
+from geofencing_service.db.models import UASZone, CodeZoneType, CodeRestrictionType, CodeYesNoType,\
+    CodeUSpaceClassType, \
+    AirspaceVolume, Authority, DailyPeriod, CodeWeekDay, TimePeriod, DataSource, User, \
+    AuthorityPurposeType
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -90,35 +91,17 @@ def get_unique_id():
     return uuid.uuid4().hex
 
 
-def make_authority_entity() -> AuthorityEntity:
-    result = AuthorityEntity()
+def make_authority() -> Authority:
+    result = Authority()
     result.name = get_unique_id()
-    result.contact_name = "AuthorityEntity manager"
-    result.service = "AuthorityEntity service"
+    result.contact_name = "Authority manager"
+    result.service = "Authority service"
     result.email = "auth@autority.be"
     result.phone = "123123123"
+    result.purpose = AuthorityPurposeType.AUTHORIZATION.value,
+    result.interval_before = "P3Y"
 
     return result
-
-
-def make_notification_requirement() -> NotificationRequirement:
-    return NotificationRequirement(
-        authority=make_authority_entity(),
-        interval_before='interval'
-    )
-
-
-def make_authorization_requirement() -> AuthorizationRequirement:
-    return AuthorizationRequirement(
-        authority=make_authority_entity()
-    )
-
-
-def make_authority() -> Authority:
-    return Authority(
-        requires_notification_to=make_notification_requirement(),
-        requires_authorization_from=make_authorization_requirement()
-    )
 
 
 def make_daily_period():

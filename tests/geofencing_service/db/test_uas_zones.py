@@ -31,7 +31,7 @@ from datetime import timedelta
 
 import pytest
 
-from geofencing_service.db.models import UASZone, AuthorityEntity
+from geofencing_service.db.models import UASZone
 from geofencing_service.db.uas_zones import get_uas_zones, create_uas_zone, delete_uas_zone
 from tests.geofencing_service.utils import make_uas_zone, make_uas_zones_filter_from_db_uas_zone, \
     BASILIQUE_POLYGON, INTERSECTING_BASILIQUE_POLYGON, NON_INTERSECTING_BASILIQUE_POLYGON
@@ -43,8 +43,6 @@ __author__ = "EUROCONTROL (SWIM)"
 @pytest.fixture
 def db_uas_zone():
     uas_zone = make_uas_zone(BASILIQUE_POLYGON)
-    uas_zone.get_authorization_authority().save()
-    uas_zone.get_notification_authority().save()
     uas_zone.save()
 
     return uas_zone
@@ -68,8 +66,8 @@ def filter_with_non_intersecting_airspace_volume(db_uas_zone):
     return uas_zones_filter
 
 
-def test_get_uas_zones__filter_by_airspace_volume__polygon(filter_with_intersecting_airspace_volume,
-                                                           filter_with_non_intersecting_airspace_volume):
+def test_get_uas_zones__filter_by_airspace_volume__polygon(
+        filter_with_intersecting_airspace_volume, filter_with_non_intersecting_airspace_volume):
 
     result = get_uas_zones(filter_with_intersecting_airspace_volume)
     assert len(result) == 1
@@ -78,7 +76,8 @@ def test_get_uas_zones__filter_by_airspace_volume__polygon(filter_with_intersect
     assert len(result) == 0
 
 
-def test_get_uas_zones__filter_by_airspace_volume__upper_lower_limit(filter_with_intersecting_airspace_volume):
+def test_get_uas_zones__filter_by_airspace_volume__upper_lower_limit(
+        filter_with_intersecting_airspace_volume):
 
     result = get_uas_zones(filter_with_intersecting_airspace_volume)
     assert len(result) == 1
@@ -141,8 +140,6 @@ def test_create_uas_zone():
     create_uas_zone(uas_zone)
 
     assert uas_zone in UASZone.objects.all()
-    assert uas_zone.get_notification_authority() in AuthorityEntity.objects.all()
-    assert uas_zone.get_authorization_authority() in AuthorityEntity.objects.all()
 
 
 def test_delete_uas_zone(db_uas_zone):
