@@ -69,7 +69,6 @@ class UASZonesFilterSchema(Schema):
     end_date_time = AwareDateTime(data_key='endDateTime')
     request_id = String(data_key='requestID')
     regions = List(Integer)
-    updated_after_date_time = AwareDateTime(data_key='updatedAfterDateTime')
 
     @post_load
     def load_filter(self, item, **kwargs):

@@ -35,10 +35,10 @@ from mongoengine import connect
 from pkg_resources import resource_filename
 from swim_backend.config import load_app_config
 
-from geofencing_service.db.models import UASZone, CodeZoneType, CodeRestrictionType, CodeYesNoType,\
+from geofencing_service.db.models import UASZone, CodeZoneType, CodeRestrictionType, CodeYesNoType, \
     CodeUSpaceClassType, \
     AirspaceVolume, Authority, DailyPeriod, CodeWeekDay, TimePeriod, DataSource, User, \
-    AuthorityPurposeType
+    AuthorityPurposeType, CodeZoneReasonType
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -124,20 +124,20 @@ def make_applicable_period():
 def make_uas_zone(name, polygon, user):
     result = UASZone()
     result.identifier = get_unique_id()[:7]
+    result.country = "BEL"
     result.name = name
     result.type = CodeZoneType.COMMON.value
-    result.region = 1
     result.restriction = CodeRestrictionType.NO_RESTRICTION.value
-    result.data_capture_prohibition = CodeYesNoType.YES.value
+    result.restriction_conditions = ["special conditions"]
+    result.region = 1
+    result.reason = [CodeZoneReasonType.AIR_TRAFFIC.value]
+    result.other_reason_info = "other reason"
+    result.regulation_exemption = CodeYesNoType.YES.value
     result.u_space_class = CodeUSpaceClassType.EUROCONTROL.value
     result.message = "message"
-    result.country = "BEL"
-    result.airspace_volume = AirspaceVolume(polygon=polygon)
-    result.authority = make_authority()
-    result.applicable_time_period = make_applicable_period()
-    result.data_source = DataSource(
-        creation_date_time=NOW,
-    )
+    result.zone_authority = make_authority()
+    result.applicability = make_applicable_period()
+    result.geometry = AirspaceVolume(polygon=polygon)
     result.user = user
 
     return result

@@ -91,8 +91,7 @@ class UASZonesFilter(CompareMixin):
                  regions: List[int],
                  request_id: str,
                  start_date_time: datetime,
-                 end_date_time: datetime,
-                 updated_after_date_time: Optional[datetime] = None) -> None:
+                 end_date_time: datetime) -> None:
         """
 
         :param airspace_volume:
@@ -100,15 +99,12 @@ class UASZonesFilter(CompareMixin):
         :param regions:
         :param start_date_time:
         :param end_date_time:
-        :param updated_after_date_time:
         """
         self.airspace_volume = airspace_volume
         self.regions = regions
         self.request_id = request_id
         self.start_date_time = make_datetime_aware(start_date_time)
         self.end_date_time = make_datetime_aware(end_date_time)
-        self.updated_after_date_time = make_datetime_aware(updated_after_date_time) \
-            if updated_after_date_time is not None else None
 
     @classmethod
     def from_dict(cls, object_dict):
@@ -117,7 +113,6 @@ class UASZonesFilter(CompareMixin):
             regions=object_dict['regions'],
             start_date_time=object_dict['start_date_time'],
             end_date_time=object_dict['end_date_time'],
-            updated_after_date_time=object_dict.get('updated_after_date_time'),
             request_id=object_dict.get('request_id')
         )
 
@@ -127,6 +122,5 @@ class UASZonesFilter(CompareMixin):
             "regions": self.regions,
             "start_date_time": self.start_date_time,
             "end_date_time": self.end_date_time,
-            "updated_after_date_time": self.updated_after_date_time,
             "request_id": self.request_id
         }

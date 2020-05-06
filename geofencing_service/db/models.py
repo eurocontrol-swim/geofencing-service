@@ -171,31 +171,27 @@ def _get_or_create_user(user: User) -> User:
 
 class UASZone(Document):
     identifier = StringField(required=True, primary_key=True, max_length=7)
-    name = StringField(required=True, max_length=200)
+    country = StringField(min_length=3, max_length=3, required=True)
+    name = StringField(max_length=200)
     type = StringField(choices=CodeZoneType.choices(), required=True)
     restriction = StringField(choices=CodeRestrictionType.choices(), max_length=200, required=True)
     restriction_conditions = ListField(StringField(), db_field='restrictionConditions')
     region = IntField(min_value=0, max_value=0xffff)
-    data_capture_prohibition = StringField(db_field='dataCaptureProhibition',
-                                           choices=CodeYesNoType.choices(),
-                                           required=True)
-    u_space_class = StringField(db_field='uSpaceClass', choices=CodeUSpaceClassType.choices(), max_length=200)
+    reason = ListField(StringField(choices=CodeZoneReasonType.choices()), max_length=9)
+    other_reason_info = StringField(max_length=30)
+    regulation_exemption = StringField(choices=CodeYesNoType.choices())
+    u_space_class = StringField(db_field='uSpaceClass', choices=CodeUSpaceClassType.choices(),
+                                max_length=100)
     message = StringField(max_length=200)
-    reason = ListField(StringField(choices=CodeZoneReasonType.choices()))
-    country = StringField(min_length=3, max_length=3, required=True)
 
-    airspace_volume = EmbeddedDocumentField(AirspaceVolume, db_field='airspaceVolume', required=True)
-    applicable_time_period = EmbeddedDocumentField(TimePeriod, db_field='applicableTimePeriod')
-    authority = EmbeddedDocumentField(Authority)
-    data_source = EmbeddedDocumentField(DataSource, db_field='dataSource')
+    zone_authority = EmbeddedDocumentField(Authority, db_field='zoneAuthority', required=True)
+    applicability = EmbeddedDocumentField(TimePeriod)
+    geometry = EmbeddedDocumentField(AirspaceVolume, required=True)
     extended_properties = DictField(db_field='extendedProperties')
 
     user = ReferenceField(User, required=True)
 
     def clean(self):
-        if self.data_source.update_date_time is None:
-            self.data_source.update_date_time = self.data_source.creation_date_time
-
         if self.user is not None:
             self.user = _get_or_create_user(self.user)
 

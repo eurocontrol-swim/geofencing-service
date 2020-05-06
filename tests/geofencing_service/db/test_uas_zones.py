@@ -122,18 +122,6 @@ def test_get_uas_zones__filter_by_applicable_time_period(filter_with_intersectin
     assert len(result) == 0
 
 
-def test_get_uas_zones__filter_by_updated_date_time(filter_with_intersecting_airspace_volume):
-    filter_with_intersecting_airspace_volume.updated_after_date_time -= timedelta(days=1)
-
-    result = get_uas_zones(filter_with_intersecting_airspace_volume)
-    assert len(result) == 1
-
-    filter_with_intersecting_airspace_volume.updated_after_date_time += timedelta(days=2)
-
-    result = get_uas_zones(filter_with_intersecting_airspace_volume)
-    assert len(result) == 0
-
-
 def test_create_uas_zone():
     uas_zone = make_uas_zone(polygon=BASILIQUE_POLYGON)
 

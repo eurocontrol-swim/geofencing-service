@@ -82,7 +82,7 @@ def filter_with_non_intersecting_airspace_volume(db_uas_zone_basilique):
 @pytest.fixture
 def uas_zone_input():
     return {
-        "airspaceVolume": {
+        "geometry": {
             "lowerLimit": 0,
             "lowerVerticalReference": "AGL",
             "polygon": [
@@ -106,7 +106,7 @@ def uas_zone_input():
             "upperLimit": 0,
             "upperVerticalReference": "AGL"
         },
-        "applicableTimePeriod": {
+        "applicability": {
             "dailySchedule": [
                 {
                     "day": "MON",
@@ -118,7 +118,7 @@ def uas_zone_input():
             "permanent": "YES",
             "startDateTime": "2019-11-29T10:30:16.548Z"
         },
-        "authority": {
+        "zoneAuthority": {
             "contactName": "string",
             "email": "user@example.com",
             "name": "string",
@@ -129,12 +129,7 @@ def uas_zone_input():
             "intervalBefore": "P3Y"
         },
         "country": "BEL",
-        "dataCaptureProhibition": "YES",
-        "dataSource": {
-            "author": "string",
-            "creationDateTime": "2019-11-29T10:30:16.549Z",
-            "updateDateTime": "2019-11-29T10:30:16.549Z"
-        },
+        "regulationExemption": "YES",
         "extendedProperties": {},
         "identifier": "4rf04r1",
         "message": "string",
@@ -182,8 +177,7 @@ def test_get_uas_zones__invalid_polygon_input__returns_nok__400(test_client, tes
             0
         ],
         "requestID": "string",
-        "startDateTime": "2019-11-05T13:10:39.315Z",
-        "updatedAfterDateTime": "2019-11-05T13:10:39.315Z"
+        "startDateTime": "2019-11-05T13:10:39.315Z"
     }
 
     response = test_client.post(URL_UAS_ZONES_FILTER, data=json.dumps(data), content_type='application/json',
@@ -226,8 +220,7 @@ def test_get_uas_zones__valid_input__returns_ok_and_empty_uas_zone_list__200(tes
             0
         ],
         "requestID": "string",
-        "startDateTime": "2019-11-05T13:10:39.315Z",
-        "updatedAfterDateTime": "2019-11-05T13:10:39.315Z"
+        "startDateTime": "2019-11-05T13:10:39.315Z"
     }
 
     response = test_client.post(URL_UAS_ZONES_FILTER, data=json.dumps(data), content_type='application/json',
@@ -239,16 +232,20 @@ def test_get_uas_zones__valid_input__returns_ok_and_empty_uas_zone_list__200(tes
     assert [] == response_data['UASZoneList']
 
 
-def test_get_uas_zones__filter_by_airspace_volume__polygon(test_client, test_user,
-                                                           filter_with_intersecting_airspace_volume,
-                                                           filter_with_non_intersecting_airspace_volume):
+def test_get_uas_zones__filter_by_airspace_volume__polygon(
+    test_client,
+    test_user,
+    filter_with_intersecting_airspace_volume,
+    filter_with_non_intersecting_airspace_volume
+):
     response_data, status_code = _post_uas_zones_filter(test_client, test_user,
                                                         filter_with_intersecting_airspace_volume)
     assert 200 == status_code
     assert 1 == len(response_data['UASZoneList'])
 
-    response_data, status_code = _post_uas_zones_filter(test_client, test_user,
-                                                        filter_with_non_intersecting_airspace_volume)
+    response_data, status_code = _post_uas_zones_filter(
+        test_client, test_user, filter_with_non_intersecting_airspace_volume)
+
     assert 200 == status_code
     assert 0 == len(response_data['UASZoneList'])
 
@@ -313,22 +310,6 @@ def test_get_uas_zones__filter_by_applicable_time_period(test_client, test_user,
     assert 0 == len(response_data['UASZoneList'])
 
 
-def test_get_uas_zones__filter_by_updated_date_time(test_client, test_user, filter_with_intersecting_airspace_volume):
-    filter_with_intersecting_airspace_volume.updated_after_date_time -= timedelta(days=1)
-
-    response_data, status_code = _post_uas_zones_filter(test_client, test_user,
-                                                        filter_with_intersecting_airspace_volume)
-    assert 200 == status_code
-    assert 1 == len(response_data['UASZoneList'])
-
-    filter_with_intersecting_airspace_volume.updated_after_date_time += timedelta(days=2)
-
-    response_data, status_code = _post_uas_zones_filter(test_client, test_user,
-                                                        filter_with_intersecting_airspace_volume)
-    assert 200 == status_code
-    assert 0 == len(response_data['UASZoneList'])
-
-
 def _post_uas_zones_filter(test_client, test_user, filter_data) -> Tuple[Dict[str, Any], int]:
 
     if isinstance(filter_data, UASZonesFilter):
@@ -357,11 +338,10 @@ def _post_uas_zones_filter(test_client, test_user, filter_data) -> Tuple[Dict[st
             },
             'regions': [1],
             'endDateTime': '2021-01-01T00:00:00+00:00',
-            'updatedAfterDateTime': NOW_STRING,
             'startDateTime': '2020-01-01T00:00:00+00:00',
         },
         [{
-            'airspaceVolume': {
+            'geometry': {
                 'lowerLimit': 0,
                 'lowerVerticalReference': "WGS84",
                 'upperVerticalReference': "WGS84",
@@ -376,17 +356,17 @@ def _post_uas_zones_filter(test_client, test_user, filter_data) -> Tuple[Dict[st
                 ],
                 'upperLimit': 100000,
             },
-            'applicableTimePeriod': {
+            'applicability': {
                 'dailySchedule': [{
                     'day': 'MON',
-                     'endTime': '18:00:00+00:00',
-                     'startTime': '12:00:00+00:00'
+                    'endTime': '18:00:00+00:00',
+                    'startTime': '12:00:00+00:00'
                 }],
                 'endDateTime': '2021-01-01T00:00:00+00:00',
                 'permanent': 'YES',
                 'startDateTime': '2020-01-01T00:00:00+00:00',
             },
-            'authority': {
+            'zoneAuthority': {
                 'contactName': 'Authority '
                 'manager',
                 'email': 'auth@autority.be',
@@ -398,20 +378,16 @@ def _post_uas_zones_filter(test_client, test_user, filter_data) -> Tuple[Dict[st
                 'intervalBefore': 'P3Y'
             },
             'country': 'BEL',
-            'dataCaptureProhibition': 'YES',
-            'dataSource': {
-                'author': 'Author',
-                'creationDateTime': NOW_STRING,
-                'updateDateTime': NOW_STRING
-            },
+            'regulationExemption': 'YES',
             'extendedProperties': {},
             'identifier': "",
             'message': 'message',
             'name': "",
-            'reason': [],
+            'reason': ['AIR_TRAFFIC'],
+            'otherReasonInfo': "other reason",
             'region': 1,
             'restriction': 'NO_RESTRICTION',
-            'restrictionConditions': [],
+            'restrictionConditions': ['special conditions'],
             'type': 'COMMON',
             'uSpaceClass': 'EUROCONTROL',
         }]
@@ -430,7 +406,6 @@ def _post_uas_zones_filter(test_client, test_user, filter_data) -> Tuple[Dict[st
             },
             'regions': [1],
             'endDateTime': '2021-01-01T00:00:00+00:00',
-            'updatedAfterDateTime': NOW_STRING,
             'startDateTime': '2020-01-01T00:00:00+00:00',
         },
         []
@@ -443,8 +418,8 @@ def test_get_uas_zones__filter_by_airspace_volume__polygon__response_is_serializ
     if expected_uas_zones:
         expected_uas_zones[0]['identifier'] = db_uas_zone_basilique.identifier
         expected_uas_zones[0]['name'] = db_uas_zone_basilique.name
-        expected_uas_zones[0]['authority']['name'] = db_uas_zone_basilique.authority.name
-        expected_uas_zones[0]['authority']['name'] = db_uas_zone_basilique.authority.name
+        expected_uas_zones[0]['zoneAuthority']['name'] = db_uas_zone_basilique.zone_authority.name
+        expected_uas_zones[0]['zoneAuthority']['name'] = db_uas_zone_basilique.zone_authority.name
 
     response_data, status_code = _post_uas_zones_filter(test_client, test_user, filter_data)
     assert 200 == status_code
@@ -464,7 +439,7 @@ def test_create_uas_zone___invalid_user__returns_nok__401(test_client):
 
 def test_create_uas_zone(test_client, test_user):
     uas_zone_input = """{
-  "airspaceVolume": {
+  "geometry": {
     "lowerLimit": 0,
     "lowerVerticalReference": "WGS84",
     "polygon": [
@@ -476,7 +451,7 @@ def test_create_uas_zone(test_client, test_user):
     "upperLimit": 100,
     "upperVerticalReference": "WGS84"
   },
-  "applicableTimePeriod": {
+  "applicability": {
     "dailySchedule": [
       {
         "day": "MON",
@@ -488,7 +463,7 @@ def test_create_uas_zone(test_client, test_user):
     "permanent": "YES",
     "startDateTime": "2020-01-14T10:16:33.532Z"
   },
-  "authority": {
+  "zoneAuthority": {
       "contactName": "string",
       "email": "user@example.com",
       "name": "string",
@@ -499,12 +474,7 @@ def test_create_uas_zone(test_client, test_user):
       "intervalBefore": "P3Y"
   },
   "country": "BEL",
-  "dataCaptureProhibition": "YES",
-  "dataSource": {
-    "author": "string",
-    "creationDateTime": "2020-01-14T10:16:33.532Z",
-    "updateDateTime": "2020-01-14T10:16:33.532Z"
-  },
+  "regulationExemption": "YES",
   "extendedProperties": {},
   "identifier": "4rf04r0",
   "message": "string",
@@ -550,7 +520,7 @@ def test_create_uas_zone__valid_input__object_is_saved__returns_ok__201(test_cli
 def test_create_uas_zone__invalid_airspace_volume__not_enough_points__returns_nok__400(test_client, test_user,
                                                                                        uas_zone_input):
 
-    uas_zone_input['airspaceVolume']['polygon'] = [{'LAT': '50.862525', 'LON': '4.32812'}]
+    uas_zone_input['geometry']['polygon'] = [{'LAT': '50.862525', 'LON': '4.32812'}]
 
     response = test_client.post(URL_UAS_ZONES, data=json.dumps(uas_zone_input), content_type='application/json',
                                 headers=make_basic_auth_header(test_user.username, DEFAULT_LOGIN_PASS))
@@ -559,14 +529,14 @@ def test_create_uas_zone__invalid_airspace_volume__not_enough_points__returns_no
 
     assert 400 == response.status_code
     assert "NOK" == response_data['genericReply']['RequestStatus']
-    assert "[{'LAT': '50.862525', 'LON': '4.32812'}] is too short - 'airspaceVolume.polygon'" == \
+    assert "[{'LAT': '50.862525', 'LON': '4.32812'}] is too short - 'geometry.polygon'" == \
            response_data['genericReply']['RequestExceptionDescription']
 
 
 def test_create_uas_zone__invalid_airspace_volume__not_closing_loop__returns_nok__400(test_client, test_user,
                                                                                       uas_zone_input):
 
-    uas_zone_input['airspaceVolume']['polygon'] = uas_zone_input['airspaceVolume']['polygon'][:-1]
+    uas_zone_input['geometry']['polygon'] = uas_zone_input['geometry']['polygon'][:-1]
 
     response = test_client.post(URL_UAS_ZONES, data=json.dumps(uas_zone_input), content_type='application/json',
                                 headers=make_basic_auth_header(test_user.username, DEFAULT_LOGIN_PASS))
@@ -575,7 +545,7 @@ def test_create_uas_zone__invalid_airspace_volume__not_closing_loop__returns_nok
 
     assert 400 == response.status_code
     assert "NOK" == response_data['genericReply']['RequestStatus']
-    assert "{'airspaceVolume': {'polygon': ['Loop is not closed']}}" == \
+    assert "{'geometry': {'polygon': ['Loop is not closed']}}" == \
            response_data['genericReply']['RequestExceptionDescription']
 
 

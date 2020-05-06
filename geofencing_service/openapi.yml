@@ -411,19 +411,11 @@ components:
           items:
             type: string
             maxLength: 200
-
         region:
           description: Where applicable, identifies a region inside a State where the UAS Zone is located.
           type: integer
           minimum: 0
           maximum: 65535
-        dataCaptureProhibition:
-          description: An indication if data capturing (such as aerial photography, etc.) is prohibited when flying in the zone.
-          type: string
-          enum: [
-            "YES",
-            "NO"
-          ]
         reason:
           type: array
           items:
@@ -439,6 +431,15 @@ components:
               "FOREIGN_TERRITORY",
               "OTHER"
             ]
+        otherReasonInfo:
+          type: string
+          maxLength: 30
+        regulationExemption:
+          type: string
+          enum: [
+            "YES",
+            "NO"
+          ]
         uSpaceClass:
           description: A code that identifies the category or class of the zone applying a "USpace concept".
           type: string
@@ -446,28 +447,16 @@ components:
             "EUROCONTROL",
             "CORUS"
           ]
-          maxLength: 200
+          maxLength: 100
         message:
           description: A message to be displayed to the user of the zone
           type: string
           maxLength: 200
-        dataSource:
-          type: object
-          properties:
-            author:
-              type: string
-              maxLength: 200
-            creationDateTime:
-              type: string
-              format: 'date-time'
-            updateDateTime:
-              type: string
-              format: 'date-time'
-        authority:
+        zoneAuthority:
           $ref: '#/components/schemas/Authority'
-        applicableTimePeriod:
+        applicability:
           $ref: '#/components/schemas/TimePeriod'
-        airspaceVolume:
+        geometry:
           $ref: '#/components/schemas/AirspaceVolume'
         extendedProperties:
           description: The extendedProperties section is a placeholder, allowing service providers to customize the implementation and provide additional information.
@@ -638,10 +627,6 @@ components:
           format: 'date-time'
         requestID:
           type: string
-        updatedAfterDateTime:
-          type: string
-          format: 'date-time'
-          nullable: true
 
     UASZonesFilterReply:
       type: object

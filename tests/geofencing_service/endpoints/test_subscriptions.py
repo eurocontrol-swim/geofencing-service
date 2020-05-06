@@ -78,8 +78,7 @@ def test_create_subscription_to_uas_zones_updates__invalid_polygon_input__return
             0
         ],
         "requestID": "string",
-        "startDateTime": "2019-11-05T13:10:39.315Z",
-        "updatedAfterDateTime": "2019-11-05T13:10:39.315Z"
+        "startDateTime": "2019-11-05T13:10:39.315Z"
     }
 
     response = test_client.post(URL, data=json.dumps(data), content_type='application/json',
@@ -123,8 +122,7 @@ def test_create_subscription_to_uas_zones_updates__valid_input__returns_ok_and_c
             0
         ],
         "requestID": "string",
-        "startDateTime": "2019-11-05T13:10:39.315Z",
-        "updatedAfterDateTime": "2019-11-05T13:10:39.315Z"
+        "startDateTime": "2019-11-05T13:10:39.315Z"
     }
 
     context = UASZonesSubscriptionCreateContext(uas_zones_filter=UASZonesFilterSchema().load(data), user=test_user)

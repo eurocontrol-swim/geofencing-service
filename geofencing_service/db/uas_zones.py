@@ -68,16 +68,13 @@ def get_uas_zones(uas_zones_filter: UASZonesFilter, user: Optional[User] = None)
     """
 
     queries_list = [
-        Q(airspace_volume__polygon__geo_intersects=uas_zones_filter.airspace_volume.polygon_coordinates),
-        Q(airspace_volume__upper_limit_in_m__lte=uas_zones_filter.airspace_volume.upper_limit_in_m),
-        Q(airspace_volume__lower_limit_in_m__gte=uas_zones_filter.airspace_volume.lower_limit_in_m),
+        Q(geometry__polygon__geo_intersects=uas_zones_filter.airspace_volume.polygon_coordinates),
+        Q(geometry__upper_limit_in_m__lte=uas_zones_filter.airspace_volume.upper_limit_in_m),
+        Q(geometry__lower_limit_in_m__gte=uas_zones_filter.airspace_volume.lower_limit_in_m),
         Q(region__in=uas_zones_filter.regions),
-        Q(applicable_time_period__start_date_time__gte=uas_zones_filter.start_date_time),
-        Q(applicable_time_period__end_date_time__lte=uas_zones_filter.end_date_time),
+        Q(applicability__start_date_time__gte=uas_zones_filter.start_date_time),
+        Q(applicability__end_date_time__lte=uas_zones_filter.end_date_time),
     ]
-
-    if uas_zones_filter.updated_after_date_time:
-        queries_list.append(Q(data_source__update_date_time__gte=uas_zones_filter.updated_after_date_time))
 
     if user is not None:
         queries_list.append(Q(user=user))

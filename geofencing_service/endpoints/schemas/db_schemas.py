@@ -212,21 +212,21 @@ class DataSourceSchema(Schema):
 
 class UASZoneSchema(Schema):
     identifier = String(required=True)
-    name = String(required=True)
-    type = String()
-    restriction = String()
+    country = String(required=True)
+    name = String()
+    type = String(required=True)
+    restriction = String(required=True)
     restriction_conditions = List(String(), data_key='restrictionConditions')
     region = Integer()
-    data_capture_prohibition = String(data_key='dataCaptureProhibition')
+    reason = List(String())
+    other_reason_info = String(data_key='otherReasonInfo')
+    regulation_exemption = String(data_key='regulationExemption')
     u_space_class = String(data_key='uSpaceClass')
     message = String()
-    reason = List(String())
-    country = String()
 
-    airspace_volume = Nested(AirspaceVolumeSchema, data_key='airspaceVolume', required=True)
-    applicable_time_period = Nested(TimePeriodSchema, data_key='applicableTimePeriod')
-    authority = Nested(AuthoritySchema)
-    data_source = Nested(DataSourceSchema, data_key='dataSource')
+    zone_authority = Nested(AuthoritySchema, data_key='zoneAuthority', required=True)
+    applicability = Nested(TimePeriodSchema)
+    geometry = Nested(AirspaceVolumeSchema, required=True)
     extended_properties = Dict(data_key='extendedProperties')
 
     @post_load

@@ -38,7 +38,7 @@ from geofencing_service.db.models import AirspaceVolume, TimePeriod, CodeYesNoTy
     CodeRestrictionType, CodeUSpaceClassType, CodeZoneType, DataSource, DailyPeriod, CodeWeekDay, \
     User, \
     CodeVerticalReferenceType, Authority, UASZonesSubscription, GeofencingSMSubscription, \
-    AuthorityPurposeType
+    AuthorityPurposeType, CodeZoneReasonType
 from geofencing_service.filters import UASZonesFilter, AirspaceVolumeFilter
 
 __author__ = "EUROCONTROL (SWIM)"
@@ -129,24 +129,24 @@ def make_user(username=None, password='password'):
     return user
 
 
-def make_uas_zone(polygon: GeoJSONPolygonCoordinates = BASILIQUE_POLYGON, user: Optional[User] = None) -> UASZone:
+def make_uas_zone(polygon: GeoJSONPolygonCoordinates = BASILIQUE_POLYGON,
+                  user: Optional[User] = None) -> UASZone:
     result = UASZone()
     result.identifier = get_unique_id()[:7]
+    result.country = "BEL"
     result.name = get_unique_id()
     result.type = CodeZoneType.COMMON.value
-    result.region = 1
     result.restriction = CodeRestrictionType.NO_RESTRICTION.value
-    result.data_capture_prohibition = CodeYesNoType.YES.value
+    result.restriction_conditions = ["special conditions"]
+    result.region = 1
+    result.reason = [CodeZoneReasonType.AIR_TRAFFIC.value]
+    result.other_reason_info = "other reason"
+    result.regulation_exemption = CodeYesNoType.YES.value
     result.u_space_class = CodeUSpaceClassType.EUROCONTROL.value
     result.message = "message"
-    result.country = "BEL"
-    result.airspace_volume = make_airspace_volume(polygon)
-    result.authority = make_authority()
-    result.applicable_time_period = make_applicable_period()
-    result.data_source = DataSource(
-        author="Author",
-        creation_date_time=NOW,
-    )
+    result.zone_authority = make_authority()
+    result.applicability = make_applicable_period()
+    result.geometry = make_airspace_volume(polygon=polygon)
     result.user = user or make_user()
 
     return result
@@ -155,16 +155,15 @@ def make_uas_zone(polygon: GeoJSONPolygonCoordinates = BASILIQUE_POLYGON, user: 
 def make_uas_zones_filter_from_db_uas_zone(uas_zone: UASZone) -> UASZonesFilter:
     uas_zones_filter = UASZonesFilter(
         airspace_volume=AirspaceVolumeFilter(
-            polygon=point_list_from_geojson_polygon_coordinates(uas_zone.airspace_volume.polygon),
-            upper_limit_in_m=uas_zone.airspace_volume.upper_limit_in_m,
-            lower_limit_in_m=uas_zone.airspace_volume.lower_limit_in_m,
-            upper_vertical_reference=uas_zone.airspace_volume.upper_vertical_reference,
-            lower_vertical_reference=uas_zone.airspace_volume.lower_vertical_reference
+            polygon=point_list_from_geojson_polygon_coordinates(uas_zone.geometry.polygon),
+            upper_limit_in_m=uas_zone.geometry.upper_limit_in_m,
+            lower_limit_in_m=uas_zone.geometry.lower_limit_in_m,
+            upper_vertical_reference=uas_zone.geometry.upper_vertical_reference,
+            lower_vertical_reference=uas_zone.geometry.lower_vertical_reference
         ),
         regions=[uas_zone.region],
-        start_date_time=uas_zone.applicable_time_period.start_date_time,
-        end_date_time=uas_zone.applicable_time_period.end_date_time,
-        updated_after_date_time=uas_zone.data_source.update_date_time,
+        start_date_time=uas_zone.applicability.start_date_time,
+        end_date_time=uas_zone.applicability.end_date_time,
         request_id="1"
     )
 
