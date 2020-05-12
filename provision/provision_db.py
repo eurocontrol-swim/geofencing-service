@@ -30,6 +30,7 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 import uuid
 import logging.config
 from datetime import datetime, timezone
+from typing import Optional
 
 from mongoengine import connect
 from pkg_resources import resource_filename
@@ -38,7 +39,7 @@ from swim_backend.config import load_app_config
 from geofencing_service.db.models import UASZone, CodeZoneType, CodeRestrictionType, CodeYesNoType, \
     CodeUSpaceClassType, \
     AirspaceVolume, Authority, DailyPeriod, CodeWeekDay, TimePeriod, User, \
-    AuthorityPurposeType, CodeZoneReasonType
+    AuthorityPurposeType, CodeZoneReasonType, CodeUomDimensions, CodeVerticalReferenceType
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -110,7 +111,7 @@ def make_authority() -> Authority:
     result.service = "Authority service"
     result.email = "auth@autority.be"
     result.phone = "123123123"
-    result.purpose = AuthorityPurposeType.AUTHORIZATION.value,
+    result.purpose = AuthorityPurposeType.AUTHORIZATION.value
     result.interval_before = "P3Y"
 
     return result
@@ -133,6 +134,20 @@ def make_time_period():
     )
 
 
+def make_airspace_volume(horizontal_projection: dict,
+                         uom_dimensions: str = CodeUomDimensions.METERS.value,
+                         upper_limit: Optional[int] = None,
+                         lower_limit: Optional[int] = None) -> AirspaceVolume:
+    return AirspaceVolume(
+        horizontal_projection=horizontal_projection,
+        uom_dimensions=uom_dimensions,
+        lower_vertical_reference=CodeVerticalReferenceType.AMSL.value,
+        upper_vertical_reference=CodeVerticalReferenceType.AMSL.value,
+        upper_limit=upper_limit or 100000,
+        lower_limit=lower_limit or 0
+    )
+
+
 def make_uas_zone(name, polygon, user):
     result = UASZone()
     result.identifier = get_unique_id()[:7]
@@ -149,7 +164,7 @@ def make_uas_zone(name, polygon, user):
     result.message = "message"
     result.zone_authority = make_authority()
     result.applicability = make_time_period()
-    result.geometry = AirspaceVolume(horizontal_projection=polygon)
+    result.geometry = make_airspace_volume(horizontal_projection=polygon)
     result.user = user
 
     return result

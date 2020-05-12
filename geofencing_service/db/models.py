@@ -143,7 +143,7 @@ class TimePeriod(EmbeddedDocument):
 
 
 class Authority(EmbeddedDocument):
-    name = StringField(required=True, unique=True, max_length=200)
+    name = StringField(required=True, max_length=200)
     service = StringField(required=True, max_length=200)
     email = EmailField()
     contact_name = StringField(db_field='contactName', required=True, max_length=200)
