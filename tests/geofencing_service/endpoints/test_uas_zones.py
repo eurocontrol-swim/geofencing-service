@@ -409,6 +409,82 @@ def _post_uas_zones_filter(test_client, test_user, filter_data) -> Tuple[Dict[st
                 "lowerLimit": 0,
                 "lowerVerticalReference": "AMSL",
                 "horizontalProjection": {
+                    "type": "Circle",
+                    "center": [4.32812, 50.862525],
+                    "radius": 500,
+                },
+                "upperLimit": 1000000,
+                "upperVerticalReference": "AMSL"
+            },
+            "endDateTime": "2021-11-05T13:10:39.315Z",
+            "regions": [
+                1
+            ],
+            "startDateTime": "2019-11-05T13:10:39.315Z"
+        },
+        [{
+            'geometry': {
+                "uomDimensions": "M",
+                'lowerLimit': 0,
+                'lowerVerticalReference': "AMSL",
+                'upperVerticalReference': "AMSL",
+                'horizontalProjection': {
+                    'type': 'Polygon',
+                    'coordinates': [[
+                        [4.329385, 50.863648],
+                        [4.328055, 50.865348],
+                        [4.317369, 50.86847],
+                        [4.314826, 50.867671],
+                        [4.31592, 50.865873],
+                        [4.326508, 50.862792],
+                        [4.329385, 50.863648],
+                    ]]
+                },
+                'upperLimit': 100000,
+            },
+            'applicability': {
+                'dailySchedule': [{
+                    'day': 'MON',
+                    'endTime': '18:00:00+00:00',
+                    'startTime': '12:00:00+00:00'
+                }],
+                'endDateTime': '2021-01-01T00:00:00+00:00',
+                'permanent': 'YES',
+                'startDateTime': '2020-01-01T00:00:00+00:00',
+            },
+            'zoneAuthority': {
+                'contactName': 'Authority '
+                'manager',
+                'email': 'auth@autority.be',
+                'name': '175d280099fb48eea5da490ac12f816a',
+                'phone': '234234234',
+                'service': 'Authority service',
+                'siteURL': 'http://www.autority.be',
+                'purpose': 'AUTHORIZATION',
+                'intervalBefore': 'P3Y'
+            },
+            'country': 'BEL',
+            'regulationExemption': 'YES',
+            'extendedProperties': {},
+            'identifier': "",
+            'message': 'message',
+            'name': "",
+            'reason': ['AIR_TRAFFIC'],
+            'otherReasonInfo': "other reason",
+            'region': 1,
+            'restriction': 'NO_RESTRICTION',
+            'restrictionConditions': ['special conditions'],
+            'type': 'COMMON',
+            'uSpaceClass': 'EUROCONTROL',
+        }]
+    ),
+    (
+        {
+            "airspaceVolume": {
+                "uomDimensions": "M",
+                "lowerLimit": 0,
+                "lowerVerticalReference": "AMSL",
+                "horizontalProjection": {
                     "type": "Polygon",
                     "coordinates": [[
                         [4.32812, 50.862525],

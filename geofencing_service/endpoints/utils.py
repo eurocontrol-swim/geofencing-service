@@ -29,6 +29,7 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 """
 __author__ = "EUROCONTROL (SWIM)"
 
+import json
 import re
 from datetime import datetime, timezone
 
@@ -113,4 +114,4 @@ def circle_to_polygon(lat: float, lon: float, radius_in_m: float, n_edges: int):
 
     result = shapely.geometry.mapping(shapely.geometry.Polygon(polygon))
 
-    return result
+    return json.loads(json.dumps(result))
