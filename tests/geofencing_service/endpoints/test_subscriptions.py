@@ -36,12 +36,11 @@ from mongoengine import DoesNotExist
 
 from geofencing_service import BASE_PATH
 from geofencing_service.db.models import UASZonesSubscription
-from geofencing_service.endpoints.schemas.filters_schemas import UASZonesFilterSchema
-from geofencing_service.events.uas_zones_subscription_handlers import UASZonesSubscriptionCreateContext
-from geofencing_service.filters import UASZonesFilter
+from geofencing_service.endpoints.schemas.db_schemas import UASZonesFilterSchema
+from geofencing_service.events.uas_zones_subscription_handlers import \
+    UASZonesSubscriptionCreateContext
 from tests.conftest import DEFAULT_LOGIN_PASS
-from tests.geofencing_service.utils import make_basic_auth_header, make_uas_zones_subscription, \
-    make_uas_zones_filter_from_db_uas_zone
+from tests.geofencing_service.utils import make_basic_auth_header, make_uas_zones_subscription
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -58,70 +57,29 @@ def test_create_subscription_to_uas_zones_updates__invalid_user__returns_nok_401
     assert "Invalid credentials" == response_data['genericReply']["RequestExceptionDescription"]
 
 
-@pytest.mark.parametrize('polygon, expected_exception_description', [
-    ([{"LAT": "0", "LON": "0"}], "[{'LAT': '0', 'LON': '0'}] is too short - 'airspaceVolume.polygon'"),
-    ([{"LAT": "1.0", "LON": "2.0"}, {"LAT": "3.0", "LON": "4.0"}, {"LAT": "5.0", "LON": "6.0"}],
-     "{'airspaceVolume': {'polygon': ['Loop is not closed']}}"),
-])
-def test_create_subscription_to_uas_zones_updates__invalid_polygon_input__returns_nok__400(
-        test_client, test_user, polygon, expected_exception_description):
+def test_create_subscription_to_uas_zones_updates__valid_input__returns_ok_and_creates_subscription__200(
+        test_client, test_user
+):
     data = {
         "airspaceVolume": {
             "lowerLimit": 0,
-            "lowerVerticalReference": "WGS84",
-            "polygon": polygon,
+            "lowerVerticalReference": "AMSL",
+            "horizontalProjection": {
+                "type": "Polygon",
+                "coordinates": [[
+                    [1.0, 2.0],
+                    [3.0, 4.0],
+                    [5.0, 6.0],
+                    [1.0, 2.0]
+                ]]
+            },
             "upperLimit": 0,
-            "upperVerticalReference": "WGS84"
+            "upperVerticalReference": "AMSL"
         },
         "endDateTime": "2019-11-05T13:10:39.315Z",
         "regions": [
             0
         ],
-        "requestID": "string",
-        "startDateTime": "2019-11-05T13:10:39.315Z"
-    }
-
-    response = test_client.post(URL, data=json.dumps(data), content_type='application/json',
-                                headers=make_basic_auth_header(test_user.username, DEFAULT_LOGIN_PASS))
-
-    assert 400 == response.status_code
-    response_data = json.loads(response.data)
-    assert "NOK" == response_data['genericReply']['RequestStatus']
-    assert expected_exception_description == response_data['genericReply']["RequestExceptionDescription"]
-
-
-def test_create_subscription_to_uas_zones_updates__valid_input__returns_ok_and_creates_subscription__200(test_client,
-                                                                                                         test_user):
-    data = {
-        "airspaceVolume": {
-            "lowerLimit": 0,
-            "lowerVerticalReference": "WGS84",
-            "polygon": [
-                {
-                    "LAT": "1.0",
-                    "LON": "2.0"
-                },
-                {
-                    "LAT": "3.0",
-                    "LON": "4.0"
-                },
-                {
-                    "LAT": "5.0",
-                    "LON": "6.0"
-                },
-                {
-                    "LAT": "1.0",
-                    "LON": "2.0"
-                }
-            ],
-            "upperLimit": 0,
-            "upperVerticalReference": "WGS84"
-        },
-        "endDateTime": "2019-11-05T13:10:39.315Z",
-        "regions": [
-            0
-        ],
-        "requestID": "string",
         "startDateTime": "2019-11-05T13:10:39.315Z"
     }
 
@@ -153,6 +111,124 @@ def test_update_subscription_to_uas_zones_updates__invalid_user__returns_nok_401
     assert "Invalid credentials" == response_data['genericReply']["RequestExceptionDescription"]
 
 
+@pytest.mark.parametrize('horizontal_projection, expected_exception_description', [
+    (
+        {
+            'types': 'Polygon',
+            'coordinates': [[[1, 2], [3, 4], [5, 6], [1, 2]]],
+        },
+        "{'airspaceVolume': {'horizontalProjection': [{'type': ['Missing data for required field.']}]}}"
+    ),
+    (
+        {
+            'type': 'Polygon',
+            'coordinatesss': [[[1, 2], [3, 4], [5, 6], [1, 2]]],
+        },
+        "{'airspaceVolume': {'horizontalProjection': [{'coordinates': ['Missing data for required field.']}]}}"
+    ),
+    (
+        {
+            'type': 'Polygon',
+            'coordinates': [[[1, 2], [3, 4], [5, 6]]],
+        },
+        "{'airspaceVolume': {'horizontalProjection': [{'coordinates': {0: ['Linestring is not closed.']}}]}}"
+    ),
+    (
+        {
+            'type': 'Polygon',
+            'coordinates': [[[1, 2]]],
+        },
+        "{'airspaceVolume': {'horizontalProjection': [{'coordinates': {0: ['Linestring has less than 3 different vertices.']}}]}}"
+    ),
+    (
+        {
+            'type': 'Invalid',
+            'coordinates': [[[1, 2], [3, 4], [5, 6]]],
+        },
+        "{'airspaceVolume': {'horizontalProjection': [{'type': ['Invalid geometry type. Expected one of [Circle, Polygon]']}]}}"
+    ),
+    (
+        {
+            'type': 'Polygon',
+            'coordinates': 'invalid',
+        },
+        "{'airspaceVolume': {'horizontalProjection': [{'coordinates': ['Not a valid list.']}]}}"
+    ),
+    (
+        {
+            'type': 'Circle',
+            'center': [],
+        },
+        "{'airspaceVolume': {'horizontalProjection': [{'radius': ['Missing data for required field.']}]}}"
+    ),
+    (
+        {
+            'type': 'Circle',
+            'radius': 100,
+        },
+        "{'airspaceVolume': {'horizontalProjection': [{'center': ['Missing data for required field.']}]}}"
+    ),
+    (
+        {
+            'type': 'Circle',
+            'radius': 100,
+        },
+        "{'airspaceVolume': {'horizontalProjection': [{'center': ['Missing data for required field.']}]}}"
+    ),
+    (
+        {
+            'type': 'Circle',
+            'center': 'invalid',
+            'radius': 100,
+        },
+        "{'airspaceVolume': {'horizontalProjection': [{'center': ['Not a valid list.']}]}}"
+    ),
+    (
+        {
+            'type': 'Circle',
+            'center': [1, 2],
+            'radius': 'invalid',
+        },
+        "{'airspaceVolume': {'horizontalProjection': [{'radius': ['Not a valid number.']}]}}"
+    ),
+    (
+        {
+            'type': 'Circle',
+            'center': [1, 2],
+            'radius': -1,
+        },
+        "{'airspaceVolume': {'horizontalProjection': [{'radius': ['Negative value not allowed.']}]}}"
+    ),
+])
+def test_create_subscription_to_uas_zones_updates__invalid_horizontal_projection__returns_nok__400(
+        test_client, test_user, horizontal_projection, expected_exception_description):
+
+    data = {
+        "airspaceVolume": {
+            "lowerLimit": 0,
+            "lowerVerticalReference": "AMSL",
+            "horizontalProjection": horizontal_projection,
+            "upperLimit": 0,
+            "upperVerticalReference": "AMSL",
+            "uomDimensions": "M"
+        },
+        "endDateTime": "2019-11-05T13:10:39.315Z",
+        "regions": [
+            0
+        ],
+        "startDateTime": "2019-11-05T13:10:39.315Z"
+    }
+
+    response = test_client.post(URL, data=json.dumps(data), content_type='application/json',
+                                headers=make_basic_auth_header(test_user.username, DEFAULT_LOGIN_PASS))
+
+    assert 400 == response.status_code
+
+    generic_reply = json.loads(response.data)['genericReply']
+    assert "NOK" == generic_reply['RequestStatus']
+    assert expected_exception_description == generic_reply["RequestExceptionDescription"]
+
+
 def test_update_subscription_to_uas_zones_updates__invalid_subscription_id__returns_nok_404(test_client, test_user):
     response = test_client.put(URL + 'invalid_subscription_id', data="{}", content_type='application/json',
                                headers=make_basic_auth_header(test_user.username, DEFAULT_LOGIN_PASS))
@@ -167,7 +243,9 @@ def test_update_subscription_to_uas_zones_updates__invalid_subscription_id__retu
 @pytest.mark.parametrize('invalid_data', [
     {"active": 1}, {"active": 1.0}, {"active": "invalid"}, {"active": ()}, {"active": []}, {"invalid_key": True}
 ])
-def test_update_subscription_to_uas_zones_updates__invalid_data__returns_nok_400(test_client, test_user, invalid_data):
+def test_update_subscription_to_uas_zones_updates__invalid_data__returns_nok_400(
+        test_client, test_user, invalid_data
+):
     uas_zones_subscription = make_uas_zones_subscription(user=test_user)
     uas_zones_subscription.save()
 

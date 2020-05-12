@@ -76,5 +76,3 @@ def make_datetime_aware(dt: datetime) -> datetime:
     :return:
     """
     return dt.replace(tzinfo=timezone.utc)
-
-

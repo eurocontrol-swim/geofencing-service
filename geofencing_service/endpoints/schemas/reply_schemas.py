@@ -30,11 +30,9 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 from marshmallow import Schema
 from marshmallow.fields import Nested, String, DateTime, Boolean
 
-from geofencing_service.endpoints.schemas.db_schemas import UASZoneSchema
+from geofencing_service.endpoints.schemas.db_schemas import UASZoneSchema, UASZonesFilterSchema
 
 __author__ = "EUROCONTROL (SWIM)"
-
-from geofencing_service.endpoints.schemas.filters_schemas import UASZonesFilterSchema
 
 
 class GenericReplySchema(Schema):
@@ -68,8 +66,11 @@ class UASZoneSubscriptionReplyObjectSchema(ReplySchema):
 
 
 class UASZoneSubscriptionReplySchema(ReplySchema):
-    uas_zone_subscription = Nested(UASZoneSubscriptionReplyObjectSchema, data_key='UASZoneSubscription')
+    uas_zone_subscription = Nested(UASZoneSubscriptionReplyObjectSchema,
+                                   data_key='UASZoneSubscription')
 
 
 class UASZoneSubscriptionsReplySchema(ReplySchema):
-    uas_zone_subscriptions = Nested(UASZoneSubscriptionReplyObjectSchema, many=True, data_key='UASZoneSubscriptions')
+    uas_zone_subscriptions = Nested(UASZoneSubscriptionReplyObjectSchema,
+                                    many=True,
+                                    data_key='UASZoneSubscriptions')

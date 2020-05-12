@@ -27,100 +27,94 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from datetime import datetime
-from typing import List, Optional, Dict, Any
-
-from geofencing_service.common import CompareMixin, Point, geojson_polygon_coordinates_from_point_list, \
-    GeoJSONPolygonCoordinates
-from geofencing_service.db import AIRSPACE_VOLUME_UPPER_LIMIT_IN_M, AIRSPACE_VOLUME_LOWER_LIMIT_IN_M
-from geofencing_service.endpoints.utils import make_datetime_aware
-
-__author__ = "EUROCONTROL (SWIM)"
-
-
-class AirspaceVolumeFilter(CompareMixin):
-
-    def __init__(self,
-                 polygon: List[Point],
-                 upper_limit_in_m: Optional[int] = AIRSPACE_VOLUME_UPPER_LIMIT_IN_M,
-                 lower_limit_in_m: Optional[int] = AIRSPACE_VOLUME_LOWER_LIMIT_IN_M,
-                 upper_vertical_reference: Optional[str] = None,
-                 lower_vertical_reference: Optional[str] = None) -> None:
-        """
-
-        :param polygon:
-        :param upper_limit_in_m:
-        :param lower_limit_in_m:
-        :param upper_vertical_reference:
-        :param lower_vertical_reference:
-        """
-        self.polygon = polygon
-        self.upper_limit_in_m = upper_limit_in_m
-        self.lower_limit_in_m = lower_limit_in_m
-        self.upper_vertical_reference = upper_vertical_reference or ""
-        self.lower_vertical_reference = lower_vertical_reference or ""
-
-    @property
-    def polygon_coordinates(self) -> GeoJSONPolygonCoordinates:
-        return geojson_polygon_coordinates_from_point_list(self.polygon)
-
-    @classmethod
-    def from_dict(cls, object_dict):
-        return cls(
-            polygon=[Point.from_dict(coords) for coords in object_dict['polygon']],
-            upper_limit_in_m=object_dict.get("upper_limit_in_m"),
-            lower_limit_in_m=object_dict.get("lower_limit_in_m"),
-            upper_vertical_reference=object_dict.get("upper_vertical_reference"),
-            lower_vertical_reference=object_dict.get("lower_vertical_reference"),
-        )
-
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "polygon": [point.to_dict() for point in self.polygon],
-            "upper_limit_in_m": self.upper_limit_in_m,
-            "lower_limit_in_m": self.lower_limit_in_m,
-            "upper_vertical_reference": self.upper_vertical_reference,
-            "lower_vertical_reference": self.lower_vertical_reference
-        }
-
-
-class UASZonesFilter(CompareMixin):
-
-    def __init__(self,
-                 airspace_volume: AirspaceVolumeFilter,
-                 regions: List[int],
-                 request_id: str,
-                 start_date_time: datetime,
-                 end_date_time: datetime) -> None:
-        """
-
-        :param airspace_volume:
-        :param request_id:
-        :param regions:
-        :param start_date_time:
-        :param end_date_time:
-        """
-        self.airspace_volume = airspace_volume
-        self.regions = regions
-        self.request_id = request_id
-        self.start_date_time = make_datetime_aware(start_date_time)
-        self.end_date_time = make_datetime_aware(end_date_time)
-
-    @classmethod
-    def from_dict(cls, object_dict):
-        return cls(
-            airspace_volume=AirspaceVolumeFilter.from_dict(object_dict["airspace_volume"]),
-            regions=object_dict['regions'],
-            start_date_time=object_dict['start_date_time'],
-            end_date_time=object_dict['end_date_time'],
-            request_id=object_dict.get('request_id')
-        )
-
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "airspace_volume": self.airspace_volume.to_dict(),
-            "regions": self.regions,
-            "start_date_time": self.start_date_time,
-            "end_date_time": self.end_date_time,
-            "request_id": self.request_id
-        }
+# from datetime import datetime
+# from typing import List, Optional, Dict, Any
+#
+# from geofencing_service.common import CompareMixin, Polygon
+# from geofencing_service.db import AIRSPACE_VOLUME_UPPER_LIMIT, AIRSPACE_VOLUME_LOWER_LIMIT
+# from geofencing_service.endpoints.utils import make_datetime_aware
+#
+# __author__ = "EUROCONTROL (SWIM)"
+#
+#
+# class AirspaceVolumeFilter(CompareMixin):
+#
+#     def __init__(self,
+#                  horizontal_projection: Polygon,
+#                  uom_dimensions: str,
+#                  upper_limit: Optional[int] = AIRSPACE_VOLUME_UPPER_LIMIT,
+#                  lower_limit: Optional[int] = AIRSPACE_VOLUME_LOWER_LIMIT,
+#                  upper_vertical_reference: Optional[str] = None,
+#                  lower_vertical_reference: Optional[str] = None) -> None:
+#         """
+#         :param horizontal_projection:
+#         :param uom_dimensions:
+#         :param upper_limit:
+#         :param lower_limit:
+#         :param upper_vertical_reference:
+#         :param lower_vertical_reference:
+#         """
+#         self.horizontal_projection = horizontal_projection
+#         self.uom_dimensions = uom_dimensions
+#         self.upper_limit = upper_limit
+#         self.lower_limit = lower_limit
+#         self.upper_vertical_reference = upper_vertical_reference or ""
+#         self.lower_vertical_reference = lower_vertical_reference or ""
+#
+#     @classmethod
+#     def from_dict(cls, object_dict):
+#         return cls(
+#             horizontal_projection=Polygon.from_dic(object_dict['horizontal_projection']),
+#             uom_dimensions=object_dict.get('uom_dimensions'),
+#             upper_limit=object_dict.get("upper_limit"),
+#             lower_limit=object_dict.get("lower_limit"),
+#             upper_vertical_reference=object_dict.get("upper_vertical_reference"),
+#             lower_vertical_reference=object_dict.get("lower_vertical_reference")
+#         )
+#
+#     def to_dict(self) -> Dict[str, Any]:
+#         return {
+#             "horizontal_projection": self.horizontal_projection,
+#             "uom_dimensions": self.uom_dimensions,
+#             "upper_limit": self.upper_limit,
+#             "lower_limit": self.lower_limit,
+#             "upper_vertical_reference": self.upper_vertical_reference,
+#             "lower_vertical_reference": self.lower_vertical_reference
+#         }
+#
+#
+# class UASZonesFilter(CompareMixin):
+#
+#     def __init__(self,
+#                  airspace_volume: AirspaceVolumeFilter,
+#                  regions: List[int],
+#                  start_date_time: datetime,
+#                  end_date_time: datetime) -> None:
+#         """
+#
+#         :param airspace_volume:
+#         :param regions:
+#         :param start_date_time:
+#         :param end_date_time:
+#         """
+#         self.airspace_volume = airspace_volume
+#         self.regions = regions
+#         self.start_date_time = make_datetime_aware(start_date_time)
+#         self.end_date_time = make_datetime_aware(end_date_time)
+#
+#     @classmethod
+#     def from_dict(cls, object_dict):
+#         return cls(
+#             airspace_volume=AirspaceVolumeFilter.from_dict(object_dict["airspace_volume"]),
+#             regions=object_dict['regions'],
+#             start_date_time=object_dict['start_date_time'],
+#             end_date_time=object_dict['end_date_time']
+#         )
+#
+#     def to_dict(self) -> Dict[str, Any]:
+#         return {
+#             "airspace_volume": self.airspace_volume.to_dict(),
+#             "regions": self.regions,
+#             "start_date_time": self.start_date_time,
+#             "end_date_time": self.end_date_time
+#         }

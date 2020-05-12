@@ -42,76 +42,51 @@ class CompareMixin:
         return not other == self
 
 
-class Point(CompareMixin):
-
-    def __init__(self, lon: float, lat: float) -> None:
-        """
-
-        :param lat:
-        :param lon:
-        """
-        self.lon = lon
-        self.lat = lat
+class Polygon(CompareMixin):
+    def __init__(self, type: str, coordinates: List[List[List[float]]]) -> None:
+        self.type = type
+        self.coordinates = coordinates
 
     @classmethod
-    def from_dict(cls, object_dict):
+    def from_dic(cls, object_dict: Dict[str, Any]):
+        """
+
+        :return: Polygon
+        """
         return cls(
-            lon=float(object_dict['lon']),
-            lat=float(object_dict['lat'])
+            type=object_dict['type'],
+            coordinates=object_dict['coordinates']
         )
 
-    def to_dict(self) -> Dict[str, float]:
+    def to_dict(self) -> Dict[str, Any]:
         return {
-            "lon": self.lon,
-            "lat": self.lat
+            'type': self.type,
+            'coordinates': self.coordinates
         }
 
 
-def geojson_polygon_coordinates_from_point_list(point_list: List[Point]) -> GeoJSONPolygonCoordinates:
-    """
-        Converts a list of Point to a list of GeoJSON polygon coordinates.
+class Circle(CompareMixin):
+    def __init__(self, type: str, coordinates: List[List[List[float]]], radius: float) -> None:
+        self.type = type
+        self.radius = radius
+        self.coordinates = coordinates
 
-        Example:
-        this list of points:
-        [
-             Point(lon=50.863648, lat=4.329385),
-             Point(lon=50.865348, lat=4.328055),
-             Point(lon=50.86847, lat=4.317369),
-             Point(lon=50.863648, lat=4.329385)
-        ]
-        will be converted to:
-        [
-            [[50.863648, 4.329385],
-             [50.865348, 4.328055],
-             [50.86847, 4.317369],
-             [50.863648, 4.329385]]
-        ]
-    :param point_list:
-    :return:
-    """
-    return [[[pf.lon, pf.lat] for pf in point_list]]
+    @classmethod
+    def from_dic(cls, object_dict: Dict[str, Any]):
+        """
 
+        :return: Polygon
+        """
+        return cls(
+            type=object_dict['type'],
+            radius=object_dict['radius'],
+            coordinates=object_dict['coordinates']
+        )
 
-def point_list_from_geojson_polygon_coordinates(coordinates: GeoJSONPolygonCoordinates) -> List[Point]:
-    """
-        Converts a list of GeoJSON polygon coordinates to a list of Point.
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            'type': self.type,
+            'radius': self.radius,
+            'coordinates': self.coordinates
+        }
 
-        Example:
-        this list of coordinates:
-        [
-            [[50.863648, 4.329385],
-             [50.865348, 4.328055],
-             [50.86847, 4.317369],
-             [50.863648, 4.329385]]
-        ]
-        will be converted to:
-        [
-             Point(lon=50.863648, lat=4.329385),
-             Point(lon=50.865348, lat=4.328055),
-             Point(lon=50.86847, lat=4.317369),
-             Point(lon=50.863648, lat=4.329385)
-        ]
-    :param coordinates:
-    :return:
-    """
-    return [Point(lon=lon, lat=lat) for lon, lat in coordinates[0]]

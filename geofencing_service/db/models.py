@@ -32,10 +32,11 @@ from typing import Tuple, Any
 
 from mongoengine import EmbeddedDocument, StringField, IntField, PolygonField, ComplexDateTimeField, \
     EmbeddedDocumentField, \
-    Document, ListField, EmbeddedDocumentListField, DictField, ValidationError, ReferenceField, EmailField, URLField, \
-    BooleanField, DoesNotExist
+    Document, ListField, EmbeddedDocumentListField, DictField, ValidationError, ReferenceField, \
+    EmailField, URLField, \
+    BooleanField, DoesNotExist, FloatField
 
-from geofencing_service.db import AIRSPACE_VOLUME_UPPER_LIMIT_IN_M, AIRSPACE_VOLUME_LOWER_LIMIT_IN_M
+from geofencing_service.db import AIRSPACE_VOLUME_UPPER_LIMIT, AIRSPACE_VOLUME_LOWER_LIMIT
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -94,7 +95,11 @@ class CodeZoneReasonType(ChoiceType):
 class CodeVerticalReferenceType(ChoiceType):
     AGL = "AGL"
     AMSL = "AMSL"
-    WGS84 = "WGS84"
+
+
+class CodeUomDimensions(ChoiceType):
+    METERS = 'M'
+    FEET = 'FT'
 
 
 class AuthorityPurposeType(ChoiceType):
@@ -103,16 +108,26 @@ class AuthorityPurposeType(ChoiceType):
     INFORMATION = "INFORMATION"
 
 
+class CircleField(EmbeddedDocument):
+    type = StringField(default='Circle')
+    center = ListField(FloatField())
+    radius = FloatField()
+
+
 class AirspaceVolume(EmbeddedDocument):
-    lower_limit_in_m = IntField(db_field='lowerLimit', default=AIRSPACE_VOLUME_LOWER_LIMIT_IN_M)
+    uom_dimensions = StringField(choices=CodeUomDimensions.choices(), required=True)
+    lower_limit = IntField(db_field='lowerLimit', default=AIRSPACE_VOLUME_LOWER_LIMIT)
     lower_vertical_reference = StringField(db_field='lowerVerticalReference',
                                            choices=CodeVerticalReferenceType.choices(),
-                                           default=CodeVerticalReferenceType.WGS84.value)
-    upper_limit_in_m = IntField(db_field='upperLimit', default=AIRSPACE_VOLUME_UPPER_LIMIT_IN_M)
+                                           default=CodeVerticalReferenceType.AMSL.value)
+    upper_limit = IntField(db_field='upperLimit', default=AIRSPACE_VOLUME_UPPER_LIMIT)
     upper_vertical_reference = StringField(db_field='upperVerticalReference',
                                            choices=CodeVerticalReferenceType.choices(),
-                                           default=CodeVerticalReferenceType.WGS84.value)
-    polygon = PolygonField(required=True)
+                                           default=CodeVerticalReferenceType.AMSL.value)
+    horizontal_projection = PolygonField(required=True)
+
+    # helper field that holds geometry data in case of the horizontal projection if os  circle type
+    circle = EmbeddedDocumentField(CircleField)
 
 
 class DailyPeriod(EmbeddedDocument):
@@ -141,12 +156,6 @@ class Authority(EmbeddedDocument):
     def clean(self):
         if not (self.email or self.site_url or self.phone):
             raise ValidationError(f"One of email, site_url, phone must be defined.")
-
-
-class DataSource(EmbeddedDocument):
-    author = StringField(max_length=200)
-    creation_date_time = ComplexDateTimeField(db_field='creationDateTime', required=True)
-    update_date_time = ComplexDateTimeField(db_field='endDateTime')
 
 
 class User(Document):
@@ -196,6 +205,13 @@ class UASZone(Document):
             self.user = _get_or_create_user(self.user)
 
 
+class UASZonesFilter(EmbeddedDocument):
+    airspace_volume = EmbeddedDocumentField(AirspaceVolume, db_field='airspaceVolume')
+    regions = ListField()
+    start_date_time = ComplexDateTimeField(db_field='startDateTime')
+    end_date_time = ComplexDateTimeField(db_field='endDateTime')
+
+
 class GeofencingSMSubscription(EmbeddedDocument):
     id = IntField(required=True)
     queue = StringField(required=True)
@@ -206,7 +222,7 @@ class GeofencingSMSubscription(EmbeddedDocument):
 class UASZonesSubscription(Document):
     id = StringField(required=True, primary_key=True)
     sm_subscription = EmbeddedDocumentField(GeofencingSMSubscription, required=True)
-    uas_zones_filter = DictField(required=True)
+    uas_zones_filter = EmbeddedDocumentField(UASZonesFilter, required=True)
     user = ReferenceField(User, required=True)
 
     def clean(self):

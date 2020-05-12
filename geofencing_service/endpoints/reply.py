@@ -37,12 +37,11 @@ from typing import List, Optional, Type
 from marshmallow import Schema
 from swim_backend.errors import APIError
 
-from geofencing_service.db.models import UASZone
+from geofencing_service.db.models import UASZone,UASZonesFilter
 from geofencing_service.endpoints.schemas.reply_schemas import ReplySchema
 
 __author__ = "EUROCONTROL (SWIM)"
 
-from geofencing_service.filters import UASZonesFilter
 
 
 class RequestStatus(Enum):

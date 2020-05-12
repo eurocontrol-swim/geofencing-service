@@ -40,7 +40,7 @@ from geofencing_service.endpoints.reply import handle_response, SubscribeToUASZo
 from geofencing_service.endpoints.schemas.db_schemas import SubscriptionSchema
 from geofencing_service.endpoints.schemas.reply_schemas import SubscribeToUASZonesUpdatesReplySchema, ReplySchema, \
     UASZoneSubscriptionReplySchema, UASZoneSubscriptionsReplySchema
-from geofencing_service.endpoints.schemas.filters_schemas import UASZonesFilterSchema
+from geofencing_service.endpoints.schemas.db_schemas import UASZonesFilterSchema
 from geofencing_service.events import events
 
 __author__ = "EUROCONTROL (SWIM)"

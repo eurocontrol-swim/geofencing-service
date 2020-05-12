@@ -33,18 +33,17 @@ from flask import request
 from marshmallow import ValidationError
 from swim_backend.errors import BadRequestError, NotFoundError
 
-from geofencing_service.db.uas_zones import get_uas_zones as db_get_uas_zones, get_uas_zones_by_identifier
-from geofencing_service.endpoints.reply import UASZoneFilterReply, handle_response, UASZoneCreateReply, Reply, \
-    GenericReply, RequestStatus
-from geofencing_service.endpoints.schemas.db_schemas import UASZoneSchema
-from geofencing_service.endpoints.schemas.filters_schemas import UASZonesFilterSchema
-from geofencing_service.endpoints.schemas.reply_schemas import UASZonesFilterReplySchema, UASZoneCreateReplySchema, \
-    ReplySchema
+from geofencing_service.db.uas_zones import get_uas_zones as db_get_uas_zones, \
+    get_uas_zones_by_identifier
+from geofencing_service.endpoints.reply import UASZoneFilterReply, handle_response, \
+    UASZoneCreateReply, Reply, GenericReply, RequestStatus
+from geofencing_service.endpoints.schemas.db_schemas import UASZoneSchema, UASZonesFilterSchema
+from geofencing_service.endpoints.schemas.reply_schemas import UASZonesFilterReplySchema, \
+    UASZoneCreateReplySchema, ReplySchema
 from geofencing_service.events import events
+from geofencing_service.events.uas_zone_handlers import UASZoneContext
 
 __author__ = "EUROCONTROL (SWIM)"
-
-from geofencing_service.events.uas_zone_handlers import UASZoneContext
 
 
 @handle_response(UASZonesFilterReplySchema)
@@ -79,7 +78,8 @@ def create_uas_zone() -> Tuple[UASZoneCreateReply, int]:
     except ValidationError as e:
         raise BadRequestError(str(e))
 
-    context = events.create_uas_zone_event.handle(context=UASZoneContext(uas_zone=uas_zone, user=request.user))
+    context = events.create_uas_zone_event.handle(context=UASZoneContext(uas_zone=uas_zone,
+                                                                         user=request.user))
 
     return UASZoneCreateReply(uas_zone=context.uas_zone), 201
 
@@ -99,6 +99,7 @@ def delete_uas_zone(uas_zone_identifier: str) -> Tuple[Reply, int]:
     if uas_zone is None:
         raise NotFoundError(f"UASZone with identifier '{uas_zone_identifier}' does not exist")
 
-    events.delete_uas_zone_event.handle(context=UASZoneContext(uas_zone=uas_zone, user=request.user))
+    events.delete_uas_zone_event.handle(context=UASZoneContext(uas_zone=uas_zone,
+                                                               user=request.user))
 
     return Reply(generic_reply=GenericReply(request_status=RequestStatus.OK.value)), 204

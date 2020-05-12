@@ -39,12 +39,13 @@ from subscription_manager_client.subscription_manager import SubscriptionManager
 from swim_backend.local import AppContextProxy
 
 from geofencing_service.events.broker_message_producers import uas_zones_updates_message_producer
-from geofencing_service.db.models import UASZonesSubscription, GeofencingSMSubscription, User
-from geofencing_service.db.subscriptions import create_uas_zones_subscription as db_create_uas_zones_subscription,\
+from geofencing_service.db.models import UASZonesSubscription, GeofencingSMSubscription, User, \
+    UASZonesFilter
+from geofencing_service.db.subscriptions import \
+    create_uas_zones_subscription as db_create_uas_zones_subscription,\
     update_uas_zones_subscription as db_update_uas_zones_subscription, \
     delete_uas_zones_subscription as db_delete_uas_zones_subscription
-from geofencing_service.endpoints.schemas.filters_schemas import UASZonesFilterSchema
-from geofencing_service.filters import UASZonesFilter
+from geofencing_service.endpoints.schemas.db_schemas import UASZonesFilterSchema
 
 __author__ = "EUROCONTROL (SWIM)"
 

@@ -32,8 +32,7 @@ from typing import List, Optional
 
 from mongoengine import Q, DoesNotExist
 
-from geofencing_service.db.models import UASZone, User
-from geofencing_service.filters import UASZonesFilter
+from geofencing_service.db.models import UASZone, User, UASZonesFilter
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -68,9 +67,11 @@ def get_uas_zones(uas_zones_filter: UASZonesFilter, user: Optional[User] = None)
     """
 
     queries_list = [
-        Q(geometry__polygon__geo_intersects=uas_zones_filter.airspace_volume.polygon_coordinates),
-        Q(geometry__upper_limit_in_m__lte=uas_zones_filter.airspace_volume.upper_limit_in_m),
-        Q(geometry__lower_limit_in_m__gte=uas_zones_filter.airspace_volume.lower_limit_in_m),
+        Q(geometry__horizontal_projection__geo_intersects=uas_zones_filter.airspace_volume
+                                                                          .horizontal_projection['coordinates']),
+        Q(geometry__upper_limit__lte=uas_zones_filter.airspace_volume.upper_limit),
+        Q(geometry__lower_limit__gte=uas_zones_filter.airspace_volume.lower_limit),
+        Q(geometry__uom_dimensions=uas_zones_filter.airspace_volume.uom_dimensions),
         Q(region__in=uas_zones_filter.regions),
         Q(applicability__start_date_time__gte=uas_zones_filter.start_date_time),
         Q(applicability__end_date_time__lte=uas_zones_filter.end_date_time),

@@ -525,7 +525,6 @@ components:
           enum: [
             "AGL",
             "AMSL",
-            "WGS84"
           ]
         upperLimit:
           description: The highest level included in the Zone (in metres). If not specified, it means that the zone extends to any possible level (unlimited).
@@ -535,42 +534,52 @@ components:
           type: string
           enum: [
             "AGL",
-            "AMSL",
-            "WGS84"
+            "AMSL"
           ]
-        polygon:
-          description: The shape of the area in a projection at the surface of the Earth considered as the WGS-84 ellipsoid.
+        horizontal_projection:
+          oneOf:
+            - $ref: '#/components/schemas/Polygon'
+            - $ref: '#/components/schemas/Circle'
+
+    Polygon:
+      type: object
+      description: "Type for the description of the airspaceVolume projection onto the Earth´s surface. This type is a specialization of a geoJSON Polygon. The coordinates must be expressed as an array of [lon, lat] arrays using the Coordinate Reference System urn:ogc:def:crs:OGC::CRS84 as per the geoJSON Specification. See: https://tools.ietf.org/html/rfc7946#section-3.1.6"
+      properties:
+        type:
+          type: string
+          enum: [
+            'Polygon'
+          ]
+        coordinates:
           type: array
-          minItems: 3
           items:
-            type: object
-            properties:
-              LAT:
-                type: string
-                format: float
-                maxLength: 20
-                example:
-                  "50.870058"
-              LON:
-                type: string
-                format: float
-                maxLength: 20
-                example:
-                  "4.325421"
-          example:
-            [{
-              "LAT": "50.862525",
-              "LON": "4.328120"
-            },{
-              "LAT": "50.865502",
-              "LON": "4.329257"
-            },{
-              "LAT": "50.865468",
-              "LON": "4.323686"
-            },{
-              "LAT": "50.862525",
-              "LON": "4.328120"
-            }]
+            type: array
+            minItems: 4
+            items:
+              type: array
+              minItems: 2
+              maxItems: 2
+              items:
+                type: number
+
+    Circle:
+      type: object
+      description: "Type for the description of a circular horizontal projection of an airspaceVolume onto the Earth's surface. The coordinates of the center must be expressed as a [lon, lat] array using the Coordinate Reference System urn:ogc:def:crs:OGC::CRS84 as per the geoJSON Specification. See: https://tools.ietf.org/html/rfc7946#section-3.1.6"
+      properties:
+        type:
+          type: string
+          enum: [
+            'Circle'
+          ]
+        center:
+          type: array
+          minItems: 2
+          maxItems: 2
+          items:
+            type: number
+        radius:
+          type: number
+
     Authority:
       type: object
       description: A public or private authority that has responsibilities in relation with the authorization of UAS operations within a Country.
@@ -611,7 +620,6 @@ components:
         - airspaceVolume
         - startDateTime
         - endDateTime
-        - requestID
       properties:
         airspaceVolume:
           $ref: '#/components/schemas/AirspaceVolume'
@@ -625,8 +633,6 @@ components:
         endDateTime:
           type: string
           format: 'date-time'
-        requestID:
-          type: string
 
     UASZonesFilterReply:
       type: object
@@ -645,7 +651,6 @@ components:
           $ref: '#/components/schemas/UASZone'
         genericReply:
           $ref: '#/components/schemas/GenericReply'
-
 
     UASZoneSubscription:
       type: object

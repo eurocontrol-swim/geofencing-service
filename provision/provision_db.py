@@ -35,9 +35,10 @@ from mongoengine import connect
 from pkg_resources import resource_filename
 from swim_backend.config import load_app_config
 
+from geofencing_service.common import Polygon
 from geofencing_service.db.models import UASZone, CodeZoneType, CodeRestrictionType, CodeYesNoType, \
     CodeUSpaceClassType, \
-    AirspaceVolume, Authority, DailyPeriod, CodeWeekDay, TimePeriod, DataSource, User, \
+    AirspaceVolume, Authority, DailyPeriod, CodeWeekDay, TimePeriod, User, \
     AuthorityPurposeType, CodeZoneReasonType
 
 __author__ = "EUROCONTROL (SWIM)"
@@ -51,39 +52,51 @@ _logger = logging.getLogger(__name__)
 NOW = datetime.now(timezone.utc)
 
 POLYGONS = {
-    "basilique_polygon":  [
-        [[4.329385, 50.863648],
-         [4.328055, 50.865348],
-         [4.317369, 50.868470],
-         [4.314826, 50.867671],
-         [4.315920, 50.865873],
-         [4.326508, 50.862792],
-         [4.329385, 50.863648]]
-    ],
-    "parc_royal": [
-        [[4.362334, 50.846844],
-         [4.360553, 50.843125],
-         [4.364823, 50.842244],
-         [4.366797, 50.845977],
-         [4.362334, 50.846844]]
-    ],
-    "parc_du_cinquantenaire": [
-        [[4.387284, 50.844065],
-         [4.395417, 50.842222],
-         [4.397841, 50.839485],
-         [4.392970, 50.838055],
-         [4.384977, 50.839681],
-         [4.387284, 50.844065]]
-    ],
-    "bois_de_la_cambre": [
-        [[4.367825, 50.814009],
-         [4.376479, 50.815210],
-         [4.400072, 50.795249],
-         [4.381311, 50.788147],
-         [4.376037, 50.805531],
-         [4.372529, 50.805314],
-         [4.367825, 50.814009]]
-    ]
+    "basilique_polygon": Polygon(
+        type='Polygon',
+        coordinates=[[
+            [4.329385, 50.863648],
+            [4.328055, 50.865348],
+            [4.317369, 50.868470],
+            [4.314826, 50.867671],
+            [4.315920, 50.865873],
+            [4.326508, 50.862792],
+            [4.329385, 50.863648]
+        ]]
+    ),
+    "parc_royal": Polygon(
+        type='Polygon',
+        coordinates=[[
+            [4.362334, 50.846844],
+            [4.360553, 50.843125],
+            [4.364823, 50.842244],
+            [4.366797, 50.845977],
+            [4.362334, 50.846844]
+        ]]
+    ),
+    "parc_du_cinquantenaire": Polygon(
+        type='Polygon',
+        coordinates=[[
+            [4.387284, 50.844065],
+            [4.395417, 50.842222],
+            [4.397841, 50.839485],
+            [4.392970, 50.838055],
+            [4.384977, 50.839681],
+            [4.387284, 50.844065]
+        ]]
+    ),
+    "bois_de_la_cambre": Polygon(
+        type='Polygon',
+        coordinates=[[
+            [4.367825, 50.814009],
+            [4.376479, 50.815210],
+            [4.400072, 50.795249],
+            [4.381311, 50.788147],
+            [4.376037, 50.805531],
+            [4.372529, 50.805314],
+            [4.367825, 50.814009]
+        ]]
+    )
 }
 
 
@@ -112,7 +125,7 @@ def make_daily_period():
     )
 
 
-def make_applicable_period():
+def make_time_period():
     return TimePeriod(
         permanent=CodeYesNoType.YES.value,
         start_date_time=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
@@ -136,8 +149,8 @@ def make_uas_zone(name, polygon, user):
     result.u_space_class = CodeUSpaceClassType.EUROCONTROL.value
     result.message = "message"
     result.zone_authority = make_authority()
-    result.applicability = make_applicable_period()
-    result.geometry = AirspaceVolume(polygon=polygon)
+    result.applicability = make_time_period()
+    result.geometry = AirspaceVolume(horizontal_projection=polygon)
     result.user = user
 
     return result
