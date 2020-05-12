@@ -37,7 +37,8 @@ from geofencing_service.db.models import UASZone, User, UASZonesFilter
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def get_uas_zones_by_identifier(uas_zone_identifier: str, user: Optional[User] = None) -> Optional[UASZone]:
+def get_uas_zones_by_identifier(uas_zone_identifier: str, user: Optional[User] = None) \
+        -> Optional[UASZone]:
     """
     Retrieves a UASZone by its identifier
     :param user:
@@ -49,6 +50,7 @@ def get_uas_zones_by_identifier(uas_zone_identifier: str, user: Optional[User] =
 
     if user is not None:
         query &= Q(user=user)
+
     try:
         result = UASZone.objects.get(query)
     except DoesNotExist:
@@ -65,13 +67,13 @@ def get_uas_zones(uas_zones_filter: UASZonesFilter, user: Optional[User] = None)
     :param uas_zones_filter:
     :return:
     """
+    airspace_volume = uas_zones_filter.airspace_volume
 
     queries_list = [
-        Q(geometry__horizontal_projection__geo_intersects=uas_zones_filter.airspace_volume
-                                                                          .horizontal_projection['coordinates']),
-        Q(geometry__upper_limit__lte=uas_zones_filter.airspace_volume.upper_limit),
-        Q(geometry__lower_limit__gte=uas_zones_filter.airspace_volume.lower_limit),
-        Q(geometry__uom_dimensions=uas_zones_filter.airspace_volume.uom_dimensions),
+        Q(geometry__horizontal_projection__geo_intersects=airspace_volume.horizontal_projection['coordinates']),
+        Q(geometry__upper_limit__lte=airspace_volume.upper_limit),
+        Q(geometry__lower_limit__gte=airspace_volume.lower_limit),
+        Q(geometry__uom_dimensions=airspace_volume.uom_dimensions),
         Q(region__in=uas_zones_filter.regions),
         Q(applicability__start_date_time__gte=uas_zones_filter.start_date_time),
         Q(applicability__end_date_time__lte=uas_zones_filter.end_date_time),

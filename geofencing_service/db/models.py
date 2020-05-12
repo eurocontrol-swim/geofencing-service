@@ -30,11 +30,10 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 import enum
 from typing import Tuple, Any
 
-from mongoengine import EmbeddedDocument, StringField, IntField, PolygonField, ComplexDateTimeField, \
-    EmbeddedDocumentField, \
-    Document, ListField, EmbeddedDocumentListField, DictField, ValidationError, ReferenceField, \
-    EmailField, URLField, \
-    BooleanField, DoesNotExist, FloatField
+from mongoengine import EmbeddedDocument, StringField, IntField, PolygonField, \
+    ComplexDateTimeField, EmbeddedDocumentField, Document, ListField, EmbeddedDocumentListField, \
+    DictField, ValidationError, ReferenceField, EmailField, URLField, BooleanField, DoesNotExist, \
+    FloatField
 
 from geofencing_service.db import AIRSPACE_VOLUME_UPPER_LIMIT, AIRSPACE_VOLUME_LOWER_LIMIT
 

@@ -35,7 +35,6 @@ from mongoengine import connect
 from pkg_resources import resource_filename
 from swim_backend.config import load_app_config
 
-from geofencing_service.common import Polygon
 from geofencing_service.db.models import UASZone, CodeZoneType, CodeRestrictionType, CodeYesNoType, \
     CodeUSpaceClassType, \
     AirspaceVolume, Authority, DailyPeriod, CodeWeekDay, TimePeriod, User, \
@@ -52,7 +51,7 @@ _logger = logging.getLogger(__name__)
 NOW = datetime.now(timezone.utc)
 
 POLYGONS = {
-    "basilique_polygon": Polygon(
+    "basilique_polygon": dict(
         type='Polygon',
         coordinates=[[
             [4.329385, 50.863648],
@@ -64,7 +63,7 @@ POLYGONS = {
             [4.329385, 50.863648]
         ]]
     ),
-    "parc_royal": Polygon(
+    "parc_royal": dict(
         type='Polygon',
         coordinates=[[
             [4.362334, 50.846844],
@@ -74,7 +73,7 @@ POLYGONS = {
             [4.362334, 50.846844]
         ]]
     ),
-    "parc_du_cinquantenaire": Polygon(
+    "parc_du_cinquantenaire": dict(
         type='Polygon',
         coordinates=[[
             [4.387284, 50.844065],
@@ -85,7 +84,7 @@ POLYGONS = {
             [4.387284, 50.844065]
         ]]
     ),
-    "bois_de_la_cambre": Polygon(
+    "bois_de_la_cambre": dict(
         type='Polygon',
         coordinates=[[
             [4.367825, 50.814009],

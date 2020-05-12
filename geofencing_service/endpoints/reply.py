@@ -43,7 +43,6 @@ from geofencing_service.endpoints.schemas.reply_schemas import ReplySchema
 __author__ = "EUROCONTROL (SWIM)"
 
 
-
 class RequestStatus(Enum):
     OK = "OK"
     NOK = "NOK"
@@ -100,7 +99,12 @@ class SubscribeToUASZonesUpdatesReply(Reply):
 
 class UASZoneSubscriptionReplyObject:
 
-    def __init__(self, subscription_id: str, publication_location: str, active: bool, uas_zones_filter: UASZonesFilter):
+    def __init__(self,
+                 subscription_id: str,
+                 publication_location: str,
+                 active: bool,
+                 uas_zones_filter: UASZonesFilter):
+
         super().__init__()
         self.subscription_id = subscription_id
         self.publication_location = publication_location
@@ -123,8 +127,8 @@ class UASZoneSubscriptionsReply(Reply):
 
 def handle_response(schema: Type[Schema]):
     """
-    Handles the response by dumping the returned object using the provided schema class and by handling any possible
-    exception
+    Handles the response by dumping the returned object using the provided schema class and by
+    handling any possible exception
     :param schema: the schema class
     :return:
     """

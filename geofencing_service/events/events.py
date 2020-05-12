@@ -44,8 +44,8 @@ class Event(list):
     """
     Simplistic implementation of event handling.
 
-    A list of callables handlers. They all accept a `context` keyword parameter which is supposed to be shared
-    and updated among them.
+    A list of callables handlers. They all accept a `context` keyword parameter which is supposed to
+    be shared and updated among them.
     The handlers will be called in ascending order by index.
     """
     _type = 'Generic'

@@ -33,10 +33,9 @@ from marshmallow.fields import String, Nested, Integer, Dict, AwareDateTime, Lis
     Boolean, Float
 
 from geofencing_service.db.models import UASZone, CodeUomDimensions, UASZonesFilter, AirspaceVolume
-from geofencing_service.endpoints.schemas.utils import is_valid_duration_format
 from geofencing_service.endpoints.utils import time_str_from_datetime_str, \
-    make_datetime_string_aware, datetime_str_from_time_str
-from geofencing_service.utils import circle_to_polygon
+    make_datetime_string_aware, datetime_str_from_time_str, is_valid_duration_format, \
+    circle_to_polygon
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -87,8 +86,7 @@ class CircleSchema(BaseSchema):
 def validate_horizontal_projection(value):
     if 'type' not in value:
         raise ValidationError(
-            message={'type': ['Missing data for required field.']},
-            field_name="type"
+            message={'type': ['Missing data for required field.']}
         )
 
     if value['type'] == 'Circle':
@@ -96,7 +94,8 @@ def validate_horizontal_projection(value):
     elif value['type'] == 'Polygon':
         PolygonSchema().load(value)
     else:
-        raise ValidationError(message={'type': ['Invalid geometry type. Expected one of [Circle, Polygon]']})
+        raise ValidationError(
+            message={'type': ['Invalid geometry type. Expected one of [Circle, Polygon]']})
 
     return True
 

@@ -34,7 +34,7 @@ __author__ = "EUROCONTROL (SWIM)"
 
 import pytest
 
-from geofencing_service.endpoints.schemas.utils import is_valid_duration_format
+from geofencing_service.endpoints.utils import is_valid_duration_format
 
 
 @pytest.mark.parametrize('iso_duration, is_valid', [

@@ -31,8 +31,9 @@ import pytest
 from mongoengine import DoesNotExist
 
 from geofencing_service.db.models import UASZonesSubscription
-from geofencing_service.db.subscriptions import get_uas_zones_subscriptions, get_uas_zones_subscription_by_id, \
-    create_uas_zones_subscription, update_uas_zones_subscription, delete_uas_zones_subscription
+from geofencing_service.db.subscriptions import get_uas_zones_subscriptions, \
+    get_uas_zones_subscription_by_id, create_uas_zones_subscription, update_uas_zones_subscription,\
+    delete_uas_zones_subscription
 from tests.geofencing_service.utils import make_uas_zones_subscription
 
 __author__ = "EUROCONTROL (SWIM)"

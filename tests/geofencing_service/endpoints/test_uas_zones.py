@@ -35,7 +35,7 @@ from unittest import mock
 import pytest
 
 from geofencing_service import BASE_PATH
-from geofencing_service.db.models import UASZone, AirspaceVolume, UASZonesFilter
+from geofencing_service.db.models import UASZone, UASZonesFilter
 from geofencing_service.db.uas_zones import get_uas_zones_by_identifier
 from geofencing_service.endpoints.schemas.db_schemas import UASZonesFilterSchema
 from geofencing_service.events.uas_zone_handlers import UASZoneContext
@@ -138,7 +138,8 @@ def uas_zone_input():
 
 def test_get_uas_zones__invalid_user__returns_nok__401(test_client):
 
-    response = test_client.post(URL_UAS_ZONES_FILTER, headers=make_basic_auth_header('fake_username', 'fake_password'))
+    response = test_client.post(URL_UAS_ZONES_FILTER,
+                                headers=make_basic_auth_header('fake_username', 'fake_password'))
 
     assert 401 == response.status_code
     response_data = json.loads(response.data)
@@ -262,10 +263,12 @@ def test_get_uas_zones__invalid_polygon_input__returns_nok__400(
     assert 400 == response.status_code
     response_data = json.loads(response.data)
     assert "NOK" == response_data['genericReply']['RequestStatus']
-    assert expected_exception_description == response_data['genericReply']["RequestExceptionDescription"]
+    assert expected_exception_description == \
+           response_data['genericReply']["RequestExceptionDescription"]
 
 
-def test_get_uas_zones__valid_input__returns_ok_and_empty_uas_zone_list__200(test_client, test_user):
+def test_get_uas_zones__valid_input__returns_ok_and_empty_uas_zone_list__200(test_client,
+                                                                             test_user):
     data = {
         "airspaceVolume": {
             "lowerLimit": 0,
@@ -289,8 +292,11 @@ def test_get_uas_zones__valid_input__returns_ok_and_empty_uas_zone_list__200(tes
         "startDateTime": "2019-11-05T13:10:39.315Z"
     }
 
-    response = test_client.post(URL_UAS_ZONES_FILTER, data=json.dumps(data), content_type='application/json',
-                                headers=make_basic_auth_header(test_user.username, DEFAULT_LOGIN_PASS))
+    response = test_client.post(URL_UAS_ZONES_FILTER,
+                                data=json.dumps(data),
+                                content_type='application/json',
+                                headers=make_basic_auth_header(test_user.username,
+                                                               DEFAULT_LOGIN_PASS))
 
     assert 200 == response.status_code
     response_data = json.loads(response.data)
@@ -316,8 +322,9 @@ def test_get_uas_zones__filter_by_airspace_volume__horizontal_projection(
     assert 0 == len(response_data['UASZoneList'])
 
 
-def test_get_uas_zones__filter_by_airspace_volume__upper_lower_limit(test_client, test_user,
-                                                                     filter_with_intersecting_airspace_volume):
+def test_get_uas_zones__filter_by_airspace_volume__upper_lower_limit(
+        test_client, test_user, filter_with_intersecting_airspace_volume
+):
     response_data, status_code = _post_uas_zones_filter(test_client, test_user,
                                                         filter_with_intersecting_airspace_volume)
     assert 200 == status_code
@@ -337,7 +344,9 @@ def test_get_uas_zones__filter_by_airspace_volume__upper_lower_limit(test_client
     assert 0 == len(response_data['UASZoneList'])
 
 
-def test_get_uas_zones__filter_by_regions(test_client, test_user, filter_with_intersecting_airspace_volume):
+def test_get_uas_zones__filter_by_regions(
+        test_client, test_user, filter_with_intersecting_airspace_volume
+):
 
     response_data, status_code = _post_uas_zones_filter(test_client, test_user,
                                                         filter_with_intersecting_airspace_volume)
@@ -383,8 +392,11 @@ def _post_uas_zones_filter(test_client, test_user, filter_data) -> Tuple[Dict[st
     else:
         filter_data = json.dumps(filter_data)
 
-    response = test_client.post(URL_UAS_ZONES_FILTER, data=filter_data, content_type='application/json',
-                                headers=make_basic_auth_header(test_user.username, DEFAULT_LOGIN_PASS))
+    response = test_client.post(URL_UAS_ZONES_FILTER,
+                                data=filter_data,
+                                content_type='application/json',
+                                headers=make_basic_auth_header(test_user.username,
+                                                               DEFAULT_LOGIN_PASS))
 
     return json.loads(response.data), response.status_code
 
@@ -514,7 +526,8 @@ def test_get_uas_zones__filter_by_airspace_volume__polygon__response_is_serializ
 
 def test_create_uas_zone___invalid_user__returns_nok__401(test_client):
 
-    response = test_client.post(URL_UAS_ZONES, headers=make_basic_auth_header('fake_username', 'fake_password'))
+    response = test_client.post(URL_UAS_ZONES, headers=make_basic_auth_header('fake_username',
+                                                                              'fake_password'))
 
     assert 401 == response.status_code
     response_data = json.loads(response.data)
@@ -579,8 +592,11 @@ def test_create_uas_zone(test_client, test_user):
   "type": "COMMON",
   "uSpaceClass": "EUROCONTROL"
 }"""
-    response = test_client.post(URL_UAS_ZONES, data=uas_zone_input, content_type='application/json',
-                                headers=make_basic_auth_header(test_user.username, DEFAULT_LOGIN_PASS))
+    response = test_client.post(URL_UAS_ZONES,
+                                data=uas_zone_input,
+                                content_type='application/json',
+                                headers=make_basic_auth_header(test_user.username,
+                                                               DEFAULT_LOGIN_PASS))
 
     response_data = json.loads(response.data)
     assert response.status_code == 201
@@ -591,20 +607,26 @@ def test_create_uas_zone__valid_input__object_is_saved__returns_ok__201(
 
     uas_zone = make_uas_zone(BASILIQUE_POLYGON)
 
-    # saving the expected uas_zone at this point contradicts a bit the nature of this test but here we are actually
-    # testing the event outcome
+    # saving the expected uas_zone at this point contradicts a bit the nature of this test but here
+    # we are actually testing the event outcome
     uas_zone.save()
     context = UASZoneContext(uas_zone=uas_zone, user=test_user)
-    with mock.patch('geofencing_service.events.events.create_uas_zone_event.handle', return_value=context) as mock_event:
-        response = test_client.post(URL_UAS_ZONES, data=json.dumps(uas_zone_input), content_type='application/json',
-                                    headers=make_basic_auth_header(test_user.username, DEFAULT_LOGIN_PASS))
+    with mock.patch('geofencing_service.events.events.create_uas_zone_event.handle',
+                    return_value=context) as mock_event:
+
+        response = test_client.post(URL_UAS_ZONES,
+                                    data=json.dumps(uas_zone_input),
+                                    content_type='application/json',
+                                    headers=make_basic_auth_header(test_user.username,
+                                                                   DEFAULT_LOGIN_PASS))
 
         response_data = json.loads(response.data)
 
         assert 201 == response.status_code
         assert "OK" == response_data['genericReply']['RequestStatus']
         assert context.uas_zone in UASZone.objects.all()
-        assert uas_zone_input['identifier'] == mock_event.call_args[1]['context'].uas_zone.identifier
+        assert uas_zone_input['identifier'] == \
+               mock_event.call_args[1]['context'].uas_zone.identifier
 
 
 @pytest.mark.parametrize('horizontal_projection, expected_exception_description', [
@@ -720,15 +742,20 @@ def test_create_uas_zone__invalid_airspace_volume__not_enough_points__returns_no
 
 
 @pytest.mark.parametrize('invalid_identifier, expected_message', [
-    ('short', "'short' is too short - 'identifier'"), ('looooooong', "'looooooong' is too long - 'identifier'")
+    ('short', "'short' is too short - 'identifier'"),
+    ('looooooong', "'looooooong' is too long - 'identifier'")
 ])
-def test_create_uas_zone__invalid_identifier_length__returns_nok__400(test_client, test_user, uas_zone_input,
-                                                                      invalid_identifier, expected_message):
+def test_create_uas_zone__invalid_identifier_length__returns_nok__400(
+        test_client, test_user, uas_zone_input, invalid_identifier, expected_message
+):
 
     uas_zone_input['identifier'] = invalid_identifier
 
-    response = test_client.post(URL_UAS_ZONES, data=json.dumps(uas_zone_input), content_type='application/json',
-                                headers=make_basic_auth_header(test_user.username, DEFAULT_LOGIN_PASS))
+    response = test_client.post(URL_UAS_ZONES,
+                                data=json.dumps(uas_zone_input),
+                                content_type='application/json',
+                                headers=make_basic_auth_header(test_user.username,
+                                                               DEFAULT_LOGIN_PASS))
 
     response_data = json.loads(response.data)
 
@@ -751,7 +778,8 @@ def test_delete_uas_zone___invalid_user__returns_nok__401(test_client):
 def test_delete_uas_zone___invalid_identifier__returns_nok__404(test_client, test_user):
 
     response = test_client.delete(URL_UAS_ZONES + 'invalid_identifier',
-                                  headers=make_basic_auth_header(test_user.username, DEFAULT_LOGIN_PASS))
+                                  headers=make_basic_auth_header(test_user.username,
+                                                                 DEFAULT_LOGIN_PASS))
 
     assert 404 == response.status_code
     response_data = json.loads(response.data)
@@ -760,11 +788,12 @@ def test_delete_uas_zone___invalid_identifier__returns_nok__404(test_client, tes
            response_data['genericReply']["RequestExceptionDescription"]
 
 
-def test_delete_uas_zone___valid_identifier__uas_zone_is_deleted__returns_ok__204(test_client, test_user,
-                                                                                  db_uas_zone_basilique):
+def test_delete_uas_zone___valid_identifier__uas_zone_is_deleted__returns_ok__204(
+        test_client, test_user, db_uas_zone_basilique):
 
     response = test_client.delete(URL_UAS_ZONES + db_uas_zone_basilique.identifier,
-                                  headers=make_basic_auth_header(test_user.username, DEFAULT_LOGIN_PASS))
+                                  headers=make_basic_auth_header(test_user.username,
+                                                                 DEFAULT_LOGIN_PASS))
 
     assert 204 == response.status_code
 

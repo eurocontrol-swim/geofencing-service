@@ -33,7 +33,6 @@ from base64 import b64encode
 from datetime import datetime, timezone
 from typing import Optional, Dict
 
-from geofencing_service.common import GeoJSONPolygonCoordinates, Polygon
 from geofencing_service.db.models import AirspaceVolume, TimePeriod, CodeYesNoType, UASZone, \
     UASZonesFilter, CodeRestrictionType, CodeUSpaceClassType, CodeZoneType, DailyPeriod, \
     CodeWeekDay, User, CodeVerticalReferenceType, Authority, UASZonesSubscription, \
@@ -200,7 +199,7 @@ def make_geofencing_sm_subscription() -> GeofencingSMSubscription:
     )
 
 
-def make_uas_zones_subscription(polygon: GeoJSONPolygonCoordinates = BASILIQUE_POLYGON, user: Optional[User] = None) \
+def make_uas_zones_subscription(polygon: dict = BASILIQUE_POLYGON, user: Optional[User] = None) \
         -> UASZonesSubscription:
 
     uas_zone_filter = make_uas_zones_filter_from_db_uas_zone(make_uas_zone(polygon))
