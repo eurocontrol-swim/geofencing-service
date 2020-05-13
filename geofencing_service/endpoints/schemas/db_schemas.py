@@ -32,7 +32,7 @@ from marshmallow import Schema, post_dump, pre_load, post_load, validate, Valida
 from marshmallow.fields import String, Nested, Integer, Dict, AwareDateTime, List, Email, URL, \
     Boolean, Float
 
-from geofencing_service.db.models import UASZone, CodeUomDimensions, UASZonesFilter, AirspaceVolume
+from geofencing_service.db.models import UASZone, UomDistance, UASZonesFilter, AirspaceVolume
 from geofencing_service.endpoints.utils import time_str_from_datetime_str, \
     make_datetime_string_aware, datetime_str_from_time_str, is_valid_duration_format, \
     circle_to_polygon
@@ -116,7 +116,7 @@ class AirspaceVolumeSchema(BaseSchema):
             circle = data['horizontal_projection']
 
             radius_in_m = circle['radius']
-            if data['uom_dimensions'] == CodeUomDimensions.METERS.value:
+            if data['uom_dimensions'] == UomDistance.METERS.value:
                 radius_in_m = circle['radius'] * FEET_METERS_RATIO
 
             data['horizontal_projection'] = circle_to_polygon(

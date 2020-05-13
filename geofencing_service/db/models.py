@@ -96,12 +96,12 @@ class CodeVerticalReferenceType(ChoiceType):
     AMSL = "AMSL"
 
 
-class CodeUomDimensions(ChoiceType):
+class UomDistance(ChoiceType):
     METERS = 'M'
     FEET = 'FT'
 
 
-class AuthorityPurposeType(ChoiceType):
+class CodeAuthorityRole(ChoiceType):
     AUTHORIZATION = "AUTHORIZATION"
     NOTIFICATION = "NOTIFICATION"
     INFORMATION = "INFORMATION"
@@ -114,7 +114,7 @@ class CircleField(EmbeddedDocument):
 
 
 class AirspaceVolume(EmbeddedDocument):
-    uom_dimensions = StringField(choices=CodeUomDimensions.choices(), required=True)
+    uom_dimensions = StringField(choices=UomDistance.choices(), required=True)
     lower_limit = IntField(db_field='lowerLimit', default=AIRSPACE_VOLUME_LOWER_LIMIT)
     lower_vertical_reference = StringField(db_field='lowerVerticalReference',
                                            choices=CodeVerticalReferenceType.choices(),
@@ -149,7 +149,7 @@ class Authority(EmbeddedDocument):
     contact_name = StringField(db_field='contactName', required=True, max_length=200)
     site_url = URLField(db_field='siteURL')
     phone = StringField(required=True, max_length=200)
-    purpose = StringField(required=True, choices=AuthorityPurposeType.choices())
+    purpose = StringField(required=True, choices=CodeAuthorityRole.choices())
     interval_before = StringField(db_field='intervalBefore', required=True)
 
     def clean(self):

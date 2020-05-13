@@ -36,7 +36,7 @@ from typing import Optional, Dict
 from geofencing_service.db.models import AirspaceVolume, TimePeriod, CodeYesNoType, UASZone, \
     UASZonesFilter, CodeRestrictionType, CodeUSpaceClassType, CodeZoneType, DailyPeriod, \
     CodeWeekDay, User, CodeVerticalReferenceType, Authority, UASZonesSubscription, \
-    GeofencingSMSubscription, AuthorityPurposeType, CodeZoneReasonType, CodeUomDimensions
+    GeofencingSMSubscription, CodeAuthorityRole, CodeZoneReasonType, UomDistance
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -85,7 +85,7 @@ NON_INTERSECTING_BASILIQUE_POLYGON = {
 
 
 def make_airspace_volume(horizontal_projection: dict,
-                         uom_dimensions: str = CodeUomDimensions.METERS.value,
+                         uom_dimensions: str = UomDistance.METERS.value,
                          upper_limit: Optional[int] = None,
                          lower_limit: Optional[int] = None) -> AirspaceVolume:
     return AirspaceVolume(
@@ -106,7 +106,7 @@ def make_authority() -> Authority:
         email="auth@autority.be",
         site_url="http://www.autority.be",
         phone="234234234",
-        purpose=AuthorityPurposeType.AUTHORIZATION.value,
+        purpose=CodeAuthorityRole.AUTHORIZATION.value,
         interval_before="P3Y"
     )
 
@@ -163,7 +163,7 @@ def make_uas_zone(horizontal_projection: Optional[dict] = None,
 
 
 def make_uas_zones_filter_from_db_uas_zone(
-        uas_zone: UASZone, uom_dimensions: str = CodeUomDimensions.METERS.value) -> UASZonesFilter:
+        uas_zone: UASZone, uom_dimensions: str = UomDistance.METERS.value) -> UASZonesFilter:
 
     uas_zones_filter = UASZonesFilter(
         airspace_volume=AirspaceVolume(

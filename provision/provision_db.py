@@ -39,7 +39,7 @@ from swim_backend.config import load_app_config
 from geofencing_service.db.models import UASZone, CodeZoneType, CodeRestrictionType, CodeYesNoType, \
     CodeUSpaceClassType, \
     AirspaceVolume, Authority, DailyPeriod, CodeWeekDay, TimePeriod, User, \
-    AuthorityPurposeType, CodeZoneReasonType, CodeUomDimensions, CodeVerticalReferenceType
+    CodeAuthorityRole, CodeZoneReasonType, UomDistance, CodeVerticalReferenceType
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -111,7 +111,7 @@ def make_authority() -> Authority:
     result.service = "Authority service"
     result.email = "auth@autority.be"
     result.phone = "123123123"
-    result.purpose = AuthorityPurposeType.AUTHORIZATION.value
+    result.purpose = CodeAuthorityRole.AUTHORIZATION.value
     result.interval_before = "P3Y"
 
     return result
@@ -135,7 +135,7 @@ def make_time_period():
 
 
 def make_airspace_volume(horizontal_projection: dict,
-                         uom_dimensions: str = CodeUomDimensions.METERS.value,
+                         uom_dimensions: str = UomDistance.METERS.value,
                          upper_limit: Optional[int] = None,
                          lower_limit: Optional[int] = None) -> AirspaceVolume:
     return AirspaceVolume(
