@@ -27,6 +27,7 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
+from datetime import datetime, timezone
 from functools import reduce
 from typing import List, Optional
 
@@ -92,6 +93,7 @@ def create_uas_zone(uas_zone: UASZone):
     Saves the uas_zone in DB
     :param uas_zone:
     """
+    uas_zone.created_at = datetime.now(timezone.utc)
     uas_zone.save()
 
 

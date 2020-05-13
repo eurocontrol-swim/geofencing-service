@@ -35,7 +35,7 @@ from marshmallow.fields import String, Nested, Integer, Dict, AwareDateTime, Lis
 from geofencing_service.db.models import UASZone, UomDistance, UASZonesFilter, AirspaceVolume
 from geofencing_service.endpoints.utils import time_str_from_datetime_str, \
     make_datetime_string_aware, datetime_str_from_time_str, is_valid_duration_format, \
-    circle_to_polygon
+    circumscribed_polygon_from_circle
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -119,9 +119,9 @@ class AirspaceVolumeSchema(BaseSchema):
             if data['uom_dimensions'] == UomDistance.METERS.value:
                 radius_in_m = circle['radius'] * FEET_METERS_RATIO
 
-            data['horizontal_projection'] = circle_to_polygon(
-                lat=circle['center'][1],
+            data['horizontal_projection'] = circumscribed_polygon_from_circle(
                 lon=circle['center'][0],
+                lat=circle['center'][1],
                 radius_in_m=radius_in_m,
                 n_edges=current_app.config['POLYGON_TO_CIRCLE_EDGES']
             )

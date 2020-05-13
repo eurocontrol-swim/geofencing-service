@@ -97,21 +97,34 @@ def is_valid_duration_format(iso_duration: str) -> bool:
     return _iso_8601_check_regex.match(iso_duration) is not None
 
 
-def circle_to_polygon(lat: float, lon: float, radius_in_m: float, n_edges: int):
+def inscribed_polygon_from_circle(lon: float, lat: float, radius_in_m: float, n_edges: int):
     """
-
-    :param lat:
     :param lon:
+    :param lat:
     :param radius_in_m:
-    :param n_edges:
+    :param n_edges: how many edges should the polygon have
     :return:
     """
     center_point = shapely.geometry.Point([lon, lat])
 
-    angles = np.linspace(0, 360, n_edges)
+    # linspace accepts number of points so we add 1 to have the desired number of edges
+    angles = np.linspace(0, 360, n_edges + 1)
 
     polygon = geog.propagate(center_point, angles, radius_in_m)
 
     result = shapely.geometry.mapping(shapely.geometry.Polygon(polygon))
 
     return json.loads(json.dumps(result))
+
+
+def circumscribed_polygon_from_circle(lon: float, lat: float, radius_in_m: float, n_edges: int):
+    """
+    By increasing the radius 5% we get an approximation of the circumscribed polygon
+    :param lon:
+    :param lat:
+    :param radius_in_m:
+    :param n_edges:
+    :return:
+    """
+
+    return inscribed_polygon_from_circle(lon, lat, radius_in_m * 1.05, n_edges)
