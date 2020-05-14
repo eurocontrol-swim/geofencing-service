@@ -78,7 +78,7 @@ def filter_with_non_intersecting_airspace_volume(db_uas_zone_basilique):
 @pytest.fixture
 def uas_zone_input():
     return {
-        "geometry": {
+        "geometry": [{
             "uomDimensions": "M",
             "lowerLimit": 0,
             "lowerVerticalReference": "AMSL",
@@ -93,8 +93,7 @@ def uas_zone_input():
             },
             "upperLimit": 1000000,
             "upperVerticalReference": "AMSL"
-        },
-
+        }],
         "applicability": {
             "dailySchedule": [
                 {
@@ -423,7 +422,7 @@ def _post_uas_zones_filter(test_client, test_user, filter_data) -> Tuple[Dict[st
             "startDateTime": "2019-11-05T13:10:39.315Z"
         },
         [{
-            'geometry': {
+            'geometry': [{
                 "uomDimensions": "M",
                 'lowerLimit': 0,
                 'lowerVerticalReference': "AMSL",
@@ -441,7 +440,7 @@ def _post_uas_zones_filter(test_client, test_user, filter_data) -> Tuple[Dict[st
                     ]]
                 },
                 'upperLimit': 100000,
-            },
+            }],
             'applicability': {
                 'dailySchedule': [{
                     'day': 'MON',
@@ -503,7 +502,7 @@ def _post_uas_zones_filter(test_client, test_user, filter_data) -> Tuple[Dict[st
             "startDateTime": "2019-11-05T13:10:39.315Z"
         },
         [{
-            'geometry': {
+            'geometry': [{
                 "uomDimensions": "M",
                 'lowerLimit': 0,
                 'lowerVerticalReference': "AMSL",
@@ -521,7 +520,7 @@ def _post_uas_zones_filter(test_client, test_user, filter_data) -> Tuple[Dict[st
                     ]]
                 },
                 'upperLimit': 100000,
-            },
+            }],
             'applicability': {
                 'dailySchedule': [{
                     'day': 'MON',
@@ -613,7 +612,7 @@ def test_create_uas_zone___invalid_user__returns_nok__401(test_client):
 
 def test_create_uas_zone(test_client, test_user):
     uas_zone_input = """{
-  "geometry": {    
+  "geometry": [{    
     "uomDimensions": "M",
     "lowerLimit": 0,
     "lowerVerticalReference": "AMSL",
@@ -628,7 +627,7 @@ def test_create_uas_zone(test_client, test_user):
     },
     "upperLimit": 100,
     "upperVerticalReference": "AMSL"
-  },
+  }],
   "applicability": {
     "dailySchedule": [
       {
@@ -711,63 +710,63 @@ def test_create_uas_zone__valid_input__object_is_saved__returns_ok__201(
             'types': 'Polygon',
             'coordinates': [[[1, 2], [3, 4], [5, 6], [1, 2]]],
         },
-        "{'geometry': {'horizontalProjection': [{'type': ['Missing data for required field.']}]}}"
+        "{'geometry': {0: {'horizontalProjection': [{'type': ['Missing data for required field.']}]}}}"
     ),
     (
         {
             'type': 'Polygon',
             'coordinatesss': [[[1, 2], [3, 4], [5, 6], [1, 2]]],
         },
-        "{'geometry': {'horizontalProjection': [{'coordinates': ['Missing data for required field.']}]}}"
+        "{'geometry': {0: {'horizontalProjection': [{'coordinates': ['Missing data for required field.']}]}}}"
     ),
     (
         {
             'type': 'Polygon',
             'coordinates': [[[1, 2], [3, 4], [5, 6]]],
         },
-        "{'geometry': {'horizontalProjection': [{'coordinates': {0: ['Linestring is not closed.']}}]}}"
+        "{'geometry': {0: {'horizontalProjection': [{'coordinates': {0: ['Linestring is not closed.']}}]}}}"
     ),
     (
         {
             'type': 'Polygon',
             'coordinates': [[[1, 2]]],
         },
-        "{'geometry': {'horizontalProjection': [{'coordinates': {0: ['Linestring has less than 3 different vertices.']}}]}}"
+        "{'geometry': {0: {'horizontalProjection': [{'coordinates': {0: ['Linestring has less than 3 different vertices.']}}]}}}"
     ),
     (
         {
             'type': 'Invalid',
             'coordinates': [[[1, 2], [3, 4], [5, 6]]],
         },
-        "{'geometry': {'horizontalProjection': [{'type': ['Invalid geometry type. Expected one of [Circle, Polygon]']}]}}"
+        "{'geometry': {0: {'horizontalProjection': [{'type': ['Invalid geometry type. Expected one of [Circle, Polygon]']}]}}}"
     ),
     (
         {
             'type': 'Polygon',
             'coordinates': 'invalid',
         },
-        "{'geometry': {'horizontalProjection': [{'coordinates': ['Not a valid list.']}]}}"
+        "{'geometry': {0: {'horizontalProjection': [{'coordinates': ['Not a valid list.']}]}}}"
     ),
     (
         {
             'type': 'Circle',
             'center': [],
         },
-        "{'geometry': {'horizontalProjection': [{'radius': ['Missing data for required field.']}]}}"
+        "{'geometry': {0: {'horizontalProjection': [{'radius': ['Missing data for required field.']}]}}}"
     ),
     (
         {
             'type': 'Circle',
             'radius': 100,
         },
-        "{'geometry': {'horizontalProjection': [{'center': ['Missing data for required field.']}]}}"
+        "{'geometry': {0: {'horizontalProjection': [{'center': ['Missing data for required field.']}]}}}"
     ),
     (
         {
             'type': 'Circle',
             'radius': 100,
         },
-        "{'geometry': {'horizontalProjection': [{'center': ['Missing data for required field.']}]}}"
+        "{'geometry': {0: {'horizontalProjection': [{'center': ['Missing data for required field.']}]}}}"
     ),
     (
         {
@@ -775,7 +774,7 @@ def test_create_uas_zone__valid_input__object_is_saved__returns_ok__201(
             'center': 'invalid',
             'radius': 100,
         },
-        "{'geometry': {'horizontalProjection': [{'center': ['Not a valid list.']}]}}"
+        "{'geometry': {0: {'horizontalProjection': [{'center': ['Not a valid list.']}]}}}"
     ),
     (
         {
@@ -783,7 +782,7 @@ def test_create_uas_zone__valid_input__object_is_saved__returns_ok__201(
             'center': [1, 2],
             'radius': 'invalid',
         },
-        "{'geometry': {'horizontalProjection': [{'radius': ['Not a valid number.']}]}}"
+        "{'geometry': {0: {'horizontalProjection': [{'radius': ['Not a valid number.']}]}}}"
     ),
     (
         {
@@ -791,7 +790,7 @@ def test_create_uas_zone__valid_input__object_is_saved__returns_ok__201(
             'center': [1, 2],
             'radius': -1,
         },
-        "{'geometry': {'horizontalProjection': [{'radius': ['Negative value not allowed.']}]}}"
+        "{'geometry': {0: {'horizontalProjection': [{'radius': ['Negative value not allowed.']}]}}}"
     ),
 ])
 def test_create_uas_zone__invalid_airspace_volume__not_enough_points__returns_nok__400(
@@ -801,7 +800,7 @@ def test_create_uas_zone__invalid_airspace_volume__not_enough_points__returns_no
         horizontal_projection,
         expected_exception_description):
 
-    uas_zone_input['geometry']['horizontalProjection'] = horizontal_projection
+    uas_zone_input['geometry'][0]['horizontalProjection'] = horizontal_projection
 
     response = test_client.post(URL_UAS_ZONES,
                                 data=json.dumps(uas_zone_input),

@@ -194,7 +194,7 @@ class UASZone(Document):
 
     zone_authority = EmbeddedDocumentField(Authority, db_field='zoneAuthority', required=True)
     applicability = EmbeddedDocumentField(TimePeriod)
-    geometry = EmbeddedDocumentField(AirspaceVolume, required=True)
+    geometry = EmbeddedDocumentListField(AirspaceVolume, required=True)
     extended_properties = DictField(db_field='extendedProperties')
 
     user = ReferenceField(User, required=True)

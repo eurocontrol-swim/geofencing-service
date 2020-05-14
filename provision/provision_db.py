@@ -164,7 +164,7 @@ def make_uas_zone(name, polygon, user):
     result.message = "message"
     result.zone_authority = make_authority()
     result.applicability = make_time_period()
-    result.geometry = make_airspace_volume(horizontal_projection=polygon)
+    result.geometry = [make_airspace_volume(horizontal_projection=polygon)]
     result.user = user
 
     return result

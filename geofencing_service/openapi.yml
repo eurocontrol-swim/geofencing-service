@@ -457,7 +457,9 @@ components:
         applicability:
           $ref: '#/components/schemas/TimePeriod'
         geometry:
-          $ref: '#/components/schemas/AirspaceVolume'
+          type: array
+          items:
+            $ref: '#/components/schemas/AirspaceVolume'
         extendedProperties:
           description: The extendedProperties section is a placeholder, allowing service providers to customize the implementation and provide additional information.
           type: object

@@ -222,19 +222,6 @@ class AuthoritySchema(BaseSchema):
     interval_before = String(data_key='intervalBefore', validate=validate_duration)
 
 
-class DataSourceSchema(BaseSchema):
-    author = String(required=True)
-    creation_date_time = AwareDateTime(data_key='creationDateTime', required=True)
-    update_date_time = AwareDateTime(data_key='updateDateTime')
-
-    @post_dump
-    def handle_datetime_awareness(self, data, **kwargs):
-        data["creationDateTime"] = make_datetime_string_aware(data["creationDateTime"])
-        data["updateDateTime"] = make_datetime_string_aware(data["updateDateTime"])
-
-        return data
-
-
 class UASZoneSchema(BaseSchema):
     identifier = String(required=True)
     country = String(required=True)
@@ -243,7 +230,7 @@ class UASZoneSchema(BaseSchema):
     restriction = String(required=True)
     restriction_conditions = List(String(), data_key='restrictionConditions')
     region = Integer()
-    reason = List(String())
+    reason = List(String(), validate=validate.Length(max=9))
     other_reason_info = String(data_key='otherReasonInfo')
     regulation_exemption = String(data_key='regulationExemption')
     u_space_class = String(data_key='uSpaceClass')
@@ -251,7 +238,7 @@ class UASZoneSchema(BaseSchema):
 
     zone_authority = Nested(AuthoritySchema, data_key='zoneAuthority', required=True)
     applicability = Nested(TimePeriodSchema)
-    geometry = Nested(AirspaceVolumeSchema, required=True)
+    geometry = Nested(AirspaceVolumeSchema, required=True, many=True)
     extended_properties = Dict(data_key='extendedProperties')
 
     @post_load

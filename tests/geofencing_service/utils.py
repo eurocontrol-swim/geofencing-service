@@ -155,8 +155,8 @@ def make_uas_zone(horizontal_projection: Optional[dict] = None,
     result.message = "message"
     result.zone_authority = make_authority()
     result.applicability = make_applicable_period()
-    result.geometry = make_airspace_volume(
-        horizontal_projection=horizontal_projection or BASILIQUE_POLYGON)
+    result.geometry = [make_airspace_volume(
+        horizontal_projection=horizontal_projection or BASILIQUE_POLYGON)]
     result.user = user or make_user()
 
     return result
@@ -167,12 +167,12 @@ def make_uas_zones_filter_from_db_uas_zone(
 
     uas_zones_filter = UASZonesFilter(
         airspace_volume=AirspaceVolume(
-            horizontal_projection=uas_zone.geometry.horizontal_projection,
+            horizontal_projection=uas_zone.geometry[0].horizontal_projection,
             uom_dimensions=uom_dimensions,
-            upper_limit=uas_zone.geometry.upper_limit,
-            lower_limit=uas_zone.geometry.lower_limit,
-            upper_vertical_reference=uas_zone.geometry.upper_vertical_reference,
-            lower_vertical_reference=uas_zone.geometry.lower_vertical_reference
+            upper_limit=uas_zone.geometry[0].upper_limit,
+            lower_limit=uas_zone.geometry[0].lower_limit,
+            upper_vertical_reference=uas_zone.geometry[0].upper_vertical_reference,
+            lower_vertical_reference=uas_zone.geometry[0].lower_vertical_reference
         ),
         regions=[uas_zone.region],
         start_date_time=uas_zone.applicability.start_date_time,
