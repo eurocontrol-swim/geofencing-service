@@ -670,7 +670,7 @@ components:
     UASZoneSubscriptionReply:
       type: object
       properties:
-        UASZoneSubscription:
+        subscription:
           $ref: '#/components/schemas/UASZoneSubscription'
         genericReply:
           $ref: '#/components/schemas/GenericReply'
@@ -678,7 +678,7 @@ components:
     UASZoneSubscriptionsReply:
       type: object
       properties:
-        UASZoneSubscriptions:
+        subscriptions:
           type: array
           items:
             $ref: '#/components/schemas/UASZoneSubscription'

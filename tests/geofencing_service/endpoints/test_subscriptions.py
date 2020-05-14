@@ -394,7 +394,7 @@ def test_get_subscription_to_uas_zones_updates__returns_subscription_data_200(
                                                               DEFAULT_LOGIN_PASS))
 
     assert 200 == response.status_code
-    response_data = json.loads(response.data)['UASZoneSubscription']
+    response_data = json.loads(response.data)['subscription']
     assert response_data['subscriptionID'] == uas_zones_subscription.id
     assert response_data['publicationLocation'] == uas_zones_subscription.sm_subscription.queue
     assert response_data['active'] == uas_zones_subscription.sm_subscription.active
@@ -422,7 +422,7 @@ def test_get_subscriptions_to_uas_zones_updates__no_subscription_exists__returns
 
     assert 200 == response.status_code
     response_data = json.loads(response.data)
-    assert [] == response_data['UASZoneSubscriptions']
+    assert [] == response_data['subscriptions']
 
 
 def test_get_subscriptions_to_uas_zones_updates__returns_subscriptions_data_200(test_client,
@@ -436,7 +436,7 @@ def test_get_subscriptions_to_uas_zones_updates__returns_subscriptions_data_200(
                                                                    DEFAULT_LOGIN_PASS))
 
     assert 200 == response.status_code
-    response_data = json.loads(response.data)['UASZoneSubscriptions']
+    response_data = json.loads(response.data)['subscriptions']
     assert 2 == len(response_data)
     assert response_data[0]['subscriptionID'] == uas_zones_subscription1.id
     assert response_data[0]['publicationLocation'] == uas_zones_subscription1.sm_subscription.queue

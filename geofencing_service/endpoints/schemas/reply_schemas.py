@@ -67,10 +67,10 @@ class UASZoneSubscriptionReplyObjectSchema(ReplySchema):
 
 class UASZoneSubscriptionReplySchema(ReplySchema):
     uas_zone_subscription = Nested(UASZoneSubscriptionReplyObjectSchema,
-                                   data_key='UASZoneSubscription')
+                                   data_key='subscription')
 
 
 class UASZoneSubscriptionsReplySchema(ReplySchema):
     uas_zone_subscriptions = Nested(UASZoneSubscriptionReplyObjectSchema,
                                     many=True,
-                                    data_key='UASZoneSubscriptions')
+                                    data_key='subscriptions')
