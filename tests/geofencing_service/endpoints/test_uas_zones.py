@@ -95,7 +95,7 @@ def uas_zone_input():
             "upperVerticalReference": "AMSL"
         }],
         "applicability": {
-            "dailySchedule": [
+            "schedule": [
                 {
                     "day": "MON",
                     "endTime": "18:00:00+00:00",
@@ -442,7 +442,7 @@ def _post_uas_zones_filter(test_client, test_user, filter_data) -> Tuple[Dict[st
                 'upperLimit': 100000,
             }],
             'applicability': {
-                'dailySchedule': [{
+                'schedule': [{
                     'day': 'MON',
                     'endTime': '18:00:00+00:00',
                     'startTime': '12:00:00+00:00'
@@ -522,7 +522,7 @@ def _post_uas_zones_filter(test_client, test_user, filter_data) -> Tuple[Dict[st
                 'upperLimit': 100000,
             }],
             'applicability': {
-                'dailySchedule': [{
+                'schedule': [{
                     'day': 'MON',
                     'endTime': '18:00:00+00:00',
                     'startTime': '12:00:00+00:00'
@@ -629,7 +629,7 @@ def test_create_uas_zone(test_client, test_user):
     "upperVerticalReference": "AMSL"
   }],
   "applicability": {
-    "dailySchedule": [
+    "schedule": [
       {
         "day": "MON",
         "endTime": "18:00:00+00:00",

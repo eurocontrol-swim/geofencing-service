@@ -153,7 +153,7 @@ def uas_zones_subscription_db_save(context: UASZonesSubscriptionCreateContext) -
         topic_name=context.topic_name,
         active=context.sm_subscription.active
     )
-    subscription.uas_zones_filter = context.uas_zones_filter.to_dict()
+    subscription.uas_zones_filter = context.uas_zones_filter
     subscription.user = context.user
 
     db_create_uas_zones_subscription(subscription)

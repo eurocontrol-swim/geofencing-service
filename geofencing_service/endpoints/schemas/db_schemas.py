@@ -192,7 +192,7 @@ class TimePeriodSchema(BaseSchema):
     permanent = String()
     start_date_time = AwareDateTime(data_key='startDateTime', required=True)
     end_date_time = AwareDateTime(data_key='endDateTime', required=True)
-    schedule = Nested(DailyPeriodSchema, many=True, data_key='dailySchedule')
+    schedule = Nested(DailyPeriodSchema, many=True, data_key='schedule')
 
     @post_dump
     def handle_datetime_awareness_dump(self, data, **kwargs):
