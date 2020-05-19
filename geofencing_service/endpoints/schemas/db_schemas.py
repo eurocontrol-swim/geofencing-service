@@ -116,7 +116,7 @@ class AirspaceVolumeSchema(BaseSchema):
             circle = data['horizontal_projection']
 
             radius_in_m = circle['radius']
-            if data['uom_dimensions'] == UomDistance.METERS.value:
+            if data['uom_dimensions'] == UomDistance.FEET.value:
                 radius_in_m = circle['radius'] * FEET_METERS_RATIO
 
             data['horizontal_projection'] = circumscribed_polygon_from_circle(
