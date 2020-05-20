@@ -86,25 +86,31 @@ def create_flask_app(config_file: str) -> Flask:
     return app
 
 
-def _preload_swim_publisher(swim_publisher: SWIMPublisher, subscriptions: List[UASZonesSubscription]):
+def _preload_swim_publisher(swim_publisher: SWIMPublisher,
+                            subscriptions: List[UASZonesSubscription]
+):
     """
     Initializes the publisher with the existing subscriptions if any
     :param swim_publisher:
     :param subscriptions:
     """
     for subscription in subscriptions:
-        swim_publisher.preload_topic_message_producer(topic_name=subscription.sm_subscription.topic_name,
-                                                      message_producer=uas_zones_updates_message_producer)
+        swim_publisher.preload_topic_message_producer(
+            topic_name=subscription.sm_subscription.topic_name,
+            message_producer=uas_zones_updates_message_producer
+        )
         _logger.info(f'Added message_producer for topic: {subscription.sm_subscription.topic_name}')
 
 
 def prepare_appication():
     app = create_flask_app(config_file=resource_filename(__name__, 'config.yml'))
 
-    # the SWIMPublisher is started in threaded mode in order to be able to use add the message_producers on demand
+    # the SWIMPublisher is started in threaded mode in order to be able to use add the message_
+    # producers on demand
     app.swim_publisher.run(threaded=True)
 
-    _preload_swim_publisher(swim_publisher=app.swim_publisher, subscriptions=get_uas_zones_subscriptions())
+    _preload_swim_publisher(swim_publisher=app.swim_publisher,
+                            subscriptions=get_uas_zones_subscriptions())
 
     return app
 

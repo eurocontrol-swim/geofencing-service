@@ -411,19 +411,11 @@ components:
           items:
             type: string
             maxLength: 200
-
         region:
           description: Where applicable, identifies a region inside a State where the UAS Zone is located.
           type: integer
           minimum: 0
           maximum: 65535
-        dataCaptureProhibition:
-          description: An indication if data capturing (such as aerial photography, etc.) is prohibited when flying in the zone.
-          type: string
-          enum: [
-            "YES",
-            "NO"
-          ]
         reason:
           type: array
           items:
@@ -439,6 +431,15 @@ components:
               "FOREIGN_TERRITORY",
               "OTHER"
             ]
+        otherReasonInfo:
+          type: string
+          maxLength: 30
+        regulationExemption:
+          type: string
+          enum: [
+            "YES",
+            "NO"
+          ]
         uSpaceClass:
           description: A code that identifies the category or class of the zone applying a "USpace concept".
           type: string
@@ -446,48 +447,24 @@ components:
             "EUROCONTROL",
             "CORUS"
           ]
-          maxLength: 200
+          maxLength: 100
         message:
           description: A message to be displayed to the user of the zone
           type: string
           maxLength: 200
-        dataSource:
-          type: object
-          properties:
-            author:
-              type: string
-              maxLength: 200
-            creationDateTime:
-              type: string
-              format: 'date-time'
-            updateDateTime:
-              type: string
-              format: 'date-time'
-        authority:
-          type: object
-          properties:
-            requiresNotificationTo:
-              type: object
-              properties:
-                authority:
-                  $ref: '#/components/schemas/Authority'
-                intervalBefore:
-                  description: The minimal time interval required between notification and starting to operate in the zone, in the format PnnDTnnHnnM (ISO 8601).
-                  type: string
-            requiresAuthorizationFrom:
-              type: object
-              properties:
-                authority:
-                  $ref: '#/components/schemas/Authority'
-        applicableTimePeriod:
-          $ref: '#/components/schemas/ApplicableTimePeriod'
-        airspaceVolume:
-          $ref: '#/components/schemas/AirspaceVolume'
+        zoneAuthority:
+          $ref: '#/components/schemas/Authority'
+        applicability:
+          $ref: '#/components/schemas/TimePeriod'
+        geometry:
+          type: array
+          items:
+            $ref: '#/components/schemas/AirspaceVolume'
         extendedProperties:
           description: The extendedProperties section is a placeholder, allowing service providers to customize the implementation and provide additional information.
           type: object
 
-    ApplicableTimePeriod:
+    TimePeriod:
       type: object
       properties:
         permanent:
@@ -505,7 +482,7 @@ components:
           description: The date and time when the area ceases to exist.
           type: string
           format: 'date-time'
-        dailySchedule:
+        dailyPeriod:
           type: array
           maxItems: 7
           minItems: 1
@@ -522,7 +499,8 @@ components:
                   "THU",
                   "FRI",
                   "SAT",
-                  "SUN"
+                  "SUN",
+                  "ANY"
                 ]
               startTime:
                 description: The daily start time
@@ -549,7 +527,6 @@ components:
           enum: [
             "AGL",
             "AMSL",
-            "WGS84"
           ]
         upperLimit:
           description: The highest level included in the Zone (in metres). If not specified, it means that the zone extends to any possible level (unlimited).
@@ -559,42 +536,58 @@ components:
           type: string
           enum: [
             "AGL",
-            "AMSL",
-            "WGS84"
+            "AMSL"
           ]
-        polygon:
-          description: The shape of the area in a projection at the surface of the Earth considered as the WGS-84 ellipsoid.
+        uomDimensions:
+          type: string
+          enum: [
+            "M",
+            "FT"
+          ]
+        horizontal_projection:
+          oneOf:
+            - $ref: '#/components/schemas/Polygon'
+            - $ref: '#/components/schemas/Circle'
+
+    Polygon:
+      type: object
+      description: "Type for the description of the airspaceVolume projection onto the Earth´s surface. This type is a specialization of a geoJSON Polygon. The coordinates must be expressed as an array of [lon, lat] arrays using the Coordinate Reference System urn:ogc:def:crs:OGC::CRS84 as per the geoJSON Specification. See: https://tools.ietf.org/html/rfc7946#section-3.1.6"
+      properties:
+        type:
+          type: string
+          enum: [
+            'Polygon'
+          ]
+        coordinates:
           type: array
-          minItems: 3
           items:
-            type: object
-            properties:
-              LAT:
-                type: string
-                format: float
-                maxLength: 20
-                example:
-                  "50.870058"
-              LON:
-                type: string
-                format: float
-                maxLength: 20
-                example:
-                  "4.325421"
-          example:
-            [{
-              "LAT": "50.862525",
-              "LON": "4.328120"
-            },{
-              "LAT": "50.865502",
-              "LON": "4.329257"
-            },{
-              "LAT": "50.865468",
-              "LON": "4.323686"
-            },{
-              "LAT": "50.862525",
-              "LON": "4.328120"
-            }]
+            type: array
+            minItems: 4
+            items:
+              type: array
+              minItems: 2
+              maxItems: 2
+              items:
+                type: number
+
+    Circle:
+      type: object
+      description: "Type for the description of a circular horizontal projection of an airspaceVolume onto the Earth's surface. The coordinates of the center must be expressed as a [lon, lat] array using the Coordinate Reference System urn:ogc:def:crs:OGC::CRS84 as per the geoJSON Specification. See: https://tools.ietf.org/html/rfc7946#section-3.1.6"
+      properties:
+        type:
+          type: string
+          enum: [
+            'Circle'
+          ]
+        center:
+          type: array
+          minItems: 2
+          maxItems: 2
+          items:
+            type: number
+        radius:
+          type: number
+
     Authority:
       type: object
       description: A public or private authority that has responsibilities in relation with the authorization of UAS operations within a Country.
@@ -618,6 +611,15 @@ components:
         phone:
           type: string
           maxLength: 200
+        purpose:
+          type: string
+          enum: [
+            "AUTHORIZATION",
+            "NOTIFICATION",
+            "INFORMATION"
+          ]
+        intervalBefore:
+          type: string
 
     UASZonesRequest:
       description: The filtering criteria of UASZone retrieving
@@ -626,7 +628,6 @@ components:
         - airspaceVolume
         - startDateTime
         - endDateTime
-        - requestID
       properties:
         airspaceVolume:
           $ref: '#/components/schemas/AirspaceVolume'
@@ -640,12 +641,6 @@ components:
         endDateTime:
           type: string
           format: 'date-time'
-        requestID:
-          type: string
-        updatedAfterDateTime:
-          type: string
-          format: 'date-time'
-          nullable: true
 
     UASZonesFilterReply:
       type: object
@@ -665,7 +660,6 @@ components:
         genericReply:
           $ref: '#/components/schemas/GenericReply'
 
-
     UASZoneSubscription:
       type: object
       properties:
@@ -682,7 +676,7 @@ components:
     UASZoneSubscriptionReply:
       type: object
       properties:
-        UASZoneSubscription:
+        subscription:
           $ref: '#/components/schemas/UASZoneSubscription'
         genericReply:
           $ref: '#/components/schemas/GenericReply'
@@ -690,7 +684,7 @@ components:
     UASZoneSubscriptionsReply:
       type: object
       properties:
-        UASZoneSubscriptions:
+        subscriptions:
           type: array
           items:
             $ref: '#/components/schemas/UASZoneSubscription'

@@ -27,18 +27,21 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
+from datetime import datetime, timezone
 from functools import reduce
 from typing import List, Optional
 
 from mongoengine import Q, DoesNotExist
 
-from geofencing_service.db.models import UASZone, User
-from geofencing_service.filters import UASZonesFilter
+from geofencing_service.db.models import UASZone, User, UASZonesFilter
 
 __author__ = "EUROCONTROL (SWIM)"
 
+from geofencing_service.db.utils import _uas_zone_geometry_intersects_polygon
 
-def get_uas_zones_by_identifier(uas_zone_identifier: str, user: Optional[User] = None) -> Optional[UASZone]:
+
+def get_uas_zones_by_identifier(uas_zone_identifier: str, user: Optional[User] = None) \
+        -> Optional[UASZone]:
     """
     Retrieves a UASZone by its identifier
     :param user:
@@ -50,6 +53,7 @@ def get_uas_zones_by_identifier(uas_zone_identifier: str, user: Optional[User] =
 
     if user is not None:
         query &= Q(user=user)
+
     try:
         result = UASZone.objects.get(query)
     except DoesNotExist:
@@ -68,23 +72,31 @@ def get_uas_zones(uas_zones_filter: UASZonesFilter, user: Optional[User] = None)
     """
 
     queries_list = [
-        Q(airspace_volume__polygon__geo_intersects=uas_zones_filter.airspace_volume.polygon_coordinates),
-        Q(airspace_volume__upper_limit_in_m__lte=uas_zones_filter.airspace_volume.upper_limit_in_m),
-        Q(airspace_volume__lower_limit_in_m__gte=uas_zones_filter.airspace_volume.lower_limit_in_m),
+        Q(geometry__upper_limit__lte=uas_zones_filter.airspace_volume.upper_limit),
+        Q(geometry__lower_limit__gte=uas_zones_filter.airspace_volume.lower_limit),
+        Q(geometry__uom_dimensions=uas_zones_filter.airspace_volume.uom_dimensions),
         Q(region__in=uas_zones_filter.regions),
-        Q(applicable_time_period__start_date_time__gte=uas_zones_filter.start_date_time),
-        Q(applicable_time_period__end_date_time__lte=uas_zones_filter.end_date_time),
+        Q(applicability__start_date_time__gte=uas_zones_filter.start_date_time),
+        Q(applicability__end_date_time__lte=uas_zones_filter.end_date_time),
     ]
-
-    if uas_zones_filter.updated_after_date_time:
-        queries_list.append(Q(data_source__update_date_time__gte=uas_zones_filter.updated_after_date_time))
 
     if user is not None:
         queries_list.append(Q(user=user))
 
     query: Q = reduce(lambda q1, q2: q1 & q2, queries_list, Q())
 
-    return UASZone.objects(query).all()
+    zones = UASZone.objects(query).all()
+
+    # make the geo queries separately as there is no query operator that
+    result = [
+        zone for zone in zones
+        if _uas_zone_geometry_intersects_polygon(
+            geometry=zone.geometry,
+            polygon=uas_zones_filter.airspace_volume.horizontal_projection
+        )
+    ]
+
+    return result
 
 
 def create_uas_zone(uas_zone: UASZone):
@@ -92,6 +104,7 @@ def create_uas_zone(uas_zone: UASZone):
     Saves the uas_zone in DB
     :param uas_zone:
     """
+    uas_zone.created_at = datetime.now(timezone.utc)
     uas_zone.save()
 
 

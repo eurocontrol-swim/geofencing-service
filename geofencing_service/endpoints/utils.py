@@ -27,11 +27,21 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
+__author__ = "EUROCONTROL (SWIM)"
+
+import json
+import re
 from datetime import datetime, timezone
 
 import dateutil.parser
 
-__author__ = "EUROCONTROL (SWIM)"
+import geog
+import numpy as np
+import shapely.geometry
+
+
+_ISO_8601_CHECK_PATTERN = r'^P(?!$)((?P<years>\d+)Y)?((?P<months>\d+)M)?(\d+W)?(\d+D)?(T(?=\d)(\d+H)?(\d+M)?(\d+S)?)?$'
+_iso_8601_check_regex = re.compile(_ISO_8601_CHECK_PATTERN)
 
 
 def time_str_from_datetime_str(date_string: str) -> str:
@@ -78,3 +88,43 @@ def make_datetime_aware(dt: datetime) -> datetime:
     return dt.replace(tzinfo=timezone.utc)
 
 
+def is_valid_duration_format(iso_duration: str) -> bool:
+    """
+    Validates ISO 8601 duration strings as described at https://en.wikipedia.org/wiki/ISO_8601#Durations
+    :param iso_duration:
+    :return:
+    """
+    return _iso_8601_check_regex.match(iso_duration) is not None
+
+
+def inscribed_polygon_from_circle(lon: float, lat: float, radius_in_m: float, n_edges: int):
+    """
+    :param lon:
+    :param lat:
+    :param radius_in_m:
+    :param n_edges: how many edges should the polygon have
+    :return:
+    """
+    center_point = shapely.geometry.Point([lon, lat])
+
+    # linspace accepts number of points so we add 1 to have the desired number of edges
+    angles = np.linspace(0, 360, n_edges + 1)
+
+    polygon = geog.propagate(center_point, angles, radius_in_m)
+
+    result = shapely.geometry.mapping(shapely.geometry.Polygon(polygon))
+
+    return json.loads(json.dumps(result))
+
+
+def circumscribed_polygon_from_circle(lon: float, lat: float, radius_in_m: float, n_edges: int):
+    """
+    By increasing the radius 5% we get an approximation of the circumscribed polygon
+    :param lon:
+    :param lat:
+    :param radius_in_m:
+    :param n_edges:
+    :return:
+    """
+
+    return inscribed_polygon_from_circle(lon, lat, radius_in_m * 1.05, n_edges)

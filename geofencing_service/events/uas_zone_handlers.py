@@ -31,9 +31,10 @@ import logging
 from typing import List
 
 from geofencing_service.db.models import UASZone, UASZonesSubscription, User
-from geofencing_service.db.uas_zones import create_uas_zone as db_create_uas_zone, get_uas_zones as db_get_uas_zones
-from geofencing_service.db.subscriptions import get_uas_zones_subscriptions as db_get_uas_zones_subscriptions
-from geofencing_service.filters import UASZonesFilter
+from geofencing_service.db.uas_zones import create_uas_zone as db_create_uas_zone, \
+    get_uas_zones as db_get_uas_zones
+from geofencing_service.db.subscriptions import \
+    get_uas_zones_subscriptions as db_get_uas_zones_subscriptions
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -59,23 +60,23 @@ def uas_zone_db_save(context: UASZoneContext) -> None:
     db_create_uas_zone(context.uas_zone)
 
 
-def _uas_zone_matches_subscription_uas_zones_filter(uas_zone: UASZone, subscription: UASZonesSubscription):
+def _uas_zone_matches_subscription_uas_zones_filter(uas_zone: UASZone,
+                                                    subscription: UASZonesSubscription):
     """
     Checks if the provided UASZone coincides in the filter_zone of the provided subscription
     :param uas_zone:
     :param subscription:
     :return:
     """
-    uas_zones_filter = UASZonesFilter.from_dict(subscription.uas_zones_filter)
-
-    uas_zones = db_get_uas_zones(uas_zones_filter=uas_zones_filter)
+    uas_zones = db_get_uas_zones(uas_zones_filter=subscription.uas_zones_filter)
 
     return uas_zone in uas_zones
 
 
 def get_relevant_uas_zones_subscriptions(context: UASZoneContext) -> None:
     """
-    Rettrieves the topic_names of the subscriptions whose filter_zone intersects the UASZone in context
+    Rettrieves the topic_names of the subscriptions whose filter_zone intersects the UASZone in
+    context
     :param context:
     """
     uas_zones_subscriptions = db_get_uas_zones_subscriptions()

@@ -27,13 +27,12 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from unittest.mock import Mock, call
-
 from geofencing_service.db.uas_zones import create_uas_zone as db_create_uas_zone
 from geofencing_service.events.uas_zone_handlers import _uas_zone_matches_subscription_uas_zones_filter, \
     UASZoneContext, get_relevant_uas_zones_subscriptions
-from tests.geofencing_service.utils import make_uas_zone, BASILIQUE_POLYGON, make_uas_zones_filter_from_db_uas_zone, \
-    make_uas_zones_subscription, INTERSECTING_BASILIQUE_POLYGON, NON_INTERSECTING_BASILIQUE_POLYGON
+from tests.geofencing_service.utils import make_uas_zone, BASILIQUE_POLYGON, \
+    make_uas_zones_filter_from_db_uas_zone, make_uas_zones_subscription, \
+    INTERSECTING_BASILIQUE_POLYGON, NON_INTERSECTING_BASILIQUE_POLYGON
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -44,21 +43,25 @@ def test_uas_zone_matches_subscription():
     uas_zone_intersecting_basilique = make_uas_zone(INTERSECTING_BASILIQUE_POLYGON)
     uas_zone_non_intersecting_basilique = make_uas_zone(NON_INTERSECTING_BASILIQUE_POLYGON)
 
-    intersecting_uas_zone_filter = make_uas_zones_filter_from_db_uas_zone(uas_zone_intersecting_basilique)
+    intersecting_uas_zone_filter = make_uas_zones_filter_from_db_uas_zone(
+        uas_zone_intersecting_basilique)
 
     intersecting_uas_zones_subscription = make_uas_zones_subscription()
-    intersecting_uas_zones_subscription.uas_zones_filter = intersecting_uas_zone_filter.to_dict()
+    intersecting_uas_zones_subscription.uas_zones_filter = intersecting_uas_zone_filter
     intersecting_uas_zones_subscription.save()
 
-    assert _uas_zone_matches_subscription_uas_zones_filter(uas_zone_basilique, intersecting_uas_zones_subscription) is True
+    assert _uas_zone_matches_subscription_uas_zones_filter(
+        uas_zone_basilique,  intersecting_uas_zones_subscription) is True
 
-    non_intersecting_uas_zone_filter = make_uas_zones_filter_from_db_uas_zone(uas_zone_non_intersecting_basilique)
+    non_intersecting_uas_zone_filter = make_uas_zones_filter_from_db_uas_zone(
+        uas_zone_non_intersecting_basilique)
 
     non_intersecting_uas_zones_subscription = make_uas_zones_subscription()
-    non_intersecting_uas_zones_subscription.uas_zones_filter = non_intersecting_uas_zone_filter.to_dict()
+    non_intersecting_uas_zones_subscription.uas_zones_filter = non_intersecting_uas_zone_filter
     non_intersecting_uas_zones_subscription.save()
 
-    assert _uas_zone_matches_subscription_uas_zones_filter(uas_zone_basilique, non_intersecting_uas_zones_subscription) is False
+    assert _uas_zone_matches_subscription_uas_zones_filter(
+        uas_zone_basilique, non_intersecting_uas_zones_subscription) is False
 
 
 def test_get_relevant_uas_zones_subscriptions(test_user):
@@ -66,17 +69,19 @@ def test_get_relevant_uas_zones_subscriptions(test_user):
     db_create_uas_zone(uas_zone_basilique)
 
     uas_zone_intersecting_basilique = make_uas_zone(INTERSECTING_BASILIQUE_POLYGON)
-    intersecting_uas_zone_filter = make_uas_zones_filter_from_db_uas_zone(uas_zone_intersecting_basilique)
+    intersecting_uas_zone_filter = make_uas_zones_filter_from_db_uas_zone(
+        uas_zone_intersecting_basilique)
 
     intersecting_uas_zones_subscription = make_uas_zones_subscription()
-    intersecting_uas_zones_subscription.uas_zones_filter = intersecting_uas_zone_filter.to_dict()
+    intersecting_uas_zones_subscription.uas_zones_filter = intersecting_uas_zone_filter
     intersecting_uas_zones_subscription.save()
 
     uas_zone_non_intersecting_basilique = make_uas_zone(NON_INTERSECTING_BASILIQUE_POLYGON)
-    non_intersecting_uas_zone_filter = make_uas_zones_filter_from_db_uas_zone(uas_zone_non_intersecting_basilique)
+    non_intersecting_uas_zone_filter = make_uas_zones_filter_from_db_uas_zone(
+        uas_zone_non_intersecting_basilique)
 
     non_intersecting_uas_zones_subscription = make_uas_zones_subscription()
-    non_intersecting_uas_zones_subscription.uas_zones_filter = non_intersecting_uas_zone_filter.to_dict()
+    non_intersecting_uas_zones_subscription.uas_zones_filter = non_intersecting_uas_zone_filter
     non_intersecting_uas_zones_subscription.save()
 
     context = UASZoneContext(uas_zone=uas_zone_basilique, user=test_user)

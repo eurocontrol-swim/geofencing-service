@@ -47,7 +47,9 @@ def get_uas_zones_subscriptions(user: Optional[User] = None) -> List[UASZonesSub
     return UASZonesSubscription.objects(query).all()
 
 
-def get_uas_zones_subscription_by_id(subscription_id: str, user: Optional[User] = None) -> Optional[UASZonesSubscription]:
+def get_uas_zones_subscription_by_id(subscription_id: str,
+                                     user: Optional[User] = None) \
+        -> Optional[UASZonesSubscription]:
     """
     Retrieves a subscription based on its id
     :param subscription_id:

@@ -7,6 +7,9 @@ dependencies:
 - Flask
 - Werkzeug
 - pip:
+  - numpy
+  - geog
+  - shapely
   - gunicorn
   - connexion[swagger-ui]
   - marshmallow

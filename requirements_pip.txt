@@ -10,6 +10,9 @@ mongoengine
 marshmallow-mongoengine
 python-dateutil
 python-qpid_proton
+numpy
+geog
+shapely
 git+https://git@github.com/eurocontrol-swim/rest-client.git
 git+https://git@github.com/eurocontrol-swim/swim-backend.git
 git+https://git@github.com/eurocontrol-swim/swim-qpid-proton.git

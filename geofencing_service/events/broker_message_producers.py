@@ -54,12 +54,14 @@ class UASZonesUpdatesMessageProducerContext:
         self.uas_zone: UASZone = uas_zone
 
 
-def uas_zones_updates_message_producer(context: UASZonesUpdatesMessageProducerContext) -> proton.Message:
+def uas_zones_updates_message_producer(context: UASZonesUpdatesMessageProducerContext) \
+        -> proton.Message:
     """
-    The message producer (UASZones retrieval) that will be called every time the topic is triggered for publishing.
+    The message producer (UASZones retrieval) that will be called every time the topic is triggered
+    for publishing.
 
-    :param context: Mandatory parameter required by `swim-pubsub`. Here it contains the UASZone filtering criteria of
-                    the subscription
+    :param context: Mandatory parameter required by `swim-pubsub`. Here it contains the UASZone
+    filtering criteria of the subscription
     :return:
     """
     if context.message_type == UASZonesUpdatesMessageType.UAS_ZONE_CREATION:
@@ -86,7 +88,9 @@ def publish_uas_zone_deletion(event_context: UASZoneContext):
     _publish_uas_zone_update(event_context, UASZonesUpdatesMessageType.UAS_ZONE_DELETION)
 
 
-def _publish_uas_zone_update(event_context: UASZoneContext, message_type: UASZonesUpdatesMessageType):
+def _publish_uas_zone_update(event_context: UASZoneContext,
+                             message_type: UASZonesUpdatesMessageType):
+
     message_producer_context = UASZonesUpdatesMessageProducerContext(
         message_type=message_type,
         uas_zone=event_context.uas_zone

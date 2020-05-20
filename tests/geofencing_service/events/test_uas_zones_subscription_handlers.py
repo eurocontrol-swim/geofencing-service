@@ -32,14 +32,16 @@ from unittest.mock import Mock
 
 from subscription_manager_client.models import Topic
 
-from geofencing_service.events.uas_zones_subscription_handlers import UASZonesSubscriptionCreateContext, \
-    get_or_create_sm_topic
+from geofencing_service.events.uas_zones_subscription_handlers import get_or_create_sm_topic, \
+    UASZonesSubscriptionCreateContext
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
 @mock.patch('geofencing_service.events.uas_zones_subscription_handlers.sm_client')
-def test_get_or_create_sm_topic__topic_is_found_and_returned(mock_sm_client, test_client, test_user):
+def test_get_or_create_sm_topic__topic_is_found_and_returned(
+        mock_sm_client, test_client, test_user
+):
     topic_name = 'topic'
     topic = Topic(name=topic_name)
 
@@ -54,7 +56,9 @@ def test_get_or_create_sm_topic__topic_is_found_and_returned(mock_sm_client, tes
 
 
 @mock.patch('geofencing_service.events.uas_zones_subscription_handlers.sm_client')
-def test_get_or_create_sm_topic__topic_is_not_found_and_is_created(mock_sm_client, test_client, test_user):
+def test_get_or_create_sm_topic__topic_is_not_found_and_is_created(
+        mock_sm_client, test_client, test_user
+):
     not_existent_topic_name = 'topic'
     mock_sm_client.get_topics = Mock(return_value=[])
     mock_sm_client.post_topic = Mock()

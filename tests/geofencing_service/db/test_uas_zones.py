@@ -31,11 +31,10 @@ from datetime import timedelta
 
 import pytest
 
-from geofencing_service.db.models import UASZone, AuthorityEntity
+from geofencing_service.db.models import UASZone
 from geofencing_service.db.uas_zones import get_uas_zones, create_uas_zone, delete_uas_zone
 from tests.geofencing_service.utils import make_uas_zone, make_uas_zones_filter_from_db_uas_zone, \
     BASILIQUE_POLYGON, INTERSECTING_BASILIQUE_POLYGON, NON_INTERSECTING_BASILIQUE_POLYGON
-from geofencing_service.common import point_list_from_geojson_polygon_coordinates
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -43,106 +42,88 @@ __author__ = "EUROCONTROL (SWIM)"
 @pytest.fixture
 def db_uas_zone():
     uas_zone = make_uas_zone(BASILIQUE_POLYGON)
-    uas_zone.get_authorization_authority().save()
-    uas_zone.get_notification_authority().save()
     uas_zone.save()
 
     return uas_zone
 
 
 @pytest.fixture
-def filter_with_intersecting_airspace_volume(db_uas_zone):
+def intersecting_filter(db_uas_zone):
     uas_zones_filter = make_uas_zones_filter_from_db_uas_zone(db_uas_zone)
-    uas_zones_filter.airspace_volume.polygon = point_list_from_geojson_polygon_coordinates(
-        INTERSECTING_BASILIQUE_POLYGON)
+    uas_zones_filter.airspace_volume.horizontal_projection = INTERSECTING_BASILIQUE_POLYGON
 
     return uas_zones_filter
 
 
 @pytest.fixture
-def filter_with_non_intersecting_airspace_volume(db_uas_zone):
+def non_intersecting_filter(db_uas_zone):
     uas_zones_filter = make_uas_zones_filter_from_db_uas_zone(db_uas_zone)
-    uas_zones_filter.airspace_volume.polygon = point_list_from_geojson_polygon_coordinates(
-        NON_INTERSECTING_BASILIQUE_POLYGON)
+    uas_zones_filter.airspace_volume.horizontal_projection = NON_INTERSECTING_BASILIQUE_POLYGON
 
     return uas_zones_filter
 
 
-def test_get_uas_zones__filter_by_airspace_volume__polygon(filter_with_intersecting_airspace_volume,
-                                                           filter_with_non_intersecting_airspace_volume):
+def test_get_uas_zones__filter_by_airspace_volume__polygon(
+        intersecting_filter, non_intersecting_filter):
 
-    result = get_uas_zones(filter_with_intersecting_airspace_volume)
+    result = get_uas_zones(intersecting_filter)
     assert len(result) == 1
 
-    result = get_uas_zones(filter_with_non_intersecting_airspace_volume)
+    result = get_uas_zones(non_intersecting_filter)
     assert len(result) == 0
 
 
-def test_get_uas_zones__filter_by_airspace_volume__upper_lower_limit(filter_with_intersecting_airspace_volume):
+def test_get_uas_zones__filter_by_airspace_volume__upper_lower_limit(intersecting_filter):
 
-    result = get_uas_zones(filter_with_intersecting_airspace_volume)
+    result = get_uas_zones(intersecting_filter)
     assert len(result) == 1
 
-    filter_with_intersecting_airspace_volume.airspace_volume.upper_limit_in_m -= 1
+    intersecting_filter.airspace_volume.upper_limit -= 1
 
-    result = get_uas_zones(filter_with_intersecting_airspace_volume)
+    result = get_uas_zones(intersecting_filter)
     assert len(result) == 0
 
-    filter_with_intersecting_airspace_volume.airspace_volume.upper_limit_in_m += 1
-    filter_with_intersecting_airspace_volume.airspace_volume.lower_limit_in_m += 1
+    intersecting_filter.airspace_volume.upper_limit += 1
+    intersecting_filter.airspace_volume.lower_limit += 1
 
-    result = get_uas_zones(filter_with_intersecting_airspace_volume)
+    result = get_uas_zones(intersecting_filter)
     assert len(result) == 0
 
 
-def test_get_uas_zones__filter_by_regions(filter_with_intersecting_airspace_volume):
+def test_get_uas_zones__filter_by_regions(intersecting_filter):
 
-    result = get_uas_zones(filter_with_intersecting_airspace_volume)
+    result = get_uas_zones(intersecting_filter)
     assert len(result) == 1
 
-    filter_with_intersecting_airspace_volume.regions = [100000]
+    intersecting_filter.regions = [100000]
 
-    result = get_uas_zones(filter_with_intersecting_airspace_volume)
+    result = get_uas_zones(intersecting_filter)
     assert len(result) == 0
 
 
-def test_get_uas_zones__filter_by_applicable_time_period(filter_with_intersecting_airspace_volume):
+def test_get_uas_zones__filter_by_applicable_time_period(intersecting_filter):
 
-    result = get_uas_zones(filter_with_intersecting_airspace_volume)
+    result = get_uas_zones(intersecting_filter)
     assert len(result) == 1
 
-    filter_with_intersecting_airspace_volume.start_date_time += timedelta(days=1)
+    intersecting_filter.start_date_time += timedelta(days=1)
 
-    result = get_uas_zones(filter_with_intersecting_airspace_volume)
+    result = get_uas_zones(intersecting_filter)
     assert len(result) == 0
 
-    filter_with_intersecting_airspace_volume.start_date_time -= timedelta(days=1)
-    filter_with_intersecting_airspace_volume.end_date_time -= timedelta(days=1)
+    intersecting_filter.start_date_time -= timedelta(days=1)
+    intersecting_filter.end_date_time -= timedelta(days=1)
 
-    result = get_uas_zones(filter_with_intersecting_airspace_volume)
-    assert len(result) == 0
-
-
-def test_get_uas_zones__filter_by_updated_date_time(filter_with_intersecting_airspace_volume):
-    filter_with_intersecting_airspace_volume.updated_after_date_time -= timedelta(days=1)
-
-    result = get_uas_zones(filter_with_intersecting_airspace_volume)
-    assert len(result) == 1
-
-    filter_with_intersecting_airspace_volume.updated_after_date_time += timedelta(days=2)
-
-    result = get_uas_zones(filter_with_intersecting_airspace_volume)
+    result = get_uas_zones(intersecting_filter)
     assert len(result) == 0
 
 
 def test_create_uas_zone():
-    uas_zone = make_uas_zone(polygon=BASILIQUE_POLYGON)
+    uas_zone = make_uas_zone(horizontal_projection=BASILIQUE_POLYGON)
 
     create_uas_zone(uas_zone)
 
     assert uas_zone in UASZone.objects.all()
-    assert uas_zone.get_notification_authority() in AuthorityEntity.objects.all()
-    assert uas_zone.get_authorization_authority() in AuthorityEntity.objects.all()
 
 
 def test_delete_uas_zone(db_uas_zone):

@@ -39,15 +39,16 @@ from geofencing_service.db.users import get_user_by_username
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def basic_auth(username: str, password: str, required_scopes: t.Optional[t.List[str]] = None) -> t.Dict[str, t.Any]:
+def basic_auth(username: str, password: str, required_scopes: t.Optional[t.List[str]] = None) \
+        -> t.Dict[str, t.Any]:
     """
-    Implements basic authentication. The function will be called from the connexion library after it has decoded the
-    base64 encoded string "username:password" by the client.
+    Implements basic authentication. The function will be called from the connexion library after
+    it has decoded the base64 encoded string "username:password" by the client.
     The authenticated user will be added in the global Flask request for further usage.
     :param username:
     :param password:
-    :param required_scopes: it is required by connexion but OPENAPI 3 specs do not foresee scopes for basic
-                            authentication
+    :param required_scopes: it is required by connexion but OPENAPI 3 specs do not foresee scopes
+                            for basic authentication
     :return:
     """
     try:

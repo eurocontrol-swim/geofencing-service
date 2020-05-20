@@ -33,12 +33,10 @@ from base64 import b64encode
 from datetime import datetime, timezone
 from typing import Optional, Dict
 
-from geofencing_service.common import point_list_from_geojson_polygon_coordinates, GeoJSONPolygonCoordinates
-from geofencing_service.db.models import AirspaceVolume, AuthorityEntity, ApplicableTimePeriod, CodeYesNoType, UASZone, \
-    CodeRestrictionType, CodeUSpaceClassType, CodeZoneType, DataSource, DailySchedule, CodeWeekDay, User, \
-    CodeVerticalReferenceType, Authority, NotificationRequirement, AuthorizationRequirement, UASZonesSubscription, \
-    GeofencingSMSubscription
-from geofencing_service.filters import UASZonesFilter, AirspaceVolumeFilter
+from geofencing_service.db.models import AirspaceVolume, TimePeriod, CodeYesNoType, UASZone, \
+    UASZonesFilter, CodeRestrictionType, CodeUSpaceClassType, CodeZoneType, DailyPeriod, \
+    CodeWeekDay, User, CodeVerticalReferenceType, Authority, UASZonesSubscription, \
+    GeofencingSMSubscription, CodeAuthorityRole, CodeZoneReasonType, UomDistance
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -50,59 +48,71 @@ def get_unique_id():
 NOW = datetime.now(timezone.utc)
 NOW_STRING = NOW.isoformat()
 
-BASILIQUE_POLYGON: GeoJSONPolygonCoordinates = [
-    [[50.863648, 4.329385],
-     [50.865348, 4.328055],
-     [50.868470, 4.317369],
-     [50.867671, 4.314826],
-     [50.865873, 4.315920],
-     [50.862792, 4.326508],
-     [50.863648, 4.329385]]
-]
+BASILIQUE_POLYGON = {
+    'type': 'Polygon',
+    'coordinates': [[
+        [4.329385, 50.863648],
+        [4.328055, 50.865348],
+        [4.317369, 50.868470],
+        [4.314826, 50.867671],
+        [4.315920, 50.865873],
+        [4.326508, 50.862792],
+        [4.329385, 50.863648]
+    ]]
+}
 
 
-INTERSECTING_BASILIQUE_POLYGON: GeoJSONPolygonCoordinates = [
-    [[50.862525, 4.328120],
-     [50.865502, 4.329257],
-     [50.865468, 4.323686],
-     [50.862525, 4.328120]]
-]
+INTERSECTING_BASILIQUE_POLYGON = {
+    'type': 'Polygon',
+    'coordinates': [[
+        [4.328120, 50.862525],
+        [4.329257, 50.865502],
+        [4.323686, 50.865468],
+        [4.328120, 50.862525]
+    ]]
+}
 
 
-NON_INTERSECTING_BASILIQUE_POLYGON: GeoJSONPolygonCoordinates = [
-    [[50.870058, 4.325421],
-     [50.867615, 4.326890],
-     [50.867602, 4.321407],
-     [50.870058, 4.325421]]
-]
+NON_INTERSECTING_BASILIQUE_POLYGON = {
+    'type': 'Polygon',
+    'coordinates': [[
+        [4.325421, 50.870058],
+        [4.326890, 50.867615],
+        [4.321407, 50.867602],
+        [4.325421, 50.870058]
+    ]]
+}
 
 
-def make_airspace_volume(polygon: GeoJSONPolygonCoordinates,
-                         upper_limit_in_m: Optional[int] = None,
-                         lower_limit_in_m: Optional[int] = None) -> AirspaceVolume:
+def make_airspace_volume(horizontal_projection: dict,
+                         uom_dimensions: str = UomDistance.METERS.value,
+                         upper_limit: Optional[int] = None,
+                         lower_limit: Optional[int] = None) -> AirspaceVolume:
     return AirspaceVolume(
-        polygon=polygon,
-        lower_vertical_reference=CodeVerticalReferenceType.WGS84.value,
-        upper_vertical_reference=CodeVerticalReferenceType.WGS84.value,
-        upper_limit_in_m=upper_limit_in_m,
-        lower_limit_in_m=lower_limit_in_m or 0
+        horizontal_projection=horizontal_projection,
+        uom_dimensions=uom_dimensions,
+        lower_vertical_reference=CodeVerticalReferenceType.AMSL.value,
+        upper_vertical_reference=CodeVerticalReferenceType.AMSL.value,
+        upper_limit=upper_limit,
+        lower_limit=lower_limit or 0
     )
 
 
-def make_authority_entity() -> AuthorityEntity:
-    result = AuthorityEntity()
-    result.name = get_unique_id()
-    result.contact_name = "AuthorityEntity manager"
-    result.service = "AuthorityEntity service"
-    result.email = "auth@autority.be"
-    result.site_url = "http://www.autority.be"
-    result.phone = "234234234"
+def make_authority() -> Authority:
+    return Authority(
+        name=get_unique_id(),
+        contact_name="Authority manager",
+        service="Authority service",
+        email="auth@autority.be",
+        site_url="http://www.autority.be",
+        phone="234234234",
+        purpose=CodeAuthorityRole.AUTHORIZATION.value,
+        interval_before="P3Y"
+    )
 
-    return result
 
-
-def make_daily_schedule():
-    return DailySchedule(
+def make_daily_period():
+    return DailyPeriod(
         day=CodeWeekDay.MON.value,
         start_time=datetime(2000, 1, 1, 12, 00, tzinfo=timezone.utc),
         end_time=datetime(2000, 1, 1, 18, 00, tzinfo=timezone.utc),
@@ -110,12 +120,14 @@ def make_daily_schedule():
 
 
 def make_applicable_period():
-    return ApplicableTimePeriod(
+    result = TimePeriod(
         permanent=CodeYesNoType.YES.value,
-        start_date_time=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
-        end_date_time=datetime(2021, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
-        daily_schedule=[make_daily_schedule()]
+        start_date_time=datetime(2020, 1, 1, 0, 0, 0).replace(tzinfo=timezone.utc),
+        end_date_time=datetime(2021, 1, 1, 0, 0, 0).replace(tzinfo=timezone.utc),
+        schedule=[make_daily_period()]
     )
+
+    return result
 
 
 def make_user(username=None, password='password'):
@@ -126,63 +138,45 @@ def make_user(username=None, password='password'):
     return user
 
 
-def make_notification_requirement() -> NotificationRequirement:
-    return NotificationRequirement(
-        authority=make_authority_entity(),
-        interval_before='interval'
-    )
-
-
-def make_authorization_requirement() -> AuthorizationRequirement:
-    return AuthorizationRequirement(
-        authority=make_authority_entity()
-    )
-
-
-def make_authority() -> Authority:
-    return Authority(
-        requires_notification_to=make_notification_requirement(),
-        requires_authorization_from=make_authorization_requirement()
-    )
-
-
-def make_uas_zone(polygon: GeoJSONPolygonCoordinates = BASILIQUE_POLYGON, user: Optional[User] = None) -> UASZone:
+def make_uas_zone(horizontal_projection: Optional[dict] = None,
+                  user: Optional[User] = None) -> UASZone:
     result = UASZone()
     result.identifier = get_unique_id()[:7]
+    result.country = "BEL"
     result.name = get_unique_id()
     result.type = CodeZoneType.COMMON.value
-    result.region = 1
     result.restriction = CodeRestrictionType.NO_RESTRICTION.value
-    result.data_capture_prohibition = CodeYesNoType.YES.value
+    result.restriction_conditions = ["special conditions"]
+    result.region = 1
+    result.reason = [CodeZoneReasonType.AIR_TRAFFIC.value]
+    result.other_reason_info = "other reason"
+    result.regulation_exemption = CodeYesNoType.YES.value
     result.u_space_class = CodeUSpaceClassType.EUROCONTROL.value
     result.message = "message"
-    result.country = "BEL"
-    result.airspace_volume = make_airspace_volume(polygon)
-    result.authority = make_authority()
-    result.applicable_time_period = make_applicable_period()
-    result.data_source = DataSource(
-        author="Author",
-        creation_date_time=NOW,
-    )
+    result.zone_authority = make_authority()
+    result.applicability = make_applicable_period()
+    result.geometry = [make_airspace_volume(
+        horizontal_projection=horizontal_projection or BASILIQUE_POLYGON)]
     result.user = user or make_user()
 
     return result
 
 
-def make_uas_zones_filter_from_db_uas_zone(uas_zone: UASZone) -> UASZonesFilter:
+def make_uas_zones_filter_from_db_uas_zone(
+        uas_zone: UASZone, uom_dimensions: str = UomDistance.METERS.value) -> UASZonesFilter:
+
     uas_zones_filter = UASZonesFilter(
-        airspace_volume=AirspaceVolumeFilter(
-            polygon=point_list_from_geojson_polygon_coordinates(uas_zone.airspace_volume.polygon),
-            upper_limit_in_m=uas_zone.airspace_volume.upper_limit_in_m,
-            lower_limit_in_m=uas_zone.airspace_volume.lower_limit_in_m,
-            upper_vertical_reference=uas_zone.airspace_volume.upper_vertical_reference,
-            lower_vertical_reference=uas_zone.airspace_volume.lower_vertical_reference
+        airspace_volume=AirspaceVolume(
+            horizontal_projection=uas_zone.geometry[0].horizontal_projection,
+            uom_dimensions=uom_dimensions,
+            upper_limit=uas_zone.geometry[0].upper_limit,
+            lower_limit=uas_zone.geometry[0].lower_limit,
+            upper_vertical_reference=uas_zone.geometry[0].upper_vertical_reference,
+            lower_vertical_reference=uas_zone.geometry[0].lower_vertical_reference
         ),
         regions=[uas_zone.region],
-        start_date_time=uas_zone.applicable_time_period.start_date_time,
-        end_date_time=uas_zone.applicable_time_period.end_date_time,
-        updated_after_date_time=uas_zone.data_source.update_date_time,
-        request_id="1"
+        start_date_time=uas_zone.applicability.start_date_time,
+        end_date_time=uas_zone.applicability.end_date_time
     )
 
     return uas_zones_filter
@@ -205,7 +199,7 @@ def make_geofencing_sm_subscription() -> GeofencingSMSubscription:
     )
 
 
-def make_uas_zones_subscription(polygon: GeoJSONPolygonCoordinates = BASILIQUE_POLYGON, user: Optional[User] = None) \
+def make_uas_zones_subscription(polygon: dict = BASILIQUE_POLYGON, user: Optional[User] = None) \
         -> UASZonesSubscription:
 
     uas_zone_filter = make_uas_zones_filter_from_db_uas_zone(make_uas_zone(polygon))
@@ -213,7 +207,7 @@ def make_uas_zones_subscription(polygon: GeoJSONPolygonCoordinates = BASILIQUE_P
     subscription = UASZonesSubscription()
     subscription.id = get_unique_id()
     subscription.sm_subscription = make_geofencing_sm_subscription()
-    subscription.uas_zones_filter = uas_zone_filter.to_dict()
+    subscription.uas_zones_filter = uas_zone_filter
     subscription.user = user or make_user()
 
     return subscription

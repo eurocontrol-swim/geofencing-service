@@ -27,107 +27,138 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from marshmallow import Schema, pre_dump, post_dump, pre_load, post_load
-from marshmallow.fields import String, Nested, Integer, Dict, AwareDateTime, List, Email, URL, Boolean
+from flask import current_app
+from marshmallow import Schema, post_dump, pre_load, post_load, validate, ValidationError, EXCLUDE
+from marshmallow.fields import String, Nested, Integer, Dict, AwareDateTime, List, Email, URL, \
+    Boolean, Float
 
-from geofencing_service.common import point_list_from_geojson_polygon_coordinates, \
-    geojson_polygon_coordinates_from_point_list, Point
-from geofencing_service.db.models import UASZone, AuthorityEntity
-from geofencing_service.endpoints.schemas.filters_schemas import validate_polygon
-from geofencing_service.endpoints.utils import time_str_from_datetime_str, make_datetime_string_aware, \
-    datetime_str_from_time_str
+from geofencing_service.db.models import UASZone, UomDistance, UASZonesFilter, AirspaceVolume
+from geofencing_service.endpoints.utils import time_str_from_datetime_str, \
+    make_datetime_string_aware, datetime_str_from_time_str, is_valid_duration_format, \
+    circumscribed_polygon_from_circle
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-class PointSchema(Schema):
-    lat = String(data_key='LAT')
-    lon = String(data_key='LON')
+FEET_METERS_RATIO = 0.3048
 
 
-class AirspaceVolumeSchema(Schema):
-    polygon = Nested(PointSchema, many=True, validate=validate_polygon)
-    lower_limit_in_m = Integer(data_key="lowerLimit", missing=None)
+class BaseSchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
+
+def validate_polygon_coordinates_linestring(linestring):
+
+    if len(linestring) < 3:
+        raise ValidationError('Linestring has less than 3 different vertices.')
+
+    if linestring[0] != linestring[-1]:
+        raise ValidationError('Linestring is not closed.')
+
+
+class PolygonSchema(BaseSchema):
+
+    type = String(required=True)
+    coordinates = List(
+        List(
+            List(
+                Float,
+                validate=validate.Length(max=2, min=2)
+            ),
+            validate=validate_polygon_coordinates_linestring,
+        ),
+        required=True
+    )
+
+
+def validate_radius(value):
+    if value < 0:
+        raise ValidationError('Negative value not allowed.')
+
+
+class CircleSchema(BaseSchema):
+    type = String(required=True)
+    center = List(Float, required=True)
+    radius = Float(required=True, validate=validate_radius)
+
+
+def validate_horizontal_projection(value):
+    if 'type' not in value:
+        raise ValidationError(
+            message={'type': ['Missing data for required field.']}
+        )
+
+    if value['type'] == 'Circle':
+        CircleSchema().load(value)
+    elif value['type'] == 'Polygon':
+        PolygonSchema().load(value)
+    else:
+        raise ValidationError(
+            message={'type': ['Invalid geometry type. Expected one of [Circle, Polygon]']})
+
+    return True
+
+
+class AirspaceVolumeSchema(BaseSchema):
+    horizontal_projection = Dict(data_key="horizontalProjection",
+                                 validate=validate_horizontal_projection)
+    lower_limit = Integer(data_key="lowerLimit", missing=None)
     lower_vertical_reference = String(data_key="lowerVerticalReference", missing=None)
-    upper_limit_in_m = Integer(data_key="upperLimit", missing=None)
+    upper_limit = Integer(data_key="upperLimit", missing=None)
     upper_vertical_reference = String(data_key="upperVerticalReference", missing=None)
+    uom_dimensions = String(data_key="uomDimensions")
+    circle = Nested(CircleSchema)
 
-    # helper field to hold temporarily the point_list while dumping the object. It prevents from overriding the polygon
-    # field and thus making it impossible to dump the object more than one time without raising an error
-    polygon_point_list_dump = Nested(PointSchema, many=True, required=False, dump_only=True)
+    @post_load
+    def handle_horizontal_projection_load(self, data, **kwargs):
+        if data['horizontal_projection']['type'] == 'Circle':
+            circle = data['horizontal_projection']
 
-    @pre_dump
-    def handle_geojson_polygon_dump(self, item, **kwargs):
-        """
-        Converts a GeoJSON polygon (as it is found in a mongo polygon field) to a list of Point i.e.:
+            radius_in_m = circle['radius']
+            if data['uom_dimensions'] == UomDistance.FEET.value:
+                radius_in_m = circle['radius'] * FEET_METERS_RATIO
 
-        this GeoJSON polygon:
-        {
-            'type': 'Polygon',
-            'coordinates': [
-                [[50.863648, 4.329385],
-                 [50.865348, 4.328055],
-                 [50.86847, 4.317369],
-                 [50.863648, 4.329385]]
-            ]
-        }
-        will be converted to:
-        [
-             Point(lat=50.863648, lon=4.329385),
-             Point(lat=50.865348, lon=4.328055),
-             Point(lat=50.86847, lon=4.317369),
-             Point(lat=50.863648, lon=4.329385)
-        ]
-        :param item:
-        :param many:
-        :param kwargs:
-        :return:
-        """
-        coordinates = item['polygon']['coordinates'] if 'coordinates' in item['polygon'] else item['polygon']
+            data['horizontal_projection'] = circumscribed_polygon_from_circle(
+                lon=circle['center'][0],
+                lat=circle['center'][1],
+                radius_in_m=radius_in_m,
+                n_edges=current_app.config['POLYGON_TO_CIRCLE_EDGES']
+            )
 
-        item.polygon_point_list_dump: List[Point] = point_list_from_geojson_polygon_coordinates(coordinates)
+            data['circle'] = circle
 
-        return item
+        return AirspaceVolume(**data)
 
     @post_dump
-    def replace_polygon(self, data, **kwargs):
-        data['polygon'] = data['polygon_point_list_dump']
-        del data['polygon_point_list_dump']
+    def handle_horizontal_projection_dump(self, data, **kwargs):
+        if data['circle']:
+            data['horizontalProjection'] = data['circle']
+
+        del data['circle']
 
         return data
 
+
+class UASZonesFilterSchema(BaseSchema):
+    airspace_volume = Nested(AirspaceVolumeSchema, data_key='airspaceVolume')
+    start_date_time = AwareDateTime(data_key='startDateTime')
+    end_date_time = AwareDateTime(data_key='endDateTime')
+    regions = List(Integer)
+
     @post_load
-    def handle_geojson_polygon_load(self, item, **kwargs):
-        """
-        Converts a list of point coordinates to GeoJSON polygon coordinates:
+    def load_filter(self, data, **kwargs):
+        return UASZonesFilter(**data)
 
-        Example:
-        this list of points:
-        [
-             {"lat": 50.863648, "lon": 4.329385},
-             {"lat": 50.865348, "lon": 4.328055},
-             {"lat": 50.86847, "lon": 4.317369},
-             {"lat": 50.863648, "lon": 4.329385}
-        ]
-        will be converted to:
-        [
-            [[50.863648, 4.329385],
-             [50.865348, 4.328055],
-             [50.86847, 4.317369],
-             [50.863648, 4.329385]]
-        ]
-        :param item:
-        :param kwargs:
-        :return:
-        """
-        point_list = [Point.from_dict(coords) for coords in item['polygon']]
+    @pre_load
+    def handle_datetime_awareness_load(self, data, **kwargs):
+        data["startDateTime"] = make_datetime_string_aware(data["startDateTime"])
+        data["endDateTime"] = make_datetime_string_aware(data["endDateTime"])
 
-        item['polygon'] = geojson_polygon_coordinates_from_point_list(point_list)
-
-        return item
+        return data
 
 
-class DailyScheduleSchema(Schema):
+class DailyPeriodSchema(BaseSchema):
     day = String()
     start_time = AwareDateTime(data_key='startTime', required=True)
     end_time = AwareDateTime(data_key='endTime', required=True)
@@ -157,90 +188,64 @@ class DailyScheduleSchema(Schema):
         return data
 
 
-class ApplicableTimePeriodSchema(Schema):
+class TimePeriodSchema(BaseSchema):
     permanent = String()
     start_date_time = AwareDateTime(data_key='startDateTime', required=True)
     end_date_time = AwareDateTime(data_key='endDateTime', required=True)
-    daily_schedule = Nested(DailyScheduleSchema, many=True, data_key='dailySchedule')
+    schedule = Nested(DailyPeriodSchema, many=True, data_key='schedule')
 
     @post_dump
-    def handle_datetime_awareness(self, data, **kwargs):
+    def handle_datetime_awareness_dump(self, data, **kwargs):
         data["startDateTime"] = make_datetime_string_aware(data["startDateTime"])
         data["endDateTime"] = make_datetime_string_aware(data["endDateTime"])
 
         return data
 
 
-class AuthorityEntitySchema(Schema):
-    authority_id = String(primary_key=True)
-    name = String(required=True)
-    contact_name = String(data_key='contactName')
-    service = String()
+def validate_duration(value: str) -> bool:
+    """
+
+    :param value:
+    :return:
+    """
+    return is_valid_duration_format(value)
+
+
+class AuthoritySchema(BaseSchema):
+    name = String(required=True, validate=validate.Length(max=200))
+    service = String(validate=validate.Length(max=200))
     email = Email()
+    contact_name = String(data_key='contactName', validate=validate.Length(max=200))
     site_url = URL(data_key='siteURL')
-    phone = String()
-
-    @post_load
-    def make_mongo_object(self, data, **kwargs):
-        """
-        A document schema will be eventually loaded in a mongoengine object for possible storing in DB
-        :param data:
-        :param kwargs:
-        :return:
-        """
-        return AuthorityEntity(**data)
+    phone = String(validate=validate.Length(max=200))
+    purpose = String(required=True)
+    interval_before = String(data_key='intervalBefore', validate=validate_duration)
 
 
-class NotificationRequirementSchema(Schema):
-    authority = Nested(AuthorityEntitySchema, required=True)
-    interval_before = String(data_key='intervalBefore', required=True)
-
-
-class AuthorizationRequirementSchema(Schema):
-    authority = Nested(AuthorityEntitySchema, required=True)
-
-
-class AuthoritySchema(Schema):
-    requires_notification_to = Nested(NotificationRequirementSchema, data_key="requiresNotificationTo")
-    requires_authorization_from = Nested(AuthorizationRequirementSchema, data_key="requiresAuthorizationFrom")
-
-
-class DataSourceSchema(Schema):
-    author = String(required=True)
-    creation_date_time = AwareDateTime(data_key='creationDateTime', required=True)
-    update_date_time = AwareDateTime(data_key='updateDateTime')
-
-    @post_dump
-    def handle_datetime_awareness(self, data, **kwargs):
-        data["creationDateTime"] = make_datetime_string_aware(data["creationDateTime"])
-        data["updateDateTime"] = make_datetime_string_aware(data["updateDateTime"])
-
-        return data
-
-
-class UASZoneSchema(Schema):
+class UASZoneSchema(BaseSchema):
     identifier = String(required=True)
-    name = String(required=True)
-    type = String()
-    restriction = String()
+    country = String(required=True)
+    name = String()
+    type = String(required=True)
+    restriction = String(required=True)
     restriction_conditions = List(String(), data_key='restrictionConditions')
     region = Integer()
-    data_capture_prohibition = String(data_key='dataCaptureProhibition')
+    reason = List(String(), validate=validate.Length(max=9))
+    other_reason_info = String(data_key='otherReasonInfo')
+    regulation_exemption = String(data_key='regulationExemption')
     u_space_class = String(data_key='uSpaceClass')
     message = String()
-    reason = List(String())
-    country = String()
 
-    airspace_volume = Nested(AirspaceVolumeSchema, data_key='airspaceVolume', required=True)
-    applicable_time_period = Nested(ApplicableTimePeriodSchema, data_key='applicableTimePeriod')
-    authority = Nested(AuthoritySchema)
-    data_source = Nested(DataSourceSchema, data_key='dataSource')
+    zone_authority = Nested(AuthoritySchema, data_key='zoneAuthority', required=True)
+    applicability = Nested(TimePeriodSchema)
+    geometry = Nested(AirspaceVolumeSchema, required=True, many=True)
     extended_properties = Dict(data_key='extendedProperties')
 
     @post_load
     def make_mongo_object(self, data, **kwargs):
         """
-        A document schema will be eventually loaded in a mongoengine object for possible storing in DB
+        A document schema will be eventually loaded in a mongoengine object for possible storing in
+        DB
         :param data:
         :param kwargs:
         :return:
@@ -250,7 +255,8 @@ class UASZoneSchema(Schema):
     @post_dump
     def handle_mongoengine_dict_field(self, data, **kwargs):
         """
-        Apparently the dict field is not serialized properly to a dict object so it has to be done manually.
+        Apparently the dict field is not serialized properly to a dict object so it has to be done
+        manually.
         :param data:
         :param kwargs:
         :return:
@@ -260,5 +266,5 @@ class UASZoneSchema(Schema):
         return data
 
 
-class SubscriptionSchema(Schema):
-    active = Boolean()
+class SubscriptionSchema(BaseSchema):
+    active = Boolean(required=True)
