@@ -99,54 +99,6 @@ HORIZONTAL_PROJECTIONS = {
         "radius": 0
     }
 }
-#
-# POLYGONS = {
-#     "basilique_polygon": dict(
-#         type='Polygon',
-#         coordinates=[[
-#             [4.329385, 50.863648],
-#             [4.328055, 50.865348],
-#             [4.317369, 50.868470],
-#             [4.314826, 50.867671],
-#             [4.315920, 50.865873],
-#             [4.326508, 50.862792],
-#             [4.329385, 50.863648]
-#         ]]
-#     ),
-#     "parc_royal": dict(
-#         type='Polygon',
-#         coordinates=[[
-#             [4.362334, 50.846844],
-#             [4.360553, 50.843125],
-#             [4.364823, 50.842244],
-#             [4.366797, 50.845977],
-#             [4.362334, 50.846844]
-#         ]]
-#     ),
-#     "parc_du_cinquantenaire": dict(
-#         type='Polygon',
-#         coordinates=[[
-#             [4.387284, 50.844065],
-#             [4.395417, 50.842222],
-#             [4.397841, 50.839485],
-#             [4.392970, 50.838055],
-#             [4.384977, 50.839681],
-#             [4.387284, 50.844065]
-#         ]]
-#     ),
-#     "bois_de_la_cambre": dict(
-#         type='Polygon',
-#         coordinates=[[
-#             [4.367825, 50.814009],
-#             [4.376479, 50.815210],
-#             [4.400072, 50.795249],
-#             [4.381311, 50.788147],
-#             [4.376037, 50.805531],
-#             [4.372529, 50.805314],
-#             [4.367825, 50.814009]
-#         ]]
-#     )
-# }
 
 
 def get_unique_id():
@@ -188,7 +140,7 @@ def make_airspace_volume(horizontal_projection: dict,
                          upper_limit: Optional[int] = None,
                          lower_limit: Optional[int] = None) -> AirspaceVolume:
 
-    result =  AirspaceVolume(
+    result = AirspaceVolume(
         horizontal_projection=horizontal_projection,
         uom_dimensions=uom_dimensions,
         lower_vertical_reference=CodeVerticalReferenceType.AMSL.value,

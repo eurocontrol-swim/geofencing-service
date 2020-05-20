@@ -538,6 +538,12 @@ components:
             "AGL",
             "AMSL"
           ]
+        uomDimensions:
+          type: string
+          enum: [
+            "M",
+            "FT"
+          ]
         horizontal_projection:
           oneOf:
             - $ref: '#/components/schemas/Polygon'
