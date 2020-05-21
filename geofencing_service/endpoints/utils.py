@@ -39,6 +39,7 @@ import geog
 import numpy as np
 import shapely.geometry
 
+POLYGON_TO_CIRCLE_EDGES = 10
 
 _ISO_8601_CHECK_PATTERN = r'^P(?!$)((?P<years>\d+)Y)?((?P<months>\d+)M)?(\d+W)?(\d+D)?(T(?=\d)(\d+H)?(\d+M)?(\d+S)?)?$'
 _iso_8601_check_regex = re.compile(_ISO_8601_CHECK_PATTERN)
@@ -117,9 +118,13 @@ def inscribed_polygon_from_circle(lon: float, lat: float, radius_in_m: float, n_
     return json.loads(json.dumps(result))
 
 
-def circumscribed_polygon_from_circle(lon: float, lat: float, radius_in_m: float, n_edges: int):
+def circumscribed_polygon_from_circle(lon: float,
+                                      lat: float,
+                                      radius_in_m: float,
+                                      n_edges: int = POLYGON_TO_CIRCLE_EDGES):
     """
-    By increasing the radius 5% we get an approximation of the circumscribed polygon
+    By increasing the radius 5% and having 10 edges we get a good enough approximation
+    of the desired circumscribed polygon.
     :param lon:
     :param lat:
     :param radius_in_m:

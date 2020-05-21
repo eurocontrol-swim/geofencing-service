@@ -27,7 +27,6 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from flask import current_app
 from marshmallow import Schema, post_dump, pre_load, post_load, validate, ValidationError, EXCLUDE
 from marshmallow.fields import String, Nested, Integer, Dict, AwareDateTime, List, Email, URL, \
     Boolean, Float
@@ -122,8 +121,7 @@ class AirspaceVolumeSchema(BaseSchema):
             data['horizontal_projection'] = circumscribed_polygon_from_circle(
                 lon=circle['center'][0],
                 lat=circle['center'][1],
-                radius_in_m=radius_in_m,
-                n_edges=current_app.config['POLYGON_TO_CIRCLE_EDGES']
+                radius_in_m=radius_in_m
             )
 
             data['circle'] = circle
