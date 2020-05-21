@@ -53,6 +53,3 @@ SUBSCRIPTION-MANAGER-API:
   verify: false
   username: geofencing
   password: geofencing
-
-
-POLYGON_TO_CIRCLE_EDGES: 40

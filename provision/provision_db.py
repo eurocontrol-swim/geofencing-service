@@ -27,175 +27,25 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-import uuid
+import json
 import logging.config
-from datetime import datetime, timezone
-from typing import Optional, List, Dict
+from typing import Dict, Any
 
-from mongoengine import connect
+from marshmallow import ValidationError
+from mongoengine import connect, NotUniqueError
 from pkg_resources import resource_filename
 from swim_backend.config import load_app_config
 
-from geofencing_service.db.models import UASZone, CodeZoneType, CodeRestrictionType, CodeYesNoType, \
-    CodeUSpaceClassType, \
-    AirspaceVolume, Authority, DailyPeriod, CodeWeekDay, TimePeriod, User, \
-    CodeAuthorityRole, CodeZoneReasonType, UomDistance, CodeVerticalReferenceType, CircleField
+from geofencing_service.db.models import User
 
 __author__ = "EUROCONTROL (SWIM)"
 
 from geofencing_service.db.uas_zones import create_uas_zone
 
 from geofencing_service.db.users import create_user
-from geofencing_service.endpoints.utils import circumscribed_polygon_from_circle
+from geofencing_service.endpoints.schemas.db_schemas import UASZoneSchema
 
 _logger = logging.getLogger(__name__)
-
-NOW = datetime.now(timezone.utc)
-
-HORIZONTAL_PROJECTIONS = {
-    "Brussels": {
-        "type": "Polygon",
-        "coordinates":[
-            [[4.2859,50.851563],
-             [4.381233,50.777316],
-             [4.466003,50.831553],
-             [4.330793,50.889391],
-             [4.2859,50.851563]],
-            [[4.329385, 50.863648],
-             [4.328055, 50.865348],
-             [4.317369, 50.868470],
-             [4.314826, 50.867671],
-             [4.315920, 50.865873],
-             [4.326508, 50.862792],
-             [4.329385, 50.863648]],
-            [[4.362334, 50.846844],
-             [4.360553, 50.843125],
-             [4.364823, 50.842244],
-             [4.366797, 50.845977],
-             [4.362334, 50.846844]],
-            [[4.387284, 50.844065],
-             [4.395417, 50.842222],
-             [4.397841, 50.839485],
-             [4.392970, 50.838055],
-             [4.384977, 50.839681],
-             [4.387284, 50.844065]],
-            [[4.367825, 50.814009],
-             [4.376479, 50.815210],
-             [4.400072, 50.795249],
-             [4.381311, 50.788147],
-             [4.376037, 50.805531],
-             [4.372529, 50.805314],
-             [4.367825, 50.814009]]
-        ]
-    },
-    "Tervuren": {
-        "type": "Circle",
-        "center": [4.514118, 50.824713],
-        "radius": 0
-    },
-    "Leuven": {
-        "type": "Circle",
-        "center": [4.700431, 50.879082],
-        "radius": 0
-    }
-}
-
-
-def get_unique_id():
-    return uuid.uuid4().hex
-
-
-def make_authority() -> Authority:
-    result = Authority()
-    result.name = get_unique_id()
-    result.contact_name = "Authority manager"
-    result.service = "Authority service"
-    result.email = "auth@autority.be"
-    result.phone = "123123123"
-    result.purpose = CodeAuthorityRole.AUTHORIZATION.value
-    result.interval_before = "P3Y"
-
-    return result
-
-
-def make_daily_period():
-    return DailyPeriod(
-        day=CodeWeekDay.MON.value,
-        start_time=datetime(2000, 1, 1, 12, 00, tzinfo=timezone.utc),
-        end_time=datetime(2000, 1, 1, 18, 00, tzinfo=timezone.utc),
-    )
-
-
-def make_time_period():
-    return TimePeriod(
-        permanent=CodeYesNoType.YES.value,
-        start_date_time=datetime(2020, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
-        end_date_time=datetime(2021, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
-        schedule=[make_daily_period()]
-    )
-
-
-def make_airspace_volume(horizontal_projection: dict,
-                         uom_dimensions: str = UomDistance.METERS.value,
-                         upper_limit: Optional[int] = None,
-                         lower_limit: Optional[int] = None) -> AirspaceVolume:
-
-    result = AirspaceVolume(
-        horizontal_projection=horizontal_projection,
-        uom_dimensions=uom_dimensions,
-        lower_vertical_reference=CodeVerticalReferenceType.AMSL.value,
-        upper_vertical_reference=CodeVerticalReferenceType.AMSL.value,
-        upper_limit=upper_limit or 100000,
-        lower_limit=lower_limit or 0
-    )
-
-    if horizontal_projection["type"] == "Circle":
-        result.circle = CircleField(**horizontal_projection)
-        result.horizontal_projection = circumscribed_polygon_from_circle(
-            lon=horizontal_projection["center"][0],
-            lat=horizontal_projection["center"][1],
-            radius_in_m=horizontal_projection["radius"],
-            n_edges=40
-        )
-
-    return result
-
-
-def make_uas_zone(name):
-    result = UASZone()
-    result.identifier = get_unique_id()[:7]
-    result.country = "BEL"
-    result.name = name
-    result.type = CodeZoneType.COMMON.value
-    result.restriction = CodeRestrictionType.NO_RESTRICTION.value
-    result.restriction_conditions = ["special conditions"]
-    result.region = 1
-    result.reason = [CodeZoneReasonType.AIR_TRAFFIC.value]
-    result.other_reason_info = "other reason"
-    result.regulation_exemption = CodeYesNoType.YES.value
-    result.u_space_class = CodeUSpaceClassType.EUROCONTROL.value
-    result.message = "message"
-    result.zone_authority = make_authority()
-    result.applicability = make_time_period()
-
-    return result
-
-
-def make_inverted_cone(center: List[float]) -> List[AirspaceVolume]:
-    radius_options = [200, 500, 1000, 2000, 3000]
-    lower_limit_options = range(500, 2501, 500)
-
-    return [
-        make_airspace_volume(
-            horizontal_projection={
-                "type": "Circle",
-                "center": center,
-                "radius": radius
-            },
-            lower_limit=lower_limit,
-            upper_limit=lower_limit + 500)
-        for lower_limit, radius in zip(lower_limit_options, radius_options)
-    ]
 
 
 def _get_users(users):
@@ -205,35 +55,47 @@ def _get_users(users):
     ]
 
 
+def configure(config_file: str) -> Dict[str, Any]:
+    config = load_app_config(config_file)
+    logging.config.dictConfig(config['LOGGING'])
+    connect(**config['MONGO'])
+
+    return config
+
+
+def get_uas_zones(uas_zones_file: str) -> Dict[str, Any]:
+    with open(uas_zones_file, 'r') as f:
+        return json.loads(f.read())['uas_zones']
+
+
 if __name__ == '__main__':
 
     config_file = resource_filename(__name__, 'config.yml')
+    uas_zones_file = resource_filename(__name__, 'uas_zones.json')
 
-    config = load_app_config(config_file)
-
-    logging.config.dictConfig(config['LOGGING'])
-
-    connect(**config['MONGO'])
+    config = configure(config_file)
+    uas_zones = get_uas_zones(uas_zones_file)
 
     # save Geofencing Users
     users = _get_users(config['DB_USERS'])
     for user in users:
-        create_user(user)
-        _logger.info(f"Saved user {user.username} in DB")
-
-    # save UASZones
-    for name, horizontal_projection in HORIZONTAL_PROJECTIONS.items():
-        uas_zone = make_uas_zone(name)
-
-        if horizontal_projection["type"] == "Polygon":
-            geometry = [make_airspace_volume(horizontal_projection=horizontal_projection)]
-        else:
-            geometry = make_inverted_cone(horizontal_projection["center"])
-
-        uas_zone.geometry = geometry
-        uas_zone.user = users[0]
         try:
+            create_user(user)
+            _logger.info(f"Saved user {user.username} in DB")
+        except NotUniqueError:
+            _logger.error(f"User {user.username} already exists.")
+
+    for uas_zone_data in uas_zones:
+        try:
+            uas_zone = UASZoneSchema().load(uas_zone_data)
+        except ValidationError as e:
+            _logger.error(f"Invalid UASZone: {str(e)}")
+            continue
+
+        try:
+            uas_zone.user = users[0]
             create_uas_zone(uas_zone)
-            _logger.info(f"Saved UASZone {name} in DB")
+            _logger.info(f"Saved UASZone {uas_zone.name} in DB")
         except Exception as e:
-            _logger.error(f"Error while saving object {uas_zone} in DB: {str(e)}")
+            _logger.error(f"Error while saving UASZone {uas_zone.name} in DB: {str(e)}")
+            continue

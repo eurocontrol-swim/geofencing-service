@@ -62,7 +62,7 @@ def _geo_polygons_intersect(poly1: dict, poly2: dict) -> bool:
     return s_poly1.intersects(s_poly2)
 
 
-def _uas_zone_geometry_intersects_polygon(geometry: List[AirspaceVolume], polygon: dict) -> bool:
+def uas_zone_geometry_intersects_polygon(geometry: List[AirspaceVolume], polygon: dict) -> bool:
     """
 
     :param geometry:

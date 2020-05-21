@@ -34,10 +34,9 @@ from typing import List, Optional
 from mongoengine import Q, DoesNotExist
 
 from geofencing_service.db.models import UASZone, User, UASZonesFilter
+from geofencing_service.db.utils import uas_zone_geometry_intersects_polygon
 
 __author__ = "EUROCONTROL (SWIM)"
-
-from geofencing_service.db.utils import _uas_zone_geometry_intersects_polygon
 
 
 def get_uas_zones_by_identifier(uas_zone_identifier: str, user: Optional[User] = None) \
@@ -90,7 +89,7 @@ def get_uas_zones(uas_zones_filter: UASZonesFilter, user: Optional[User] = None)
     # make the geo queries separately as there is no query operator that
     result = [
         zone for zone in zones
-        if _uas_zone_geometry_intersects_polygon(
+        if uas_zone_geometry_intersects_polygon(
             geometry=zone.geometry,
             polygon=uas_zones_filter.airspace_volume.horizontal_projection
         )
