@@ -31,7 +31,7 @@ from datetime import timedelta
 
 import pytest
 
-from geofencing_service.db.models import UASZone
+from geofencing_service.db.models import UASZone, UomDistance
 from geofencing_service.db.uas_zones import get_uas_zones, create_uas_zone, delete_uas_zone
 from tests.geofencing_service.utils import make_uas_zone, make_uas_zones_filter_from_db_uas_zone, \
     BASILIQUE_POLYGON, INTERSECTING_BASILIQUE_POLYGON, NON_INTERSECTING_BASILIQUE_POLYGON
@@ -73,21 +73,49 @@ def test_get_uas_zones__filter_by_airspace_volume__polygon(
     assert len(result) == 0
 
 
-def test_get_uas_zones__filter_by_airspace_volume__upper_lower_limit(intersecting_filter):
+@pytest.mark.parametrize(
+    'zone_uom, zone_upper, zone_lower, filter_uom, filter_upper, filter_lower, n_result', [
+    (UomDistance.METERS.value, 100, 100, UomDistance.METERS.value, 100, 100, 1),
+    (UomDistance.METERS.value, 99, 100, UomDistance.METERS.value, 100, 100, 1),
+    (UomDistance.METERS.value, 101, 100, UomDistance.METERS.value, 100, 100, 0),
+    (UomDistance.METERS.value, 100, 101, UomDistance.METERS.value, 100, 100, 1),
+    (UomDistance.METERS.value, 100, 99, UomDistance.METERS.value, 100, 100, 0),
+    (UomDistance.FEET.value, 100, 100, UomDistance.METERS.value, 100, 100, 0),
+    (UomDistance.FEET.value, 350, 100, UomDistance.METERS.value, 100, 100, 0),
+    (UomDistance.FEET.value, 350, 350, UomDistance.METERS.value, 100, 100, 0),
+    (UomDistance.FEET.value, 100, 350, UomDistance.METERS.value, 100, 100, 1),
+    (UomDistance.FEET.value, 100, 300, UomDistance.METERS.value, 100, 100, 0),
+    (UomDistance.FEET.value, 300, 350, UomDistance.METERS.value, 100, 100, 1),
+    (UomDistance.METERS.value, 100, 100, UomDistance.FEET.value, 100, 100, 0),
+    (UomDistance.METERS.value, 100, 100, UomDistance.FEET.value, 350, 100, 1),
+    (UomDistance.METERS.value, 100, 100, UomDistance.FEET.value, 350, 350, 0),
+    (UomDistance.METERS.value, 100, 100, UomDistance.FEET.value, 350, 300, 1),
+    (UomDistance.METERS.value, 100, 100, UomDistance.FEET.value, 300, 350, 0),
+    (UomDistance.METERS.value, 100, 100, UomDistance.FEET.value, 300, 300, 0),
+])
+def test_get_uas_zones__filter_by_airspace_volume__upper_lower_limit(
+        db_uas_zone,
+        intersecting_filter,
+        zone_uom,
+        zone_upper,
+        zone_lower,
+        filter_uom,
+        filter_upper,
+        filter_lower,
+        n_result
+):
+
+    db_uas_zone.geometry[0].uom_dimensions = zone_uom
+    db_uas_zone.geometry[0].upper_limit = zone_upper
+    db_uas_zone.geometry[0].lower_limit = zone_lower
+    db_uas_zone.save()
+
+    intersecting_filter.airspace_volume.uom_dimensions = filter_uom
+    intersecting_filter.airspace_volume.upper_limit = filter_upper
+    intersecting_filter.airspace_volume.lower_limit = filter_lower
 
     result = get_uas_zones(intersecting_filter)
-    assert len(result) == 1
-
-    intersecting_filter.airspace_volume.upper_limit -= 1
-
-    result = get_uas_zones(intersecting_filter)
-    assert len(result) == 0
-
-    intersecting_filter.airspace_volume.upper_limit += 1
-    intersecting_filter.airspace_volume.lower_limit += 1
-
-    result = get_uas_zones(intersecting_filter)
-    assert len(result) == 0
+    assert len(result) == n_result
 
 
 def test_get_uas_zones__filter_by_regions(intersecting_filter):

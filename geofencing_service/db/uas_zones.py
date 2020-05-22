@@ -33,8 +33,8 @@ from typing import List, Optional
 
 from mongoengine import Q, DoesNotExist
 
-from geofencing_service.db.models import UASZone, User, UASZonesFilter
-from geofencing_service.db.utils import uas_zone_geometry_intersects_polygon
+from geofencing_service.db import METERS_TO_FEET_RATIO, FEET_TO_METERS_RATIO
+from geofencing_service.db.models import UASZone, User, UASZonesFilter, UomDistance
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -71,29 +71,51 @@ def get_uas_zones(uas_zones_filter: UASZonesFilter, user: Optional[User] = None)
     """
 
     queries_list = [
-        Q(geometry__upper_limit__lte=uas_zones_filter.airspace_volume.upper_limit),
-        Q(geometry__lower_limit__gte=uas_zones_filter.airspace_volume.lower_limit),
-        Q(geometry__uom_dimensions=uas_zones_filter.airspace_volume.uom_dimensions),
+        Q(geometry__horizontal_projection__geo_intersects=uas_zones_filter.airspace_volume.horizontal_projection['coordinates']),
         Q(region__in=uas_zones_filter.regions),
         Q(applicability__start_date_time__gte=uas_zones_filter.start_date_time),
         Q(applicability__end_date_time__lte=uas_zones_filter.end_date_time),
     ]
+
+    if uas_zones_filter.airspace_volume.uom_dimensions == UomDistance.METERS.value:
+        limits_query = \
+        (
+            (
+                Q(geometry__uom_dimensions=UomDistance.METERS.value)
+              & Q(geometry__upper_limit__lte=uas_zones_filter.airspace_volume.upper_limit)
+              & Q(geometry__lower_limit__gte=uas_zones_filter.airspace_volume.lower_limit)
+            )
+        |
+            (
+                Q(geometry__uom_dimensions=UomDistance.FEET.value)
+              & Q(geometry__upper_limit__lte=uas_zones_filter.airspace_volume.upper_limit * METERS_TO_FEET_RATIO)
+              & Q(geometry__lower_limit__gte=uas_zones_filter.airspace_volume.lower_limit * METERS_TO_FEET_RATIO)
+            )
+        )
+    else:
+        limits_query = \
+        (
+            (
+                Q(geometry__uom_dimensions=UomDistance.METERS.value)
+              & Q(geometry__upper_limit__lte=uas_zones_filter.airspace_volume.upper_limit * FEET_TO_METERS_RATIO)
+              & Q(geometry__lower_limit__gte=uas_zones_filter.airspace_volume.lower_limit * FEET_TO_METERS_RATIO)
+            )
+        |
+            (
+                Q(geometry__uom_dimensions=UomDistance.FEET.value)
+              & Q(geometry__upper_limit__lte=uas_zones_filter.airspace_volume.upper_limit)
+              & Q(geometry__lower_limit__gte=uas_zones_filter.airspace_volume.lower_limit)
+            )
+        )
+
+    queries_list.append(limits_query)
 
     if user is not None:
         queries_list.append(Q(user=user))
 
     query: Q = reduce(lambda q1, q2: q1 & q2, queries_list, Q())
 
-    zones = UASZone.objects(query).all()
-
-    # make the geo queries separately as there is no query operator that
-    result = [
-        zone for zone in zones
-        if uas_zone_geometry_intersects_polygon(
-            geometry=zone.geometry,
-            polygon=uas_zones_filter.airspace_volume.horizontal_projection
-        )
-    ]
+    result = UASZone.objects(query).all()
 
     return result
 

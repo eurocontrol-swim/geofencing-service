@@ -125,7 +125,7 @@ class AirspaceVolume(EmbeddedDocument):
                                            default=CodeVerticalReferenceType.AMSL.value)
     horizontal_projection = PolygonField(required=True)
 
-    # helper field that holds geometry data in case of the horizontal projection if os  circle type
+    # helper field that holds geometry data in case the horizontal projection is of circle type
     circle = EmbeddedDocumentField(CircleField)
 
 

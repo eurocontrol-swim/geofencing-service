@@ -31,15 +31,13 @@ from marshmallow import Schema, post_dump, pre_load, post_load, validate, Valida
 from marshmallow.fields import String, Nested, Integer, Dict, AwareDateTime, List, Email, URL, \
     Boolean, Float
 
+from geofencing_service.db import FEET_TO_METERS_RATIO
 from geofencing_service.db.models import UASZone, UomDistance, UASZonesFilter, AirspaceVolume
 from geofencing_service.endpoints.utils import time_str_from_datetime_str, \
     make_datetime_string_aware, datetime_str_from_time_str, is_valid_duration_format, \
     circumscribed_polygon_from_circle
 
 __author__ = "EUROCONTROL (SWIM)"
-
-
-FEET_METERS_RATIO = 0.3048
 
 
 class BaseSchema(Schema):
@@ -111,12 +109,21 @@ class AirspaceVolumeSchema(BaseSchema):
 
     @post_load
     def handle_horizontal_projection_load(self, data, **kwargs):
+        """
+        In case the incoming horizontal projection is a circle then we convert into an
+        approximation of the respective circumscribed polygon for further use as MongoDB
+        does not support any circle GeoJSON property.
+        :param data:
+        :param kwargs:
+        :return:
+        """
         if data['horizontal_projection']['type'] == 'Circle':
             circle = data['horizontal_projection']
 
             radius_in_m = circle['radius']
+
             if data['uom_dimensions'] == UomDistance.FEET.value:
-                radius_in_m = circle['radius'] * FEET_METERS_RATIO
+                radius_in_m = circle['radius'] * FEET_TO_METERS_RATIO
 
             data['horizontal_projection'] = circumscribed_polygon_from_circle(
                 lon=circle['center'][0],
